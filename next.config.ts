@@ -1,7 +1,14 @@
-import type { NextConfig } from "next";
+import { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async rewrites() {
+    return [
+      {
+        source: '/pasindi',
+        destination: '/pasindi/new',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
