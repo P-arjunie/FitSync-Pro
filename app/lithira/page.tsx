@@ -1,7 +1,7 @@
 import React from 'react';
 
-const PasindiHome = () => {
+const lithiraHome = () => {
     return <div>Welcome to Pasindi's Home Page hiiiiii</div>;
 };
 
-export default PasindiHome;
+export default lithiraHome;
