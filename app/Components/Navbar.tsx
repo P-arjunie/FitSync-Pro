@@ -12,7 +12,7 @@ const Navbar: React.FC = () => {
     <nav className="bg-black text-white py-4 px-6 flex items-center justify-between">
       {/* Logo */}
       <Link href="/">
-        <Image src="/logo.png" alt="FitSync Pro Logo" width={150} height={50} />
+        <Image src="/logo.png" alt="FitSync Pro Logo" width={80} height={20} />
       </Link>
 
       {/* Desktop Navigation */}
