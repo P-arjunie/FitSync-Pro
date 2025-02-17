@@ -1,7 +1,13 @@
 import React from 'react';
+import ImageUploader from "./components/ImageUploader";
 
 const PasindiHome = () => {
-    return <div>Welcome to Pasindi's Home Page hiiiiii</div>;
+    return (
+        <div>
+          <h1>Upload Image to Cloudinary</h1>
+          <ImageUploader />
+        </div>
+      );
 };
 
 export default PasindiHome;
