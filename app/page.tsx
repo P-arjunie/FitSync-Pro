@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Navbar from './Components/Navbar';
 import Footer1 from './Components/Footer_01';
@@ -196,7 +197,30 @@ export default HomePage;
 
 
 
+<!-- =======
+"use client";
+
+import React from "react";
+import AuthForm from "./lithira/Authform/page";
+
+const ParentComponent: React.FC = () => {
+  const handleNewUser = (user: { name: string; role: "member" | "trainer" }) => {
+    console.log("New user created:", user);
+    // Add any API call or logic to save user data
+  };
+
+  return (
+    <div>
+      {/* Ensure the prop is passed correctly */}
+      <AuthForm onNewUser={handleNewUser} />
+    </div>
+  );
+};
+
+export default ParentComponent;
 
 
 
 
+
+ -->
