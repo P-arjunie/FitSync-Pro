@@ -1,61 +1,76 @@
 "use client";
-import React, { useState } from 'react';
-import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCamera, FaGoogle, FaFacebook, FaMicrosoft } from 'react-icons/fa';
+
+import React, { useState } from "react";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaEye,
+  FaEyeSlash,
+  FaCamera,
+  FaGoogle,
+  FaFacebook,
+  FaMicrosoft,
+} from "react-icons/fa";
 
 interface SignUpData {
   name: string;
   email: string;
   password: string;
   confirmPassword: string;
-  role: string;
+  role: "member" | "trainer" | "";
   profileImage: File | null;
 }
 
 interface AuthFormProps {
-  onNewUser: (user: { name: string; role: 'member' | 'trainer' }) => void;
+  onNewUser?: (user: { name: string; role: "member" | "trainer" }) => void;
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
   const [signUpData, setSignUpData] = useState<SignUpData>({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: '',
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "",
     profileImage: null,
   });
 
-  const [loginData, setLoginData] = useState({ username: '', password: '' });
+  const [loginData, setLoginData] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
 
-  const handleSignUpChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleSignUpChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setSignUpData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSignUp = () => {
     if (signUpData.password !== signUpData.confirmPassword) {
-      alert('Passwords do not match');
+      alert("Passwords do not match");
       return;
     }
     if (!signUpData.role) {
-      alert('Please select a role');
+      alert("Please select a role");
       return;
     }
 
     if (onNewUser) {
-      onNewUser({ name: signUpData.name, role: signUpData.role as 'member' | 'trainer' });
+      onNewUser({ name: signUpData.name, role: signUpData.role });
     } else {
-      //console.error('onNewUser function is not defined in the parent component.');
+      console.error("onNewUser function is not defined in the parent component.");
+      return;
     }
 
-    //alert(`Sign-up successful! Name: ${signUpData.name}, Role: ${signUpData.role}`);
+    alert(`Sign-up successful! Name: ${signUpData.name}, Role: ${signUpData.role}`);
+
     setSignUpData({
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      role: '',
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "",
       profileImage: null,
     });
   };
@@ -72,7 +87,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => handleSignUpChange(e as React.ChangeEvent<HTMLInputElement>)}
+                onChange={(e) =>
+                  handleSignUpChange(e as React.ChangeEvent<HTMLInputElement>)
+                }
               />
             </label>
             <select
@@ -82,13 +99,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
               className="bg-red-600 text-white px-3 py-2 rounded-lg"
               required
             >
-              <option value="" disabled>Select Role</option>
+              <option value="" disabled>
+                Select Role
+              </option>
               <option value="member">Member</option>
               <option value="trainer">Trainer</option>
             </select>
           </div>
 
-          <h2 className="text-xl font-bold mb-6 text-center">CREATE Your New Account</h2>
+          <h2 className="text-xl font-bold mb-6 text-center">
+            CREATE Your New Account
+          </h2>
 
           <div className="space-y-3 w-full">
             <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500">
@@ -117,13 +138,18 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
               />
             </div>
 
-            {['password', 'confirmPassword'].map((field) => (
-              <div key={field} className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500 relative">
+            {["password", "confirmPassword"].map((field) => (
+              <div
+                key={field}
+                className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500 relative"
+              >
                 <FaLock className="mr-2" />
                 <input
-                  type={showPassword[field] ? 'text' : 'password'}
+                  type={showPassword[field] ? "text" : "password"}
                   name={field}
-                  placeholder={field === 'password' ? 'Enter Password' : 'Confirm Password'}
+                  placeholder={
+                    field === "password" ? "Enter Password" : "Confirm Password"
+                  }
                   className="bg-transparent w-full outline-none"
                   value={signUpData[field as keyof SignUpData] as string}
                   onChange={handleSignUpChange}
@@ -131,7 +157,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
                 />
                 <div
                   className="cursor-pointer"
-                  onClick={() => setShowPassword({ ...showPassword, [field]: !showPassword[field] })}
+                  onClick={() =>
+                    setShowPassword({ ...showPassword, [field]: !showPassword[field] })
+                  }
                 >
                   {showPassword[field] ? <FaEyeSlash /> : <FaEye />}
                 </div>
@@ -139,7 +167,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
             ))}
 
             <div className="flex justify-between mt-4">
-              <button className="bg-red-600 px-4 py-2 rounded-lg w-[48%]" onClick={handleSignUp}>
+              <button
+                className="bg-red-600 px-4 py-2 rounded-lg w-[48%]"
+                onClick={handleSignUp}
+              >
                 Proceed
               </button>
               <button className="bg-gray-500 px-4 py-2 rounded-lg w-[48%]">
@@ -155,37 +186,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
         {/* Right Side - Login */}
         <div className="w-1/2 bg-gray-800 p-6 flex flex-col justify-center items-center rounded-r-lg">
           <h2 className="text-xl font-bold mb-6">Log In to Your Account</h2>
-          <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 mb-4 border border-red-500 w-full">
-            <FaUser className="mr-2" />
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              className="bg-transparent w-full outline-none"
-              value={loginData.username}
-              onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
-            />
-          </div>
 
-          <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 mb-4 border border-red-500 w-full">
-            <FaLock className="mr-2" />
-            <input
-              type={showPassword['login'] ? 'text' : 'password'}
-              name="password"
-              placeholder="Password"
-              className="bg-transparent w-full outline-none"
-              value={loginData.password}
-              onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-            />
-            <div
-              className="cursor-pointer"
-              onClick={() => setShowPassword({ ...showPassword, login: !showPassword['login'] })}
-            >
-              {showPassword['login'] ? <FaEyeSlash /> : <FaEye />}
-            </div>
-          </div>
-
-          {/* Login & Forgot Password Buttons */}
           <div className="flex justify-between w-full mt-4 mb-6">
             <button className="bg-red-600 px-4 py-2 rounded-lg w-[48%]">
               Log In
@@ -194,31 +195,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
               Forgot Password
             </button>
           </div>
-
-          {/* Sign Up with Google, Facebook, Microsoft */}
-          <div className="flex flex-col items-center w-full mt-4">
-            <p className="mb-3 text-gray-300">Sign up with</p>
-            <div className="flex justify-center gap-6">
-              <button
-                className="p-3 rounded-full bg-red-600 hover:bg-red-500 transition-all"
-                onClick={() => alert('Google sign-in triggered')}
-              >
-                <FaGoogle className="text-white text-xl" />
-              </button>
-              <button
-                className="p-3 rounded-full bg-red-600 hover:bg-red-500 transition-all"
-                onClick={() => alert('Facebook sign-in triggered')}
-              >
-                <FaFacebook className="text-white text-xl" />
-              </button>
-              <button
-                className="p-3 rounded-full bg-red-600 hover:bg-red-500 transition-all"
-                onClick={() => alert('Microsoft sign-in triggered')}
-              >
-                <FaMicrosoft className="text-white text-xl" />
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -226,6 +202,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 };
 
 export default AuthForm;
+
 
 
 
