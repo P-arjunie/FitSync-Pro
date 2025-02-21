@@ -1,4 +1,7 @@
 
+import Image from "next/image";
+
+
 import React from 'react';
 import Navbar from './Components/Navbar';
 import Footer1 from './Components/Footer_01';
