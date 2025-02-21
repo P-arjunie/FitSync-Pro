@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
+
 
 export default function ImageUploader() {
   const [image, setImage] = useState(null);
@@ -29,6 +30,7 @@ export default function ImageUploader() {
 
     if (data.success) {
       setImageUrl(data.url);
+      onImageUpload(data.url);
       alert("Image uploaded successfully!");
     } else {
       alert("Upload failed");
