@@ -1,10 +1,8 @@
 
-import Image from "next/image";
-
 
 import React from 'react';
-import Navbar from './Components/Navbar';
-import Footer1 from './Components/Footer_01';
+import Navbar from './components/Navbar';
+import Footer1 from './components/Footer_01';
 
 const HomePage: React.FC = () => {
   return (
@@ -196,34 +194,33 @@ const styles: { [key: string]: React.CSSProperties } = {
 };
 
 export default HomePage;
-}
-
-
-
-<!-- =======
-"use client";
-
-import React from "react";
-import AuthForm from "./lithira/Authform/page";
-
-const ParentComponent: React.FC = () => {
-  const handleNewUser = (user: { name: string; role: "member" | "trainer" }) => {
-    console.log("New user created:", user);
-    // Add any API call or logic to save user data
-  };
-
-  return (
-    <div>
-      {/* Ensure the prop is passed correctly */}
-      <AuthForm onNewUser={handleNewUser} />
-    </div>
-  );
-};
-
-export default ParentComponent;
 
 
 
 
 
- -->
+// "use client";
+
+// import React from "react";
+// import AuthForm from "./lithira/Authform/page";
+
+// const ParentComponent: React.FC = () => {
+//   const handleNewUser = (user: { name: string; role: "member" | "trainer" }) => {
+//     console.log("New user created:", user);
+//     // Add any API call or logic to save user data
+//   };
+
+//   return (
+//     <div>
+//       {/* Ensure the prop is passed correctly */}
+//       <AuthForm onNewUser={handleNewUser} />
+//     </div>
+//   );
+// };
+
+// export default ParentComponent;
+
+
+
+
+
