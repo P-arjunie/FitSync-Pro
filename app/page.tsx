@@ -31,17 +31,17 @@ const HomePage: React.FC = () => {
           <div style={styles.progressionCard}>
             <img src="/progressionicon.png" alt="Progression" style={styles.iconImage} />
             <p style={styles.CardTitle}>Progression</p>
-            <p style={styles.cardText}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            <p style={styles.cardText}>Tracking your progress is key to reaching your fitness goals. Whether you're building strength, losing weight, or improving endurance, seeing measurable progress keeps you motivated and focused on your journey. Celebrate each milestone along the way!</p>
           </div>
           <div style={styles.workoutCard}>
             <img src="/workouticon.png" alt="Workout" style={styles.iconImage} />
             <p style={styles.CardTitle}>Workout</p>
-            <p style={styles.cardText}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            <p style={styles.cardText}>Our expertly designed workouts are tailored to meet your specific fitness level and goals. Whether you're a beginner or an advanced athlete, we provide diverse routines that target all aspects of fitness, from strength training to cardiovascular endurance.</p>
           </div>
           <div style={styles.nutritionCard}>
             <img src="/nutritionicon.png" alt="Nutrition" style={styles.iconImage} />
             <p style={styles.CardTitle}>Nutrition</p>
-            <p style={styles.cardText}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            <p style={styles.cardText}>Nutrition plays a crucial role in your fitness success. We offer personalized meal plans that help you fuel your body for maximum performance. Learn how to nourish your body with the right balance of protein, carbohydrates, and healthy fats to support muscle growth and recovery.</p>
             <button style={styles.readMoreButton}>Read More</button>
           </div>
         </section>
