@@ -91,7 +91,6 @@ const HomePage: React.FC = () => {
       <Footer1 />
     </div>
   );
-
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
@@ -192,11 +191,3 @@ const styles: { [key: string]: React.CSSProperties } = {
 };
 
 export default HomePage;
-}
-
-
-
-
-
-
-
