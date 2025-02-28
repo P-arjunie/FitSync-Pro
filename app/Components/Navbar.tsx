@@ -8,7 +8,7 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="bg-black text-white py-2 px-2 flex items-center justify-between w-full border-b border-white">
+    <nav className="bg-black text-white py-2 px-2 flex items-center justify-between w-full border-b border-black">
       {/* Logo and Text */}
       <Link href="/" className="flex items-center">
         <Image src="/logo.png" alt="FitSync Pro Logo" width={40} height={40} />

@@ -4,7 +4,7 @@ import Footer1 from './Components/Footer_01';
 
 const HomePage: React.FC = () => {
   return (
-    <div>
+    <div style={styles.pageContainer}>
       <Navbar />
       
       {/* Main Content Section */}
@@ -48,24 +48,33 @@ const HomePage: React.FC = () => {
 
         {/* Who We Are Section */}
         <section style={styles.whoWeAre}>
-          <h2 style={styles.sectionTitle}>Take Your Health And Body To Next Level</h2>
-          <p style={styles.descriptionText}>
-            FitSyncPro an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries but also the leap into electronic typesetting.
-          </p>
+          <div style={styles.whoWeAreContainer}>
+          <div style={styles.whoWeAreText}>
+            <h1 style={styles.redTitles}>WHO WE ARE</h1>
+            <h2 style={styles.sectionTitle}>Take Your Health And Body To Next Level</h2>
+            <p style={styles.descriptionText}>
+        FitSyncPro, an unknown printer, took a galley of type and scrambled it to make a type specimen book.
+        It has survived not only five centuries but also the leap into electronic typesetting.
+            </p>
           <div style={styles.iconSection}>
-            <div style={styles.iconItem}>
-              <img src="/trainericon.png" alt="Professional Trainers" style={styles.iconImage} />
-              <p style={styles.iconText}>Professional Trainers</p>
-            </div>
-            <div style={styles.iconItem}>
-              <img src="/equipmenticon.png" alt="Modern Equipment" style={styles.iconImage} />
-              <p style={styles.iconText}>Modern Equipment</p>
-            </div>
-            <div style={styles.iconItem}>
-              <img src="/machineicon.png" alt="Body Building Machine" style={styles.iconImage} />
-              <p style={styles.iconText}>Body Building Machine</p>
-            </div>
-          </div>
+          <div style={styles.iconItem}>
+            <img src="/trainericon.png" alt="Professional Trainers" style={styles.iconImage2} />
+          <p style={styles.iconText}>Professional Trainers</p>
+        </div>
+        <div style={styles.iconItem}>
+          <img src="/equipmenticon.png" alt="Modern Equipment" style={styles.iconImage2} />
+          <p style={styles.iconText}>Modern Equipment</p>
+        </div>
+        <div style={styles.iconItem}>
+          <img src="/machineicon.png" alt="Body Building Machine" style={styles.iconImage2} />
+          <p style={styles.iconText}>Body Building Machine</p>
+        </div>
+        </div>
+        </div>
+        <div style={styles.whoWeAreImage}>
+        <img src="/whowearecoach.jpg" alt="Coach" style={styles.bodybuilderImage} />
+        </div>
+        </div>
         </section>
 
         {/* Featured Classes Section */}
@@ -129,23 +138,34 @@ const HomePage: React.FC = () => {
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
+  pageContainer: {
+    margin: 0,
+    padding: 0,
+    height: '100%',
+    width: '100%'
+  },
   main: {
     fontFamily: 'Arial, sans-serif',
-    marginTop: '20px',
+    margin: 0,
+    padding: 0,
+    overflowX: 'hidden', // Prevent horizontal overflow
   },
   heroSection: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '50px',
-    padding: '20px',
+    marginBottom: '0',
+    padding: '100px',
     backgroundImage: 'url(/herobackground.jpg)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
+    width: '100%', // Ensure full width
+    height: '800px',
   },
   heroText: {
     maxWidth: '50%',
     color: '#fff',
+    margin: 0, // Prevent extra margin
   },
   heroTitle: {
     fontSize: '3rem',
@@ -180,7 +200,13 @@ const styles: { [key: string]: React.CSSProperties } = {
   threeCardSection: {
     display: 'flex',
     justifyContent: 'space-between',
-    marginBottom: '50px',
+    marginBottom: '0',
+    marginTop: '0',
+    padding: '100px',
+    height: '800px',
+    backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(/cardbackground.jpg)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
   },
   CardTitle: {
     fontSize: '2.5rem', // Increase this for a larger title
@@ -189,7 +215,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   progressionCard: {
     position: 'relative',
-    backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(/gymprogress.jpg)',
+    backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url(/gymprogress.jpg)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     padding: '20px',
@@ -201,7 +227,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   workoutCard: {
     position: 'relative',
-    backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(/workoutcard.jpg)',
+    backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url(/workoutcard.jpg)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     padding: '20px',
@@ -213,7 +239,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   nutritionCard: {
     position: 'relative',
-    backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(/gymnutrition.jpg)',
+    backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url(/gymnutrition.jpg)',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     padding: '20px',
@@ -245,28 +271,80 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '5px',
   },
   whoWeAre: {
-    textAlign: 'center',
-    marginBottom: '50px',
+    background: '#f8f8f8',
+    padding: '50px 20px',
+    backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url(/whoweare2.png)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    height: '800px',
+    color: 'white',
   },
+  
+  whoWeAreContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    maxWidth: '1200px',
+    margin: '0 auto',
+  },
+  
+  whoWeAreText: {
+    flex: 1,
+  },
+  
+  whoWeAreImage: {
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  
+  bodybuilderImage: {
+    width: '80%',
+    height: '730px',
+    borderRadius: '10px',
+    marginTop: '20px',
+    marginBottom: '20px',
+    marginLeft: '50px',
+  },
+  
+  redTitles: {
+    backgroundColor: "#FF0000",
+    color: "#FFFFFF",
+    padding: "10px",
+    display: "inline-block",
+  },
+  
   sectionTitle: {
     fontSize: '2.5rem',
-    marginBottom: '30px',
+    fontWeight: 'bold',
+    margin: '20px 0',
   },
+  
   descriptionText: {
     fontSize: '1.2rem',
     marginBottom: '20px',
   },
+  
   iconSection: {
     display: 'flex',
     justifyContent: 'space-around',
+    marginTop: '30px',
   },
+  
   iconItem: {
-    width: '30%',
     textAlign: 'center',
+    flex: '1',
   },
+  
+  iconImage2: {
+    width: '60px',
+    height: '60px',
+    marginBottom: '10px',
+  },
+
   iconText: {
     fontSize: '1.1rem',
-    marginTop: '10px',
+    fontWeight: 'bold',
   },
   featuredClasses: {
     marginBottom: '50px',
