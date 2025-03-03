@@ -8,7 +8,7 @@ const HomePage: React.FC = () => {
   return (
     <div>
       <Navbar />
-      
+
       {/* Main Content Section */}
       <main style={styles.main}>
         <section style={styles.heroSection}>
@@ -66,7 +66,7 @@ const HomePage: React.FC = () => {
 
         {/* Fitness Service Section */}
         <section style={styles.fitnessService}>
-          <h2>We Are Always Provide Best Fitness Service For You</h2>
+          <h2>We Always Provide the Best Fitness Service For You</h2>
           <div style={styles.serviceContent}>
             <div style={styles.serviceItem}>
               <h3>Sculpt Your Perfect Body With Us!</h3>
@@ -93,7 +93,6 @@ const HomePage: React.FC = () => {
       <Footer1 />
     </div>
   );
-
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
@@ -194,33 +193,5 @@ const styles: { [key: string]: React.CSSProperties } = {
 };
 
 export default HomePage;
-
-
-
-
-
-// "use client";
-
-// import React from "react";
-// import AuthForm from "./lithira/Authform/page";
-
-// const ParentComponent: React.FC = () => {
-//   const handleNewUser = (user: { name: string; role: "member" | "trainer" }) => {
-//     console.log("New user created:", user);
-//     // Add any API call or logic to save user data
-//   };
-
-//   return (
-//     <div>
-//       {/* Ensure the prop is passed correctly */}
-//       <AuthForm onNewUser={handleNewUser} />
-//     </div>
-//   );
-// };
-
-// export default ParentComponent;
-
-
-
 
 
