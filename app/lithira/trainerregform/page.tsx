@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { FaCamera } from "react-icons/fa";
 
+
+
 interface TrainerFormData {
   firstName: string;
   lastName: string;
@@ -25,6 +27,19 @@ interface TrainerFormData {
 }
 
 const TrainerRegistrationForm: React.FC = () => {
+  
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   const [formData, setFormData] = useState<TrainerFormData>({
     firstName: "",
     lastName: "",
@@ -55,16 +70,41 @@ const TrainerRegistrationForm: React.FC = () => {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.termsAccepted) {
       alert("Please accept the terms and conditions.");
       return;
     }
-    console.log("Trainer Registration Data:", formData);
-    alert("Trainer Registration Successful!");
+  
+    const payload = {
+      ...formData,
+      profileImage, // include uploaded image if needed
+      status: "pending",
+      submittedAt: new Date(),
+    };
+  
+    try {
+      const res = await fetch("/api/pending-trainers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+  
+      if (res.ok) {
+        alert("Trainer registration submitted for approval.");
+        // optionally: redirect or reset form
+      } else {
+        const err = await res.json();
+        alert("Submission failed: " + err.message);
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("Something went wrong. Please try again later.");
+    }
   };
+  
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-200 to-gray-300">
@@ -73,12 +113,22 @@ const TrainerRegistrationForm: React.FC = () => {
         className="w-[800px] bg-gray-100 p-6 rounded-lg shadow-xl relative"
       >
         {/* Camera Icon */}
-        <div className="absolute top-6 right-6 border-4 border-red-500 rounded-full w-16 h-16 flex justify-center items-center cursor-pointer">
+        <div className="absolute top-6 right-6 border-4 border-red-500 rounded-full w-16 h-16 overflow-hidden cursor-pointer">
           <label className="cursor-pointer">
-            <FaCamera className="text-3xl text-gray-800" />
-            <input type="file" className="hidden" accept="image/*" />
+            {profileImage ? (
+              <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <FaCamera className="text-3xl text-gray-800 mx-auto mt-3" />
+            )}
+            <input
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
           </label>
         </div>
+
 
         {/* Title */}
         <h2 className="text-3xl font-bold text-center mb-2">
@@ -218,6 +268,23 @@ const TrainerRegistrationForm: React.FC = () => {
             </div>
           </div>
         </fieldset>
+
+        <div className="flex items-center my-4">
+          <input
+            type="checkbox"
+            id="termsAccepted"
+            name="termsAccepted"
+            checked={formData.termsAccepted}
+            onChange={handleChange}
+            className="mr-2"
+          />
+          <label htmlFor="termsAccepted" className="text-sm">
+            I agree to the <a href="#" className="text-blue-600 underline">terms and conditions</a>.
+          </label>
+        </div>
+
+
+
 
         {/* Submit Button */}
         <button
