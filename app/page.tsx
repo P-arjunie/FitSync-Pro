@@ -1,13 +1,14 @@
 
+
 import React from 'react';
-import Navbar from './Components/Navbar';
-import Footer1 from './Components/Footer_01';
+import Navbar from './components/Navbar';
+import Footer1 from './components/Footer_01';
 
 const HomePage: React.FC = () => {
   return (
     <div>
       <Navbar />
-      
+
       {/* Main Content Section */}
       <main style={styles.main}>
         <section style={styles.heroSection}>
@@ -65,7 +66,7 @@ const HomePage: React.FC = () => {
 
         {/* Fitness Service Section */}
         <section style={styles.fitnessService}>
-          <h2>We Are Always Provide Best Fitness Service For You</h2>
+          <h2>We Always Provide the Best Fitness Service For You</h2>
           <div style={styles.serviceContent}>
             <div style={styles.serviceItem}>
               <h3>Sculpt Your Perfect Body With Us!</h3>
@@ -92,7 +93,6 @@ const HomePage: React.FC = () => {
       <Footer1 />
     </div>
   );
-
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
@@ -193,7 +193,5 @@ const styles: { [key: string]: React.CSSProperties } = {
 };
 
 export default HomePage;
-
-
 
 
