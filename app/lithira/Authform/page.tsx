@@ -89,6 +89,33 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     }
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+  
+    const formData = new FormData();
+    formData.append("file", file);
+  
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+  
+      const data = await res.json();
+  
+      if (data.secure_url) {
+        setSignUpData((prevData) => ({
+          ...prevData,
+          profileImage: data.secure_url,
+        }));
+      }
+    } catch (error) {
+      console.error("Image upload failed:", error);
+    }
+  };
+  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -160,8 +187,22 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
         {/* Left Side - Sign Up */}
         <div className="w-1/2 bg-gray-800 p-6 flex flex-col items-center rounded-l-lg">
           <div className="flex flex-col items-center mb-4">
-            <label className="bg-gray-700 p-4 rounded-full border-2 border-red-500 mb-2 cursor-pointer">
-              <FaCamera className="text-3xl" />
+          <label className="mb-2 cursor-pointer relative w-20 h-20">
+              {signUpData.profileImage ? (
+                <img
+                  src={
+                    typeof signUpData.profileImage === "string"
+                      ? signUpData.profileImage
+                      : URL.createObjectURL(signUpData.profileImage)
+                  }
+                  alt="Profile Preview"
+                  className="w-full h-full object-cover rounded-full border-2 border-red-500"
+                />
+              ) : (
+                <div className="bg-gray-700 p-4 rounded-full border-2 border-red-500 flex items-center justify-center w-full h-full">
+                  <FaCamera className="text-3xl text-white" />
+                </div>
+              )}
               <input
                 type="file"
                 accept="image/*"
@@ -170,6 +211,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
                 onChange={handleSignUpChange}
               />
             </label>
+
             <select
               name="role"
               value={signUpData.role}
