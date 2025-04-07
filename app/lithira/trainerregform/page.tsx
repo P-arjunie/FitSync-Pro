@@ -1,9 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaCamera } from "react-icons/fa";
-
-
 
 interface TrainerFormData {
   firstName: string;
@@ -27,8 +25,18 @@ interface TrainerFormData {
 }
 
 const TrainerRegistrationForm: React.FC = () => {
-  
   const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  // Load image from localStorage only once on mount if no upload yet
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const imageFromAuth = localStorage.getItem("trainerProfileImage");
+      if (imageFromAuth) {
+        setProfileImage(imageFromAuth);
+      }
+    }
+  }, []);
+  
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -40,6 +48,7 @@ const TrainerRegistrationForm: React.FC = () => {
       reader.readAsDataURL(file);
     }
   };
+
   const [formData, setFormData] = useState<TrainerFormData>({
     firstName: "",
     lastName: "",
@@ -70,31 +79,31 @@ const TrainerRegistrationForm: React.FC = () => {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.termsAccepted) {
       alert("Please accept the terms and conditions.");
       return;
     }
-  
+
     const payload = {
       ...formData,
-      profileImage, // include uploaded image if needed
+      profileImage,
       status: "pending",
       submittedAt: new Date(),
     };
-  
+
     try {
       const res = await fetch("/api/pending-trainers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-  
+
       if (res.ok) {
         alert("Trainer registration submitted for approval.");
-        // optionally: redirect or reset form
+        // Reset form or redirect as needed
       } else {
         const err = await res.json();
         alert("Submission failed: " + err.message);
@@ -104,7 +113,6 @@ const TrainerRegistrationForm: React.FC = () => {
       alert("Something went wrong. Please try again later.");
     }
   };
-  
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-200 to-gray-300">
@@ -112,7 +120,7 @@ const TrainerRegistrationForm: React.FC = () => {
         onSubmit={handleSubmit}
         className="w-[800px] bg-gray-100 p-6 rounded-lg shadow-xl relative"
       >
-        {/* Camera Icon */}
+        {/* Profile Image Display or Upload */}
         <div className="absolute top-6 right-6 border-4 border-red-500 rounded-full w-16 h-16 overflow-hidden cursor-pointer">
           <label className="cursor-pointer">
             {profileImage ? (
@@ -129,20 +137,13 @@ const TrainerRegistrationForm: React.FC = () => {
           </label>
         </div>
 
-
         {/* Title */}
-        <h2 className="text-3xl font-bold text-center mb-2">
-          Registration Form - Trainer
-        </h2>
-        <p className="text-center text-sm mb-6">
-          Join Our Team & Inspire Fitness!
-        </p>
+        <h2 className="text-3xl font-bold text-center mb-2">Registration Form - Trainer</h2>
+        <p className="text-center text-sm mb-6">Join Our Team & Inspire Fitness!</p>
 
         {/* Personal Information */}
         <fieldset className="mb-6">
-          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">
-            Personal Information
-          </legend>
+          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">Personal Information</legend>
           <div className="grid grid-cols-2 gap-4">
             {[
               { label: "First Name", name: "firstName" },
@@ -167,7 +168,7 @@ const TrainerRegistrationForm: React.FC = () => {
             ))}
           </div>
 
-          {/* Gender Selection */}
+          {/* Gender */}
           <div className="flex items-center gap-4 mt-4">
             <span className="font-semibold">Gender:</span>
             {["Male", "Female", "Other"].map((gender) => (
@@ -186,11 +187,9 @@ const TrainerRegistrationForm: React.FC = () => {
           </div>
         </fieldset>
 
-        {/* Emergency Contact Information */}
+        {/* Emergency Contact */}
         <fieldset className="mb-6">
-          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">
-            Emergency Contact Information
-          </legend>
+          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">Emergency Contact Information</legend>
           <div className="grid grid-cols-2 gap-4">
             {[
               { label: "Emergency Contact Name", name: "emergencyName" },
@@ -225,9 +224,7 @@ const TrainerRegistrationForm: React.FC = () => {
 
         {/* Professional Qualifications */}
         <fieldset className="mb-6">
-          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">
-            Professional Qualifications
-          </legend>
+          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">Professional Qualifications</legend>
           <div className="grid grid-cols-2 gap-4">
             {[
               { label: "Specialization", name: "specialization" },
@@ -249,8 +246,6 @@ const TrainerRegistrationForm: React.FC = () => {
                 />
               </div>
             ))}
-
-            {/* Pricing Plan Dropdown */}
             <div className="col-span-2">
               <label className="text-sm font-semibold">Pricing Plan</label>
               <select
@@ -269,6 +264,7 @@ const TrainerRegistrationForm: React.FC = () => {
           </div>
         </fieldset>
 
+        {/* Terms */}
         <div className="flex items-center my-4">
           <input
             type="checkbox"
@@ -279,14 +275,15 @@ const TrainerRegistrationForm: React.FC = () => {
             className="mr-2"
           />
           <label htmlFor="termsAccepted" className="text-sm">
-            I agree to the <a href="#" className="text-blue-600 underline">terms and conditions</a>.
+            I agree to the{" "}
+            <a href="#" className="text-blue-600 underline">
+              terms and conditions
+            </a>
+            .
           </label>
         </div>
 
-
-
-
-        {/* Submit Button */}
+        {/* Submit */}
         <button
           type="submit"
           className="w-full bg-red-600 text-white font-semibold p-3 rounded-lg hover:bg-red-700 transition"
