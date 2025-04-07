@@ -1,5 +1,6 @@
 import React from 'react';
 import Head from 'next/head'; // Import Head from next/head
+import Navbar from "../../Components/Navbar";
 
 export default function Contact() {
   return (

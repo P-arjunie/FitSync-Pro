@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import Navbar from './components/Navbar';
 import Footer1 from './components/Footer_01';
@@ -193,5 +191,6 @@ const styles: { [key: string]: React.CSSProperties } = {
 };
 
 export default HomePage;
+
 
 
