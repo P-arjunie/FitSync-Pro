@@ -1,6 +1,9 @@
 "use client";
-
+import connectMongoDB  from '@/lib/mongodb';
+import cloudinary from '@/lib/cloudinary';
+import  uploadImageToCloudinary  from "@/lib/cloudinary"; 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   FaUser,
   FaEnvelope,
@@ -19,7 +22,7 @@ interface SignUpData {
   password: string;
   confirmPassword: string;
   role: "member" | "trainer" | "";
-  profileImage: File | null;
+  profileImage: File | null | string;
 }
 
 interface LoginData {
@@ -32,6 +35,8 @@ interface AuthFormProps {
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
+  const router = useRouter();
+
   const [signUpData, setSignUpData] = useState<SignUpData>({
     name: "",
     email: "",
@@ -89,33 +94,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-  
-    const formData = new FormData();
-    formData.append("file", file);
-  
-    try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-  
-      const data = await res.json();
-  
-      if (data.secure_url) {
-        setSignUpData((prevData) => ({
-          ...prevData,
-          profileImage: data.secure_url,
-        }));
-      }
-    } catch (error) {
-      console.error("Image upload failed:", error);
-    }
-  };
-  
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -130,10 +108,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     }
 
     let imageUrl = "";
-    if (signUpData.profileImage) {
+
+    if (signUpData.profileImage && typeof signUpData.profileImage !== "string") {
       const formData = new FormData();
       formData.append("file", signUpData.profileImage);
-      formData.append("upload_preset", "your_upload_preset"); // replace this
+      formData.append("upload_preset", "your_upload_preset"); // 🔁 Replace with actual preset
 
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -142,6 +121,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 
       const data = await res.json();
       imageUrl = data.secure_url;
+    } else if (typeof signUpData.profileImage === "string") {
+      imageUrl = signUpData.profileImage;
     }
 
     const userData = {
@@ -159,10 +140,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     });
 
     const data = await res.json();
+
     if (res.ok) {
       alert(data.message);
 
-      // 🔥 Fire onNewUser if passed
+      // Save profile image URL to localStorage
+      localStorage.setItem("trainerProfileImage", data.profileImage);
+
+      // Fire callback if any
       if (onNewUser) {
         onNewUser({
           name: userData.name,
@@ -170,11 +155,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
         });
       }
 
-      // 🔁 Redirect based on role
-      if (signUpData.role === "member") {
-        window.location.href = "/lithira/memberregform";
-      } else if (signUpData.role === "trainer") {
-        window.location.href = "/lithira/trainerregform";
+      // Redirect
+      if (userData.role === "trainer") {
+        router.push("/lithira/trainerregform");
+      } else {
+        router.push("/lithira/memberregform");
       }
     } else {
       alert(data.error);
@@ -187,7 +172,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
         {/* Left Side - Sign Up */}
         <div className="w-1/2 bg-gray-800 p-6 flex flex-col items-center rounded-l-lg">
           <div className="flex flex-col items-center mb-4">
-          <label className="mb-2 cursor-pointer relative w-20 h-20">
+            <label className="mb-2 cursor-pointer relative w-20 h-20">
               {signUpData.profileImage ? (
                 <img
                   src={
@@ -377,3 +362,4 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 };
 
 export default AuthForm;
+
