@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
 
 const connectMongoDB = async () => {
+  const uri = process.env.MONGODB_URI;
+
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-        dbName: "fit-sync",
+    await mongoose.connect(uri, {
+      dbName: "fit-sync",
     });
     console.log("Connected to MongoDB.");
-    
   } catch (error) {
     console.log(error);
   }
