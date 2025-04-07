@@ -96,35 +96,54 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (signUpData.password !== signUpData.confirmPassword) {
       alert("Passwords do not match");
       return;
     }
-
+  
     if (!signUpData.role) {
       alert("Please select a role");
       return;
     }
-
+  
     let imageUrl = "";
-
+  
     if (signUpData.profileImage && typeof signUpData.profileImage !== "string") {
-      const formData = new FormData();
-      formData.append("file", signUpData.profileImage);
-      formData.append("upload_preset", "your_upload_preset"); // 🔁 Replace with actual preset
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      imageUrl = data.secure_url;
+      // Convert image to base64
+      const toBase64 = (file: File): Promise<string> =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (error) => reject(error);
+        });
+  
+      try {
+        const base64Image = await toBase64(signUpData.profileImage);
+  
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: base64Image }),
+        });
+  
+        const data = await res.json();
+  
+        if (!res.ok) {
+          throw new Error(data.error || "Image upload failed");
+        }
+  
+        imageUrl = data.url;
+      } catch (err) {
+        console.error("Image upload failed:", err);
+        alert("Image upload failed");
+        return;
+      }
     } else if (typeof signUpData.profileImage === "string") {
       imageUrl = signUpData.profileImage;
     }
-
+  
     const userData = {
       name: signUpData.name,
       email: signUpData.email,
@@ -132,39 +151,36 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       role: signUpData.role,
       profileImage: imageUrl,
     };
-
+  
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userData),
     });
-
+  
     const data = await res.json();
-
+  
     if (res.ok) {
       alert(data.message);
-
-      // Save profile image URL to localStorage
       localStorage.setItem("trainerProfileImage", data.profileImage);
-
-      // Fire callback if any
+  
       if (onNewUser) {
         onNewUser({
           name: userData.name,
           role: userData.role as "member" | "trainer",
         });
       }
-
-      // Redirect
-      if (userData.role === "trainer") {
-        router.push("/lithira/trainerregform");
-      } else {
-        router.push("/lithira/memberregform");
-      }
+  
+      router.push(
+        userData.role === "trainer"
+          ? "/lithira/trainerregform"
+          : "/lithira/memberregform"
+      );
     } else {
       alert(data.error);
     }
   };
+  
 
   return (
     <div className="flex justify-center items-center min-h-screen w-screen bg-black text-white">
