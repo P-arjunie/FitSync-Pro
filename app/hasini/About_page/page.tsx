@@ -1,42 +1,40 @@
 import Image from "next/image";
-import Navbar from "@/app/Components/Navbar";
 
 const AboutVisionMission = () => {
   return (
     <div>
-      <Navbar />
-
       {/* About Section */}
       <section className="relative bg-gray-100 p-10">
         <div className="container mx-auto flex flex-col lg:flex-row items-center">
-          {/* Left Image Section */}
-          <div className="lg:w-1/2">
-            <div className="relative rounded-lg overflow-hidden">
+          
+          {/* Left Image */}
+          <div className="lg:w-1/2 mb-8 lg:mb-0">
+            <div className="relative w-full h-full">
               <Image
-                src="/images/beautiful-athletic-sportswear-girl-training-gym-with-friend_1157-13781.jpg"
+                src="/AboutIImg_1.jpg"
                 alt="FitSync Pro"
-                width={500}
+                width={600}
                 height={500}
-                className="rounded-lg"
+                className="rounded-lg shadow-lg object-cover w-full"
               />
             </div>
           </div>
 
-          {/* Right Text Section */}
-          <div className="lg:w-1/2 mt-6 lg:mt-0 lg:pl-12">
-            <h3 className="text-red-600 font-bold text-lg uppercase relative inline-block">
+          {/* Right Content */}
+          <div className="lg:w-1/2 lg:pl-12">
+            <h3 className="text-red-600 font-bold text-lg uppercase relative inline-block mb-2">
               Who We Are
               <span className="absolute bottom-0 left-0 w-full h-1 bg-red-600"></span>
             </h3>
-            <h2 className="text-3xl font-bold mt-2">
+            <h2 className="text-3xl font-bold text-gray-800">
               We Will Give You Strength and Health
             </h2>
-            <p className="text-gray-600 mt-4">
+            <p className="text-gray-600 mt-4 text-lg">
               Transforming bodies, building strength, and redefining fitness. A
               legacy of power, endurance, and innovation that stands the test of
               time.
             </p>
-            <ul className="mt-4 space-y-2 text-gray-600">
+            <ul className="mt-4 space-y-2 text-gray-700 text-base">
               <li>✔ FitSyncPro is an innovative fitness platform</li>
               <li>✔ Personalized training plans for every fitness level</li>
               <li>✔ Community-driven approach for motivation</li>
@@ -48,109 +46,101 @@ const AboutVisionMission = () => {
           </div>
         </div>
 
-        {/* Bottom Statistics Section */}
-        <div className="flex justify-center mt-12 space-x-10">
+        {/* Bottom Stats */}
+        <div className="flex justify-center mt-8 gap-16">
+          
+          {/* Trainer */}
           <div className="text-center">
-            <div className="relative w-24 h-24 mx-auto border-4 border-red-600 rounded-full overflow-hidden">
+            <div className="w-28 h-28 mx-auto border-4 border-red-600 rounded-full p-3">
               <Image
-                src="/images/trainers.jpg"
+                src="/AboutImg_2.jpg"
                 alt="Trainers"
-                width={96}
-                height={96}
-                className="rounded-full"
+                width={9999}
+                height={9999}
+                className="w-full h-full object-cover rounded-full"
               />
             </div>
-            <h3 className="text-xl font-bold mt-2">13+</h3>
+            <h3 className="text-xl font-bold mt-2 text-gray-800">13+</h3>
             <p className="text-gray-600">Trainers</p>
           </div>
 
+          {/* Member */}
           <div className="text-center">
-            <div className="relative w-24 h-24 mx-auto border-4 border-red-600 rounded-full overflow-hidden">
+            <div className="w-28 h-28 mx-auto border-4 border-red-600 rounded-full p-3">
               <Image
-                src="/images/members.jpg"
+                src="/AboutImg_3.jpg"
                 alt="Members"
-                width={96}
-                height={96}
-                className="rounded-full"
+                width={9999}
+                height={9999}
+                className="w-full h-full object-cover rounded-full"
               />
             </div>
-            <h3 className="text-xl font-bold mt-2">50+</h3>
+            <h3 className="text-xl font-bold mt-2 text-gray-800">50+</h3>
             <p className="text-gray-600">Members</p>
           </div>
         </div>
       </section>
 
       {/* Vision & Mission Section */}
-      <section className="bg-gray-100 p-10">
-        <div className="container mx-auto">
+      <section className="relative bg-gradient-to-br from-gray-100 to-gray-200 px-4 py-16">
+        <div className="container mx-auto flex flex-col gap-16 relative"> {/* Reduced gap from 32 to 16 */}
+
+          {/* Vertical Red Line (between images) */}
+          <div className="hidden lg:block absolute left-1/2 top-[110px] bottom-[110px] transform -translate-x-1/2 w-1 bg-red-600 z-0"></div>
+
           {/* Vision Section */}
-          <div className="flex flex-col lg:flex-row items-center">
+          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+            
             {/* Vision Text */}
-            <div className="lg:w-1/2 p-6">
-              <div className="flex items-center mb-3">
-                <Image src="/icons/trophy.png" alt="Vision Icon" width={30} height={30} />
-                <h2 className="text-2xl font-bold ml-2">OUR VISION</h2>
+            <div className="lg:w-1/2 text-center space-y-6">
+              <div className="flex flex-col items-center justify-center space-y-2">
+                <Image src="/AboutIcon_1.png" alt="Vision Icon" width={80} height={80} />
+                <h2 className="text-5xl font-bold text-black">OUR VISION</h2>
               </div>
-              <p className="text-gray-600">
-                Built on passion and dedication, FitSyncPro has grown into a premier fitness 
-                destination. From humble beginnings to a cutting-edge training facility, we 
-                continue to inspire strength, endurance, and transformation for all.
+              <p className="text-xl text-gray-800 leading-relaxed">
+                Built on passion and dedication, FitSyncPro has grown into a premier fitness destination.
+                From humble beginnings to a cutting-edge training facility, we continue to inspire strength,
+                endurance, and transformation for all.
               </p>
             </div>
 
-            {/* Vision Images */}
-            <div className="lg:w-1/2 grid grid-cols-2 gap-4">
+            {/* Vision Image */}
+            <div className="lg:w-1/2 z-10">
               <Image
-                src="/images/man-training.jpg"
-                alt="Training 1"
-                width={300}
-                height={200}
-                className="rounded-lg"
-              />
-              <Image
-                src="/images/woman-training.jpg"
-                alt="Training 2"
-                width={300}
-                height={200}
-                className="rounded-lg"
+                src="/AboutImg_4.jpg"
+                alt="Vision Image"
+                width={500}
+                height={350}
+                className="rounded-xl object-cover w-full h-auto"
               />
             </div>
           </div>
 
-          {/* Divider */}
-          <div className="w-full h-1 bg-red-600 my-10"></div>
-
           {/* Mission Section */}
-          <div className="flex flex-col lg:flex-row items-center">
-            {/* Mission Images */}
-            <div className="lg:w-1/2 grid grid-cols-2 gap-4">
-              <Image
-                src="/images/woman-training.jpg"
-                alt="Training 3"
-                width={300}
-                height={200}
-                className="rounded-lg"
-              />
-              <Image
-                src="/images/man-training.jpg"
-                alt="Training 4"
-                width={300}
-                height={200}
-                className="rounded-lg"
-              />
+          <div className="relative z-10 flex flex-col lg:flex-row-reverse items-center justify-between gap-8">
+            
+            {/* Mission Text */}
+            <div className="lg:w-1/2 text-center space-y-6">
+              <div className="flex flex-col items-center justify-center space-y-2">
+                <Image src="/AboutIcon_2.png" alt="Mission Icon" width={80} height={80} />
+                <h2 className="text-5xl font-bold text-black">OUR MISSION</h2>
+              </div>
+              <p className="text-xl text-gray-800 leading-relaxed">
+                Empowering individuals to achieve their fitness goals through innovation, dedication, and a 
+                commitment to excellence. We strive to create a motivating environment that fosters strength, 
+                health, and well-being for everyone.
+              </p>
             </div>
 
-            {/* Mission Text */}
-            <div className="lg:w-1/2 p-6">
-              <div className="flex items-center mb-3">
-                <Image src="/icons/mission.png" alt="Mission Icon" width={30} height={30} />
-                <h2 className="text-2xl font-bold ml-2">OUR MISSION</h2>
-              </div>
-              <p className="text-gray-600">
-                Empowering individuals to achieve their fitness goals through innovation, 
-                dedication, and a commitment to excellence. We strive to create a motivating 
-                environment that fosters strength, health, and well-being for everyone.
-              </p>
+            {/* Mission Image */}
+            <div className="lg:w-1/2 z-10">
+              <Image
+                src="/AboutImg_5.jpg"
+                alt="Mission Image"
+                width={500}
+                height={350}
+                className="rounded-xl object-cover w-full h-auto"
+              />
             </div>
           </div>
         </div>
