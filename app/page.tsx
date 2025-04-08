@@ -1,9 +1,13 @@
 import React from 'react';
 import Navbar from './Components/Navbar';
 import Footer1 from './Components/Footer_01';
+import StripeProvider from "./Components/StripeProvider";
+import CheckoutForm from "./Components/CheckoutForm";
 
 const HomePage: React.FC = () => {
   return (
+
+    
     <div style={styles.pageContainer}>
       <Navbar />
       
@@ -80,27 +84,48 @@ const HomePage: React.FC = () => {
         {/* Featured Classes Section */}
         <section style={styles.featuredClasses}>
           <h2 style={styles.sectionTitle}>We Are Offering Best Flexible Classes</h2>
+
           <div style={styles.classItems}>
+
+            <div>
             <div style={styles.classItem}>
-              <img src="/cycling.jpg" alt="Cycling" style={styles.classImage} />
+              <img src="/cycling.png" alt="Cycling" style={styles.classImage} />
               <p style={styles.classText}>Cycling</p>
               <button style={styles.dateButton}>Date & Time</button>
             </div>
             <div style={styles.classItem}>
-              <img src="/workout.jpg" alt="Workout" style={styles.classImage} />
+              <img src="/workout2.jpg" alt="Workout" style={styles.classImage} />
               <p style={styles.classText}>Workout</p>
               <button style={styles.dateButton}>Date & Time</button>
             </div>
+            </div>
+
+            <div>
             <div style={styles.classItem}>
-              <img src="/power.jpg" alt="Power" style={styles.classImage} />
-              <p style={styles.classText}>Power</p>
+              <img src="/powerlifting.jpg" alt="Power Lifting" style={styles.classImage} />
+              <p style={styles.classText}>Power Lifting</p>
               <button style={styles.dateButton}>Date & Time</button>
             </div>
             <div style={styles.classItem}>
-              <img src="/meditation.jpg" alt="Meditation" style={styles.classImage} />
+              <img src="/meditation.jpg" alt="meditation" style={styles.classImage} />
               <p style={styles.classText}>Meditation</p>
               <button style={styles.dateButton}>Date & Time</button>
             </div>
+            </div>
+
+            <div>
+            <div style={styles.classItem}>
+              <img src="/yoga.jpg" alt="Yoga" style={styles.classImage} />
+              <p style={styles.classText}>Yoga</p>
+              <button style={styles.dateButton}>Date & Time</button>
+            </div>
+            <div style={styles.classItem}>
+              <img src="/mma.jpg" alt="MMA" style={styles.classImage} />
+              <p style={styles.classText}>MMA</p>
+              <button style={styles.dateButton}>Date & Time</button>
+            </div>
+            </div>
+            
           </div>
         </section>
 
@@ -129,6 +154,14 @@ const HomePage: React.FC = () => {
             <input type="number" placeholder="Height (cm)" style={styles.input} />
             <button style={styles.calculateButton}>Calculate</button>
           </div>
+        </section>
+
+        {/* Stripe Checkout Section */}
+        <section style={styles.checkoutSection}>
+          <StripeProvider>
+            <h1>Checkout</h1>
+            <CheckoutForm/>
+          </StripeProvider>
         </section>
       </main>
 
@@ -315,6 +348,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   
   sectionTitle: {
+    padding: '50px',
     fontSize: '2.5rem',
     fontWeight: 'bold',
     margin: '20px 0',
@@ -344,26 +378,28 @@ const styles: { [key: string]: React.CSSProperties } = {
 
   iconText: {
     fontSize: '1.1rem',
-    fontWeight: 'bold',
+    fontWeight: 'bold',
   },
   featuredClasses: {
+    padding: '50px 20px',
     marginBottom: '50px',
   },
   classItems: {
+    padding : '50px',
     display: 'flex',
     justifyContent: 'space-around',
   },
   classItem: {
-    width: '20%',
+    width: '90%',
     textAlign: 'center',
   },
   classImage: {
     width: '100%',
-    height: 'auto',
+    height: '250px',
     marginBottom: '10px',
   },
   classText: {
-    fontSize: '1.1rem',
+    fontSize: '1.5rem',
   },
   dateButton: {
     padding: '8px 16px',
@@ -373,9 +409,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
     fontSize: '1rem',
     marginTop: '10px',
+    marginBottom: '20px',
     borderRadius: '5px',
   },
   fitnessService: {
+    padding: '50px 20px',
     marginBottom: '50px',
   },
   serviceContent: {
