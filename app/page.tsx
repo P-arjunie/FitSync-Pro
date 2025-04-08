@@ -1,4 +1,5 @@
 import React from 'react';
+import './Components/HomePage.css';
 import Navbar from './Components/Navbar';
 import Footer1 from './Components/Footer_01';
 import StripeProvider from "./Components/StripeProvider";
@@ -8,121 +9,121 @@ const HomePage: React.FC = () => {
   return (
 
     
-    <div style={styles.pageContainer}>
+    <div className = "pagecontainer">
       <Navbar />
       
       {/* Main Content Section */}
-      <main style={styles.main}>
+      <main className="main">
         {/* Hero Section */}
-        <section style={styles.heroSection}>
-          <div style={styles.heroText}>
-            <h1 style={styles.heroTitle}>MAKE YOUR BODY STRONG WITH FITSYNC PRO</h1>
-            <p style={styles.heroDescription}>
+        <section className="hero-section">
+          <div className="hero-text">
+            <h1 className="hero-title">MAKE YOUR BODY STRONG WITH FITSYNC PRO</h1>
+            <p className="hero-description">
               Gymmen an unknown printer took a galley of type and scrambled. It has survived unknown printcenturies.
             </p>
-            <div style={styles.heroButtonContainer}>
-              <button style={styles.button}>Log In</button>
-              <button style={styles.button}>Sign Up</button>
+            <div className="hero-button-container">
+              <button className="button">Log In</button>
+              <button className="button">Sign Up</button>
             </div>
           </div>
-          <div style={styles.heroImage}>
-            <img src="/bodybuilder.jpg" alt="Fitness" style={styles.heroImageStyle} />
+          <div className="hero-image">
+            <img src="/bodybuilder.jpg" alt="Fitness" className="hero-image-style" />
           </div>
         </section>
 
         {/* Progression, Workout, Nutrition Section */}
-        <section style={styles.threeCardSection}>
-          <div style={styles.progressionCard}>
-            <img src="/progressionicon.png" alt="Progression" style={styles.iconImage} />
-            <p style={styles.CardTitle}>Progression</p>
-            <p style={styles.cardText}>Tracking your progress is key to reaching your fitness goals. Whether you're building strength, losing weight, or improving endurance, seeing measurable progress keeps you motivated and focused on your journey. Celebrate each milestone along the way!</p>
+        <section className="three-card-section">
+          <div className="progression-card">
+            <img src="/progressionicon.png" alt="Progression" className="icon-image" />
+            <p className="card-title">Progression</p>
+            <p className="card-text">Tracking your progress is key to reaching your fitness goals. Whether you're building strength, losing weight, or improving endurance, seeing measurable progress keeps you motivated and focused on your journey. Celebrate each milestone along the way!</p>
           </div>
-          <div style={styles.workoutCard}>
-            <img src="/workouticon.png" alt="Workout" style={styles.iconImage} />
-            <p style={styles.CardTitle}>Workout</p>
-            <p style={styles.cardText}>Our expertly designed workouts are tailored to meet your specific fitness level and goals. Whether you're a beginner or an advanced athlete, we provide diverse routines that target all aspects of fitness, from strength training to cardiovascular endurance.</p>
+          <div className="workout-card">
+            <img src="/workouticon.png" alt="Workout" className="icon-image" />
+            <p className="card-title">Workout</p>
+            <p className="card-text">Our expertly designed workouts are tailored to meet your specific fitness level and goals. Whether you're a beginner or an advanced athlete, we provide diverse routines that target all aspects of fitness, from strength training to cardiovascular endurance.</p>
           </div>
-          <div style={styles.nutritionCard}>
-            <img src="/nutritionicon.png" alt="Nutrition" style={styles.iconImage} />
-            <p style={styles.CardTitle}>Nutrition</p>
-            <p style={styles.cardText}>Nutrition plays a crucial role in your fitness success. We offer personalized meal plans that help you fuel your body for maximum performance. Learn how to nourish your body with the right balance of protein, carbohydrates, and healthy fats to support muscle growth and recovery.</p>
-            <button style={styles.readMoreButton}>Read More</button>
+          <div className="nutrition-card">
+            <img src="/nutritionicon.png" alt="Nutrition" className="icon-image" />
+            <p className="card-title">Nutrition</p>
+            <p className="card-text">Nutrition plays a crucial role in your fitness success. We offer personalized meal plans that help you fuel your body for maximum performance. Learn how to nourish your body with the right balance of protein, carbohydrates, and healthy fats to support muscle growth and recovery.</p>
+            <button className="read-more-button">Read More</button>
           </div>
         </section>
 
         {/* Who We Are Section */}
-        <section style={styles.whoWeAre}>
-          <div style={styles.whoWeAreContainer}>
-          <div style={styles.whoWeAreText}>
-            <h1 style={styles.redTitles}>WHO WE ARE</h1>
-            <h2 style={styles.sectionTitle}>Take Your Health And Body To Next Level</h2>
-            <p style={styles.descriptionText}>
+        <section className="who-we-are">
+          <div className="who-we-are-container">
+          <div className="who-we-are-text">
+            <h1 className="red-titles">WHO WE ARE</h1>
+            <h2 className="section-title">Take Your Health And Body To Next Level</h2>
+            <p className="description-text">
         FitSyncPro, an unknown printer, took a galley of type and scrambled it to make a type specimen book.
         It has survived not only five centuries but also the leap into electronic typesetting.
             </p>
-          <div style={styles.iconSection}>
-          <div style={styles.iconItem}>
-            <img src="/trainericon.png" alt="Professional Trainers" style={styles.iconImage2} />
-          <p style={styles.iconText}>Professional Trainers</p>
+          <div className="icon-section">
+          <div className="icon-item">
+            <img src="/trainericon.png" alt="Professional Trainers" className="icon-image2" />
+          <p className="icon-item">Professional Trainers</p>
         </div>
-        <div style={styles.iconItem}>
-          <img src="/equipmenticon.png" alt="Modern Equipment" style={styles.iconImage2} />
-          <p style={styles.iconText}>Modern Equipment</p>
+        <div className="icon-item">
+          <img src="/equipmenticon.png" alt="Modern Equipment" className="icon-image2" />
+          <p className="icon-text">Modern Equipment</p>
         </div>
-        <div style={styles.iconItem}>
-          <img src="/machineicon.png" alt="Body Building Machine" style={styles.iconImage2} />
-          <p style={styles.iconText}>Body Building Machine</p>
+        <div className="icon-item">
+          <img src="/machineicon.png" alt="Body Building Machine" className="icon-image2" />
+          <p className="icon-text">Body Building Machine</p>
         </div>
         </div>
         </div>
-        <div style={styles.whoWeAreImage}>
-        <img src="/whowearecoach.jpg" alt="Coach" style={styles.bodybuilderImage} />
+        <div className="who-we-are-image">
+        <img src="/whowearecoach.jpg" alt="Coach" className="bodybuilder-image" />
         </div>
         </div>
         </section>
 
         {/* Featured Classes Section */}
-        <section style={styles.featuredClasses}>
-          <h2 style={styles.sectionTitle}>We Are Offering Best Flexible Classes</h2>
+        <section className="featured-classes">
+          <h2 className="section-title">We Are Offering Best Flexible Classes</h2>
 
-          <div style={styles.classItems}>
-
-            <div>
-            <div style={styles.classItem}>
-              <img src="/cycling.png" alt="Cycling" style={styles.classImage} />
-              <p style={styles.classText}>Cycling</p>
-              <button style={styles.dateButton}>Date & Time</button>
-            </div>
-            <div style={styles.classItem}>
-              <img src="/workout2.jpg" alt="Workout" style={styles.classImage} />
-              <p style={styles.classText}>Workout</p>
-              <button style={styles.dateButton}>Date & Time</button>
-            </div>
-            </div>
+          <div className="class-items">
 
             <div>
-            <div style={styles.classItem}>
-              <img src="/powerlifting.jpg" alt="Power Lifting" style={styles.classImage} />
-              <p style={styles.classText}>Power Lifting</p>
-              <button style={styles.dateButton}>Date & Time</button>
+            <div className="class-item">
+              <img src="/cycling.png" alt="Cycling" className="class-image" />
+              <p className="class-text">Cycling</p>
+              <button className="date-button">Date & Time</button>
             </div>
-            <div style={styles.classItem}>
-              <img src="/meditation.jpg" alt="meditation" style={styles.classImage} />
-              <p style={styles.classText}>Meditation</p>
-              <button style={styles.dateButton}>Date & Time</button>
+            <div className="class-item">
+              <img src="/workout2.jpg" alt="Workout" className="class-image" />
+              <p className="class-text">Workout</p>
+              <button className="date-button">Date & Time</button>
             </div>
             </div>
 
             <div>
-            <div style={styles.classItem}>
-              <img src="/yoga.jpg" alt="Yoga" style={styles.classImage} />
-              <p style={styles.classText}>Yoga</p>
-              <button style={styles.dateButton}>Date & Time</button>
+            <div className="class-item">
+              <img src="/powerlifting.jpg" alt="Power Lifting" className="class-image" />
+              <p className="class-text">Power Lifting</p>
+              <button className="date-button">Date & Time</button>
             </div>
-            <div style={styles.classItem}>
-              <img src="/mma.jpg" alt="MMA" style={styles.classImage} />
-              <p style={styles.classText}>MMA</p>
-              <button style={styles.dateButton}>Date & Time</button>
+            <div className="class-item">
+              <img src="/meditation.jpg" alt="meditation" className="class-image" />
+              <p className="class-text">Meditation</p>
+              <button className="date-button">Date & Time</button>
+            </div>
+            </div>
+
+            <div>
+            <div className="class-item">
+              <img src="/yoga.jpg" alt="Yoga" className="class-image" />
+              <p className="class-text">Yoga</p>
+              <button className="date-button">Date & Time</button>
+            </div>
+            <div className="class-item">
+              <img src="/mma.jpg" alt="MMA" className="class-image" />
+              <p className="class-text">MMA</p>
+              <button className="date-button">Date & Time</button>
             </div>
             </div>
             
@@ -130,34 +131,34 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Fitness Service Section */}
-        <section style={styles.fitnessService}>
-          <h2 style={styles.sectionTitle}>We Are Always Provide Best Fitness Service For You</h2>
-          <div style={styles.serviceContent}>
-            <div style={styles.serviceItem}>
-              <h3 style={styles.serviceTitle}>Sculpt Your Perfect Body With Us!</h3>
-              <p style={styles.serviceDescription}>
+        <section className="fitness-service">
+          <h2 className="section-title">We Are Always Provide Best Fitness Service For You</h2>
+          <div className="service-content">
+            <div className="service-item">
+              <h3 className="service-title">Sculpt Your Perfect Body With Us!</h3>
+              <p className="service-description">
                 A fitness legacy evolving with time, blending strength and innovation for modern excellence. It continues to inspire and transform, adapting seamlessly to modern needs while maintaining its core essence of strength and endurance.
               </p>
-              <button style={styles.button}>Our Classes</button>
+              <button className="button">Our Classes</button>
             </div>
-            <div style={styles.serviceImage}>
-              <img src="/fitnessservice.jpg" alt="Fitness Service" style={styles.serviceImageStyle} />
+            <div className="service-image">
+              <img src="/fitnessservice.jpg" alt="Fitness Service" className="service-image-style" />
             </div>
           </div>
         </section>
 
         {/* BMI Calculator Section */}
-        <section style={styles.bmiCalculator}>
-          <h2 style={styles.sectionTitle}>Let's Calculate Your BMI</h2>
-          <div style={styles.bmiForm}>
-            <input type="number" placeholder="Weight (kg)" style={styles.input} />
-            <input type="number" placeholder="Height (cm)" style={styles.input} />
-            <button style={styles.calculateButton}>Calculate</button>
+        <section className="bmi-calculator">
+          <h2 className="section-title">Let's Calculate Your BMI</h2>
+          <div className="bmi-form">
+            <input type="number" placeholder="Weight (kg)" className="input" />
+            <input type="number" placeholder="Height (cm)" className="input" />
+            <button className="calculate-button">Calculate</button>
           </div>
         </section>
 
         {/* Stripe Checkout Section */}
-        <section style={styles.checkoutSection}>
+        <section className="checkout-section">
           <StripeProvider>
             <h1>Checkout</h1>
             <CheckoutForm/>
@@ -170,6 +171,8 @@ const HomePage: React.FC = () => {
   );
 };
 
+export default HomePage;
+/*
 const styles: { [key: string]: React.CSSProperties } = {
   pageContainer: {
     margin: 0,
@@ -466,3 +469,5 @@ const styles: { [key: string]: React.CSSProperties } = {
 };
 
 export default HomePage;
+
+*/
