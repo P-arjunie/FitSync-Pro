@@ -1,11 +1,9 @@
 import React from 'react';
-import Navbar from './components/Navbar';
-import Footer1 from './components/Footer_01';
 
 const HomePage: React.FC = () => {
   return (
     <div>
-      <Navbar />
+    
 
       {/* Main Content Section */}
       <main style={styles.main}>
