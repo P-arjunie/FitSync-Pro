@@ -1,34 +1,45 @@
-import { NextResponse } from "next/server";
-import cloudinary from "@/lib/cloudinary";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure Cloudinary with environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req) {
   try {
-    console.log("📤 Received file upload request");
+    // Parse JSON body (since you're sending base64 in application/json format)
+    const { image } = await req.json();
 
-    const formData = await req.formData();
-    const file = formData.get("image");
-
-    if (!file) {
-      console.error("❌ No file provided");
-      return NextResponse.json({ success: false, message: "No file uploaded" }, { status: 400 });
+    if (!image) {
+      return new Response(JSON.stringify({ error: "No image provided" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // Convert file to base64
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = `data:image/png;base64,${buffer.toString("base64")}`;
-
     // Upload to Cloudinary
-    const uploadRes = await cloudinary.uploader.upload(base64Image, {
-      folder: "fitsync-trainers", // ✅ target folder
+    const uploadResponse = await cloudinary.uploader.upload(image, {
+      folder: "fitsync_profiles", // You can customize this folder
     });
 
-    console.log("✅ Upload Successful:", uploadRes.secure_url);
-
-    return NextResponse.json({ success: true, url: uploadRes.secure_url }, { status: 200 });
-
+    return new Response(
+      JSON.stringify({ url: uploadResponse.secure_url }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
-    console.error("❌ Upload error:", error);
-    return NextResponse.json({ success: false, error: "Upload failed" }, { status: 500 });
+    console.error("Cloudinary Upload Error:", error);
+
+    return new Response(
+      JSON.stringify({ error: "Image upload failed. Try again later." }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 }

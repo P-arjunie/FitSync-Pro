@@ -1,7 +1,4 @@
 "use client";
-import connectMongoDB  from '@/lib/mongodb';
-import cloudinary from '@/lib/cloudinary';
-import  uploadImageToCloudinary  from "@/lib/cloudinary"; 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -30,11 +27,7 @@ interface LoginData {
   password: string;
 }
 
-interface AuthFormProps {
-  onNewUser?: (user: { name: string; role: "member" | "trainer" }) => void;
-}
-
-const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
+const AuthForm = () => {
   const router = useRouter();
 
   const [signUpData, setSignUpData] = useState<SignUpData>({
@@ -86,6 +79,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 
       if (res.ok) {
         alert(data.message);
+        // Redirect logic here
       } else {
         alert(data.error);
       }
@@ -96,54 +90,50 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     if (signUpData.password !== signUpData.confirmPassword) {
       alert("Passwords do not match");
       return;
     }
-  
+
     if (!signUpData.role) {
       alert("Please select a role");
       return;
     }
-  
+
     let imageUrl = "";
-  
+
     if (signUpData.profileImage && typeof signUpData.profileImage !== "string") {
-      // Convert image to base64
-      const toBase64 = (file: File): Promise<string> =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (error) => reject(error);
-        });
-  
       try {
+        const toBase64 = (file: File): Promise<string> =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = (error) => reject(error);
+          });
+
         const base64Image = await toBase64(signUpData.profileImage);
-  
+
         const res = await fetch("/api/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: base64Image }),
         });
-  
+
         const data = await res.json();
-  
+
         if (!res.ok) {
-          throw new Error(data.error || "Image upload failed");
+          throw new Error(data.error || "Upload failed");
         }
-  
         imageUrl = data.url;
       } catch (err) {
         console.error("Image upload failed:", err);
         alert("Image upload failed");
         return;
       }
-    } else if (typeof signUpData.profileImage === "string") {
-      imageUrl = signUpData.profileImage;
     }
-  
+
     const userData = {
       name: signUpData.name,
       email: signUpData.email,
@@ -151,26 +141,19 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       role: signUpData.role,
       profileImage: imageUrl,
     };
-  
+
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(userData),
     });
-  
+
     const data = await res.json();
-  
+
     if (res.ok) {
       alert(data.message);
-      localStorage.setItem("trainerProfileImage", data.profileImage);
-  
-      if (onNewUser) {
-        onNewUser({
-          name: userData.name,
-          role: userData.role as "member" | "trainer",
-        });
-      }
-  
+      localStorage.setItem("trainerProfileImage", imageUrl);
+
       router.push(
         userData.role === "trainer"
           ? "/lithira/trainerregform"
@@ -180,57 +163,50 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       alert(data.error);
     }
   };
-  
 
   return (
     <div className="flex justify-center items-center min-h-screen w-screen bg-black text-white">
       <div className="flex w-[800px] shadow-xl">
-        {/* Left Side - Sign Up */}
+        {/* Sign Up Section */}
         <div className="w-1/2 bg-gray-800 p-6 flex flex-col items-center rounded-l-lg">
-          <div className="flex flex-col items-center mb-4">
-            <label className="mb-2 cursor-pointer relative w-20 h-20">
-              {signUpData.profileImage ? (
-                <img
-                  src={
-                    typeof signUpData.profileImage === "string"
-                      ? signUpData.profileImage
-                      : URL.createObjectURL(signUpData.profileImage)
-                  }
-                  alt="Profile Preview"
-                  className="w-full h-full object-cover rounded-full border-2 border-red-500"
-                />
-              ) : (
-                <div className="bg-gray-700 p-4 rounded-full border-2 border-red-500 flex items-center justify-center w-full h-full">
-                  <FaCamera className="text-3xl text-white" />
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                name="profileImage"
-                className="hidden"
-                onChange={handleSignUpChange}
+          <label className="mb-4 cursor-pointer relative w-20 h-20">
+            {signUpData.profileImage ? (
+              <img
+                src={
+                  typeof signUpData.profileImage === "string"
+                    ? signUpData.profileImage
+                    : URL.createObjectURL(signUpData.profileImage)
+                }
+                alt="Profile"
+                className="w-full h-full object-cover rounded-full border-2 border-red-500"
               />
-            </label>
-
-            <select
-              name="role"
-              value={signUpData.role}
+            ) : (
+              <div className="bg-gray-700 p-4 rounded-full border-2 border-red-500 flex items-center justify-center w-full h-full">
+                <FaCamera className="text-3xl text-white" />
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              name="profileImage"
+              className="hidden"
               onChange={handleSignUpChange}
-              className="bg-red-600 text-white px-3 py-2 rounded-lg"
-              required
-            >
-              <option value="" disabled>
-                Select Role
-              </option>
-              <option value="member">Member</option>
-              <option value="trainer">Trainer</option>
-            </select>
-          </div>
+            />
+          </label>
 
-          <h2 className="text-xl font-bold mb-6 text-center">
-            CREATE Your New Account
-          </h2>
+          <select
+            name="role"
+            value={signUpData.role}
+            onChange={handleSignUpChange}
+            className="bg-red-600 text-white px-3 py-2 rounded-lg mb-4"
+            required
+          >
+            <option value="" disabled>Select Role</option>
+            <option value="member">Member</option>
+            <option value="trainer">Trainer</option>
+          </select>
+
+          <h2 className="text-xl font-bold mb-4 text-center">CREATE Your New Account</h2>
 
           <form onSubmit={handleSubmit} className="space-y-3 w-full">
             <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500">
@@ -291,26 +267,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
             ))}
 
             <div className="flex justify-between mt-4">
-              <button
-                type="submit"
-                className="bg-red-600 px-4 py-2 rounded-lg w-[48%]"
-              >
-                Proceed
-              </button>
-              <button
-                type="button"
-                className="bg-gray-500 px-4 py-2 rounded-lg w-[48%]"
-              >
-                Cancel
-              </button>
+              <button type="submit" className="bg-red-600 px-4 py-2 rounded-lg w-[48%]">Proceed</button>
+              <button type="button" className="bg-gray-500 px-4 py-2 rounded-lg w-[48%]">Cancel</button>
             </div>
           </form>
         </div>
 
-        {/* Divider */}
-        <div className="w-[1%] bg-transparent"></div>
-
-        {/* Right Side - Login */}
+        {/* Login Section */}
         <div className="w-1/2 bg-gray-800 p-6 flex flex-col justify-center items-center rounded-r-lg">
           <h2 className="text-xl font-bold mb-6">Log In to Your Account</h2>
 
@@ -324,7 +287,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
                 className="bg-transparent w-full outline-none"
                 value={loginData.email}
                 onChange={handleLoginChange}
-                required
               />
             </div>
 
@@ -337,7 +299,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
                 className="bg-transparent w-full outline-none"
                 value={loginData.password}
                 onChange={handleLoginChange}
-                required
               />
               <div
                 className="cursor-pointer"
@@ -378,4 +339,5 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 };
 
 export default AuthForm;
+
 
