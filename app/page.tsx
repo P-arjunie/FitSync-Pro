@@ -1,4 +1,5 @@
 import React from 'react';
+import Footer1 from './components/Footer_01';
 
 const HomePage: React.FC = () => {
   return (
@@ -77,7 +78,7 @@ const HomePage: React.FC = () => {
 
         {/* BMI Calculator Section */}
         <section style={styles.bmiCalculator}>
-          <h2>Let's Calculate Your BMI</h2>
+          <h2>Let&apos;s Calculate Your BMI</h2>
           <div style={styles.bmiForm}>
             <input type="number" placeholder="Weight (kg)" style={styles.input} />
             <input type="number" placeholder="Height (cm)" style={styles.input} />

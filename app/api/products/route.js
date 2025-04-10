@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // // import { NextResponse } from "next/server";
 // // import connectMongoDB from "@/app/lib/mongodb";
 // // import Quiz from "../../models/product";

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,9 +9,6 @@ import {
   FaEye,
   FaEyeSlash,
   FaCamera,
-  FaGoogle,
-  FaFacebook,
-  FaMicrosoft,
 } from "react-icons/fa";
 
 interface SignUpData {
