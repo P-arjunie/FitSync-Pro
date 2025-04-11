@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import connectMongoDB from "../../../lib/mongodb.js";
-import Review from "@/app/models/Review.js";
+import Review from "../../../models/Review.js";
 export async function POST(req) {
   try {
     const { trainer, sessionType, date, comments, rating } = await req.json();

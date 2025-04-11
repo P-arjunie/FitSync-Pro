@@ -1,5 +1,5 @@
 import connectMongoDB from "../../../lib/mongodb.js";
-import Review from "@/app/models/Review.js"; // Assuming your Review model is already set up
+import Review from "../../../models/Review.js";
 
 export async function GET(req, res) {
   try {
