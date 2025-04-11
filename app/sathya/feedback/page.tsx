@@ -1,5 +1,4 @@
 'use client';  
-
 import React, { useState } from 'react';
 
 const ReviewPage = () => {
@@ -11,12 +10,15 @@ const ReviewPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Example list of trainers (you can fetch this dynamically from your database)
+  const trainers = ['John Doe', 'Jane Smith', 'Emily Clark', 'Michael Johnson'];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await fetch('/api/reviewmanagement/submitReview', {
+      const response = await fetch('/api/feedback/submitReview', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,13 +48,19 @@ const ReviewPage = () => {
           <label className="block text-gray-600 font-semibold mb-2" htmlFor="trainer">
             Trainer:
           </label>
-          <input
-            type="text"
+          <select
             id="trainer"
             value={trainer}
             onChange={(e) => setTrainer(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-          />
+          >
+            <option value="">Select a Trainer</option>
+            {trainers.map((trainerName, index) => (
+              <option key={index} value={trainerName}>
+                {trainerName}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="mb-4">
@@ -94,20 +102,19 @@ const ReviewPage = () => {
         </div>
 
         <div className="mb-6">
-  <label className="block text-gray-600 font-semibold mb-2">Rating:</label>
-  <div className="flex space-x-2">
-    {[1, 2, 3, 4, 5].map((star) => (
-      <span
-        key={star}
-        onClick={() => setRating(star)}
-        className={`cursor-pointer text-4xl ${star <= rating ? 'text-yellow-500' : 'text-gray-300'}`}
-      >
-        ★
-      </span>
-    ))}
-  </div>
-</div>
-
+          <label className="block text-gray-600 font-semibold mb-2">Rating:</label>
+          <div className="flex space-x-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <span
+                key={star}
+                onClick={() => setRating(star)}
+                className={`cursor-pointer text-4xl ${star <= rating ? 'text-yellow-500' : 'text-gray-300'}`}
+              >
+                ★
+              </span>
+            ))}
+          </div>
+        </div>
 
         <button
           type="submit"
