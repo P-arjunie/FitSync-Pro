@@ -1,82 +1,45 @@
-// import { NextResponse } from "next/server";
-// import cloudinary from "../../lib/cloudinary";
-// import { writeFile } from "fs/promises";
-// import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 
-// export async function POST(req) {
-//   try {
-//     // Log incoming request
-//     console.log("Received file upload request");
-
-//     const formData = await req.formData();
-//     const file = formData.get("image");
-
-//     if (!file) {
-//       // Return 400 if no file is uploaded
-//       console.error("No file provided");
-//       return NextResponse.json({ success: false, message: "No file uploaded" }, { status: 400 });
-//     }
-
-
-
-//     //convert to buffer
-//     const bytes = await file.arrayBuffer();
-//     const buffer = Buffer.from(bytes);
-
-//     //temp file
-//     const tempFilePath = path.join("/tmp", file.name);
-//     await writeFile(tempFilePath, buffer);  
-
-//     // Log the buffer size for debugging
-//     console.log("Buffer size:", buffer.length);
-
-//      // Upload to Cloudinary
-//     const uploadRes = await cloudinary.uploader.upload(tempFilePath, 
-//       {
-//       folder: "products", // Stores images in Cloudinary's "products" folder
-//       }
-//     );
-
-//     result.end(buffer);
-
-//     return NextResponse.json({ success: true, url: uploadRes.secure_url });
-    
-//     // Ensure the route handler always returns a valid response
-    
-//   } catch (error) {
-//     console.error("Upload error:", error);
-//     return NextResponse.json({ success: false, error: "Upload failed" }, { status: 500 });
-//   }
-// }
-import { NextResponse } from "next/server";
-import cloudinary from "../../lib/cloudinary";
+// Configure Cloudinary with environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req) {
   try {
-    console.log("Received file upload request");
+    // Parse JSON body (since you're sending base64 in application/json format)
+    const { image } = await req.json();
 
-    const formData = await req.formData();
-    const file = formData.get("image");
-
-    if (!file) {
-      console.error("No file provided");
-      return NextResponse.json({ success: false, message: "No file uploaded" }, { status: 400 });
+    if (!image) {
+      return new Response(JSON.stringify({ error: "No image provided" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // Convert to Buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Upload directly to Cloudinary
-    const uploadRes = await cloudinary.uploader.upload(`data:image/png;base64,${buffer.toString("base64")}`, {
-      folder: "products",
+    // Upload to Cloudinary
+    const uploadResponse = await cloudinary.uploader.upload(image, {
+      folder: "fitsync_profiles", // You can customize this folder
     });
 
-    console.log("Cloudinary Upload Successful:", uploadRes.secure_url);
-    return NextResponse.json({ success: true, url: uploadRes.secure_url });
-
+    return new Response(
+      JSON.stringify({ url: uploadResponse.secure_url }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
-    console.error("Upload error:", error);
-    return NextResponse.json({ success: false, error: "Upload failed" }, { status: 500 });
+    console.error("Cloudinary Upload Error:", error);
+
+    return new Response(
+      JSON.stringify({ error: "Image upload failed. Try again later." }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 }
