@@ -170,6 +170,7 @@ const HomePage: React.FC = () => {
   );
 };
 
+<<<<<<< Updated upstream
 const styles: { [key: string]: React.CSSProperties } = {
   pageContainer: {
     margin: 0,
@@ -466,3 +467,6 @@ const styles: { [key: string]: React.CSSProperties } = {
 };
 
 export default HomePage;
+=======
+export default HomePage;
+>>>>>>> Stashed changes
