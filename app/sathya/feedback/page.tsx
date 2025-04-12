@@ -1,8 +1,10 @@
-'use client';  
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 
 const ReviewPage = () => {
   const [trainer, setTrainer] = useState('');
+  const [trainers, setTrainers] = useState<string[]>([]);
   const [sessionType, setSessionType] = useState('');
   const [date, setDate] = useState('');
   const [comments, setComments] = useState('');
@@ -10,8 +12,24 @@ const ReviewPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Example list of trainers (you can fetch this dynamically from your database)
-  const trainers = ['John Doe', 'Jane Smith', 'Emily Clark', 'Michael Johnson'];
+  // ✅ Fetch trainer names from API
+  useEffect(() => {
+    const fetchTrainers = async () => {
+      try {
+        const response = await fetch('/api/trainers/getnames');
+        const data = await response.json();
+        if (response.ok) {
+          setTrainers(data.trainers.map((t: { name: string }) => t.name));
+        } else {
+          console.error(data.message);
+        }
+      } catch (err) {
+        console.error('Failed to fetch trainers', err);
+      }
+    };
+
+    fetchTrainers();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +48,12 @@ const ReviewPage = () => {
 
       if (response.ok) {
         alert('Review submitted successfully!');
+        // Clear form
+        setTrainer('');
+        setSessionType('');
+        setDate('');
+        setComments('');
+        setRating(0);
       } else {
         setError(data.message || 'Something went wrong');
       }
@@ -44,8 +68,9 @@ const ReviewPage = () => {
     <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">RATE US</h2>
       <form onSubmit={handleSubmit}>
+        {/* Trainer Dropdown */}
         <div className="mb-4">
-          <label className="block text-gray-600 font-semibold mb-2" htmlFor="trainer">
+          <label htmlFor="trainer" className="block text-gray-600 font-semibold mb-2">
             Trainer:
           </label>
           <select
@@ -53,6 +78,7 @@ const ReviewPage = () => {
             value={trainer}
             onChange={(e) => setTrainer(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            required
           >
             <option value="">Select a Trainer</option>
             {trainers.map((trainerName, index) => (
@@ -63,8 +89,9 @@ const ReviewPage = () => {
           </select>
         </div>
 
+        {/* Session Type */}
         <div className="mb-4">
-          <label className="block text-gray-600 font-semibold mb-2" htmlFor="sessionType">
+          <label htmlFor="sessionType" className="block text-gray-600 font-semibold mb-2">
             Session Type:
           </label>
           <input
@@ -73,11 +100,13 @@ const ReviewPage = () => {
             value={sessionType}
             onChange={(e) => setSessionType(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            required
           />
         </div>
 
+        {/* Date */}
         <div className="mb-4">
-          <label className="block text-gray-600 font-semibold mb-2" htmlFor="date">
+          <label htmlFor="date" className="block text-gray-600 font-semibold mb-2">
             Date:
           </label>
           <input
@@ -86,11 +115,13 @@ const ReviewPage = () => {
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            required
           />
         </div>
 
+        {/* Comments */}
         <div className="mb-4">
-          <label className="block text-gray-600 font-semibold mb-2" htmlFor="comments">
+          <label htmlFor="comments" className="block text-gray-600 font-semibold mb-2">
             Comments:
           </label>
           <textarea
@@ -98,9 +129,11 @@ const ReviewPage = () => {
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            required
           />
         </div>
 
+        {/* Rating */}
         <div className="mb-6">
           <label className="block text-gray-600 font-semibold mb-2">Rating:</label>
           <div className="flex space-x-2">
@@ -116,6 +149,7 @@ const ReviewPage = () => {
           </div>
         </div>
 
+        {/* Submit Button */}
         <button
           type="submit"
           className="w-full bg-red-500 text-white py-3 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"

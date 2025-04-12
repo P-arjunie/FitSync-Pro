@@ -9,7 +9,7 @@ export interface ITrainer extends Document {
   gender: string;
   address: string;
   specialization: string;
-  certifications: string;
+  certifications: string[]; // Changed to an array of strings
   preferredTrainingHours: string;
   yearsOfExperience: string;
   availability: string;
@@ -22,6 +22,10 @@ export interface ITrainer extends Document {
   profileImage: string;
   status: "pending" | "approved";
   submittedAt: Date;
+
+  // Newly added fields
+  biography: string;
+  skills: { name: string; level: number }[];
 }
 
 const TrainerSchema = new Schema<ITrainer>({
@@ -33,7 +37,7 @@ const TrainerSchema = new Schema<ITrainer>({
   gender: { type: String, required: true },
   address: { type: String, required: true },
   specialization: { type: String, required: true },
-  certifications: { type: String, required: true },
+  certifications: { type: [String], required: true }, // Changed to array of strings
   preferredTrainingHours: { type: String, required: true },
   yearsOfExperience: { type: String, required: true },
   availability: { type: String, required: true },
@@ -46,6 +50,15 @@ const TrainerSchema = new Schema<ITrainer>({
   profileImage: { type: String, required: true },
   status: { type: String, enum: ["pending", "approved"], default: "pending" },
   submittedAt: { type: Date, default: Date.now },
+
+  // New fields
+  biography: { type: String, default: "" },
+  skills: [
+    {
+      name: { type: String, required: true },
+      level: { type: Number, min: 0, max: 100 }, // Added min/max validation
+    },
+  ],
 });
 
 export default mongoose.models.Trainer || mongoose.model<ITrainer>("Trainer", TrainerSchema);
