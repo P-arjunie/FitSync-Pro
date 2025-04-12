@@ -1,14 +1,10 @@
-import connectMongoDB from "../../../lib/mongodb.js";
-import Review from "../../../models/Review.js";
+import connectMongoDB from "@/lib/mongodb";
+import Review from "@/models/Review";
 
-export async function GET(req, res) {
+export async function GET() {
   try {
-    // Connect to MongoDB
     await connectMongoDB();
-
-    // Fetch all reviews from the database (no filtering by trainer)
     const reviews = await Review.find({});
-
     return new Response(JSON.stringify({ reviews }), { status: 200 });
   } catch (error) {
     console.error("Error fetching reviews:", error);
