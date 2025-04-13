@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       lastName,
       dob,
       gender,
-      contactNumber,
+      phone: contactNumber,
       email,
       address,
       emergencyContactName,

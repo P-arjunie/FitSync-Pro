@@ -12,11 +12,14 @@ export interface IPendingMember extends Document {
   emergencyContact: {
     name: string;
     phone: string;
+    relation:string;
   };
   membershipInfo: {
     plan: string;
     startDate: string;
   };
+  termsAccepted:boolean;
+  userID:string;
   role: "member";
 }
 
@@ -32,11 +35,14 @@ const pendingMemberSchema = new Schema<IPendingMember>({
   emergencyContact: {
     name: { type: String, required: true },
     phone: { type: String, required: true },
+    relation: { type: String, required: true },
   },
   membershipInfo: {
     plan: { type: String, required: true },
     startDate: { type: String, required: true },
   },
+  termsAccepted:{ type: Boolean, required: true },
+  userID:{ type: String, required: true }, 
   role: {
     type: String,
     enum: ["member"],
