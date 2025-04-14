@@ -19,23 +19,22 @@ export default function Contact() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();  // Prevent default form behavior
-
+  
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify(form),
       });
-
+  
       const data = await res.json();
       if (data.success) {
         alert('Message sent successfully!');
         setForm({ name: '', email: '', subject: '', message: '' });  // Reset form after submission
       } else {
-        alert('Something went wrong!');
+        alert(`Something went wrong! Error: ${data.error}`);
       }
     } catch (error) {
       console.error(error);

@@ -27,7 +27,11 @@ export default async function handler(req, res) {
 
     res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Error sending email:', error);
-    res.status(500).json({ success: false, error: 'Failed to send message' });
+    console.error('Error sending email:', error); // Log the full error here
+    res.status(500).json({
+      success: false, 
+      error: 'Failed to send message',
+      details: error.message  // Include detailed error message in response
+    });
   }
 }
