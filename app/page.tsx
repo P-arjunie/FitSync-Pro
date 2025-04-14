@@ -161,7 +161,7 @@ const HomePage: React.FC = () => {
         <section className="checkout-section">
           <StripeProvider>
             <h1>Checkout</h1>
-            <CheckoutForm/>
+            <CheckoutForm userId={''}/>
           </StripeProvider>
         </section>
       </main>
