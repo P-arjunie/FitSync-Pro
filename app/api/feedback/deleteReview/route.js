@@ -1,42 +1,77 @@
-import { NextResponse } from "next/server";
-import connectMongoDB from "@/lib/mongodb";
-import Review from "@/models/Review";
+// app/api/feedback/deleteReview/route.js
+import dbConnect from '../../../lib/mongodb';
+import Review from '../../../models/Review';
+import { NextResponse } from 'next/server';
 
-export async function DELETE(request) {
+export async function POST(request) {
   try {
-    // Connect to MongoDB
-    await connectMongoDB();
+    const body = await request.json();
+    const { reviewId, _method } = body;
     
-    // Get the review ID from the query parameters
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
-    
-    if (!id) {
-      return NextResponse.json(
-        { message: "Review ID is required" }, 
-        { status: 400 }
-      );
+    // Check if this is a DELETE request via POST method
+    if (_method !== 'DELETE') {
+      return NextResponse.json({ message: 'Method not allowed' }, { status: 405 });
     }
     
-    // Delete the review
-    const result = await Review.findByIdAndDelete(id);
+    await dbConnect();
     
-    if (!result) {
-      return NextResponse.json(
-        { message: "Review not found" }, 
-        { status: 404 }
-      );
+    if (!reviewId) {
+      return NextResponse.json({ message: 'Review ID is required' }, { status: 400 });
     }
     
-    return NextResponse.json(
-      { message: "Review deleted successfully" }, 
-      { status: 200 }
-    );
+    // Check if the ID is valid (if using MongoDB)
+    if (!/^[0-9a-fA-F]{24}$/.test(reviewId)) {
+      return NextResponse.json({ message: 'Invalid review ID format' }, { status: 400 });
+    }
+    
+    const deletedReview = await Review.findByIdAndDelete(reviewId);
+    
+    if (!deletedReview) {
+      return NextResponse.json({ message: 'Review not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json({ success: true, message: 'Review deleted successfully' }, { status: 200 });
   } catch (error) {
-    console.error("Error deleting review:", error);
-    return NextResponse.json(
-      { message: "Failed to delete review" }, 
-      { status: 500 }
-    );
+    console.error('Error deleting review:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: error.message || 'Unknown error' 
+    }, { status: 500 });
+  }
+}
+
+// Optionally, you can also define a DELETE method handler
+export async function DELETE(request) {
+  // Extract reviewId from URL or request body
+  const url = new URL(request.url);
+  const reviewId = url.searchParams.get('reviewId');
+  
+  try {
+    await dbConnect();
+    
+    if (!reviewId) {
+      return NextResponse.json({ message: 'Review ID is required' }, { status: 400 });
+    }
+    
+    // Check if the ID is valid (if using MongoDB)
+    if (!/^[0-9a-fA-F]{24}$/.test(reviewId)) {
+      return NextResponse.json({ message: 'Invalid review ID format' }, { status: 400 });
+    }
+    
+    const deletedReview = await Review.findByIdAndDelete(reviewId);
+    
+    if (!deletedReview) {
+      return NextResponse.json({ message: 'Review not found' }, { status: 404 });
+    }
+    
+    return NextResponse.json({ success: true, message: 'Review deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: error.message || 'Unknown error' 
+    }, { status: 500 });
   }
 }
