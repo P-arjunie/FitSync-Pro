@@ -19,15 +19,17 @@ interface SignUpData {
   password: string;
   confirmPassword: string;
   role: "member" | "trainer" | "";
-  profileImage: File | null | string;
+  profileImage: File | null;
 }
 
 interface LoginData {
   email: string;
   password: string;
 }
-
-const AuthForm = () => {
+interface AuthFormProps {
+  onNewUser?: (user: { name: string; role: "member" | "trainer" }) => void;
+}
+const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
   const router = useRouter();
 
   const [signUpData, setSignUpData] = useState<SignUpData>({
@@ -50,7 +52,7 @@ const AuthForm = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value, files } = e.target as HTMLInputElement;
-    if (name === "profileImage" && files) {
+    if (name === "profileImage" && files && files[0]) {
       setSignUpData((prev) => ({ ...prev, profileImage: files[0] }));
     } else {
       setSignUpData((prev) => ({ ...prev, [name]: value }));
@@ -79,7 +81,7 @@ const AuthForm = () => {
 
       if (res.ok) {
         alert(data.message);
-        // Redirect logic here
+        // TODO: Replace with actual redirect after login
       } else {
         alert(data.error);
       }
@@ -103,8 +105,8 @@ const AuthForm = () => {
 
     let imageUrl = "";
 
-    if (signUpData.profileImage && typeof signUpData.profileImage !== "string") {
-      try {
+    try {
+      if (signUpData.profileImage) {
         const toBase64 = (file: File): Promise<string> =>
           new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -115,23 +117,22 @@ const AuthForm = () => {
 
         const base64Image = await toBase64(signUpData.profileImage);
 
-        const res = await fetch("/api/upload", {
+        const uploadRes = await fetch("/api/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: base64Image }),
         });
 
-        const data = await res.json();
+        const uploadData = await uploadRes.json();
 
-        if (!res.ok) {
-          throw new Error(data.error || "Upload failed");
-        }
-        imageUrl = data.url;
-      } catch (err) {
-        console.error("Image upload failed:", err);
-        alert("Image upload failed");
-        return;
+        if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed");
+
+        imageUrl = uploadData.url;
       }
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      alert("Image upload failed");
+      return;
     }
 
     const userData = {
@@ -142,26 +143,45 @@ const AuthForm = () => {
       profileImage: imageUrl,
     };
 
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(userData),
-    });
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok) {
-      alert(data.message);
-      localStorage.setItem("trainerProfileImage", imageUrl);
-
-      router.push(
-        userData.role === "trainer"
-          ? "/lithira/trainerregform"
-          : "/lithira/memberregform"
-      );
-    } else {
-      alert(data.error);
+      if (res.ok) {
+        alert(data.message);
+        if (onNewUser) {
+          onNewUser({ name: signUpData.name, role: signUpData.role });
+        }
+        
+        if (signUpData.role === "trainer") {
+          localStorage.setItem("trainerProfileImage", imageUrl);
+          router.push("/lithira/trainerregform");
+        } else {
+          localStorage.setItem("memberProfileImage", imageUrl);
+          router.push("/lithira/memberregform");
+        }
+      } else {
+        alert(data.error);
+      }
+    } catch (error) {
+      alert("Registration failed.");
     }
+  };
+
+  const handleCancel = () => {
+    setSignUpData({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "",
+      profileImage: null,
+    });
   };
 
   return (
@@ -172,11 +192,7 @@ const AuthForm = () => {
           <label className="mb-4 cursor-pointer relative w-20 h-20">
             {signUpData.profileImage ? (
               <img
-                src={
-                  typeof signUpData.profileImage === "string"
-                    ? signUpData.profileImage
-                    : URL.createObjectURL(signUpData.profileImage)
-                }
+                src={URL.createObjectURL(signUpData.profileImage)}
                 alt="Profile"
                 className="w-full h-full object-cover rounded-full border-2 border-red-500"
               />
@@ -201,12 +217,16 @@ const AuthForm = () => {
             className="bg-red-600 text-white px-3 py-2 rounded-lg mb-4"
             required
           >
-            <option value="" disabled>Select Role</option>
+            <option value="" disabled>
+              Select Role
+            </option>
             <option value="member">Member</option>
             <option value="trainer">Trainer</option>
           </select>
 
-          <h2 className="text-xl font-bold mb-4 text-center">CREATE Your New Account</h2>
+          <h2 className="text-xl font-bold mb-4 text-center">
+            CREATE Your New Account
+          </h2>
 
           <form onSubmit={handleSubmit} className="space-y-3 w-full">
             <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500">
@@ -255,10 +275,10 @@ const AuthForm = () => {
                 <div
                   className="cursor-pointer"
                   onClick={() =>
-                    setShowPassword({
-                      ...showPassword,
-                      [field]: !showPassword[field],
-                    })
+                    setShowPassword((prev) => ({
+                      ...prev,
+                      [field]: !prev[field],
+                    }))
                   }
                 >
                   {showPassword[field] ? <FaEyeSlash /> : <FaEye />}
@@ -267,8 +287,16 @@ const AuthForm = () => {
             ))}
 
             <div className="flex justify-between mt-4">
-              <button type="submit" className="bg-red-600 px-4 py-2 rounded-lg w-[48%]">Proceed</button>
-              <button type="button" className="bg-gray-500 px-4 py-2 rounded-lg w-[48%]">Cancel</button>
+              <button type="submit" className="bg-red-600 px-4 py-2 rounded-lg w-[48%]">
+                Proceed
+              </button>
+              <button
+                type="button"
+                className="bg-gray-500 px-4 py-2 rounded-lg w-[48%]"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
             </div>
           </form>
         </div>
@@ -303,10 +331,10 @@ const AuthForm = () => {
               <div
                 className="cursor-pointer"
                 onClick={() =>
-                  setShowPassword({
-                    ...showPassword,
-                    loginPassword: !showPassword["loginPassword"],
-                  })
+                  setShowPassword((prev) => ({
+                    ...prev,
+                    loginPassword: !prev.loginPassword,
+                  }))
                 }
               >
                 {showPassword["loginPassword"] ? <FaEyeSlash /> : <FaEye />}
@@ -339,5 +367,3 @@ const AuthForm = () => {
 };
 
 export default AuthForm;
-
-
