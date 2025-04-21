@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ItemDetails from "../components/ProductDetails";
-
+import Navbar from "@/Components/Navbar";
 // Define TypeScript interfaces
 interface Product {
   _id: string;
@@ -64,6 +65,7 @@ const Medicine = () => {
 
   return (
     <div className="px-6 py-4">
+    <Navbar/>
       {/* 🔍 Search Bar */}
       <div className="flex items-center justify-center gap-2 mb-6">
         <input
