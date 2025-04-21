@@ -42,3 +42,6 @@ html, body {
   z-index: 0;
 }
 
+.break-inside-avoid {
+  break-inside: avoid;
+}
