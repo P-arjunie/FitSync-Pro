@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.1",
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.4.7",
     "cloudinary": "^2.5.1",

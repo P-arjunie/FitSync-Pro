@@ -96,7 +96,7 @@ export default function Contact() {
                   Information
                 </h2>
                 <p className="text-black">+9471 2781 444</p>
-                <p className="text-black">email@fitSyncPro.com</p>
+                <p className="text-black">fitsyncpro@gmail.com</p>
               </div>
 
               <div>
