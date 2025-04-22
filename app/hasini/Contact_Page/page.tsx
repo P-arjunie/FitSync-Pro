@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Head from 'next/head';
-import Navbar from "../../Components/Navbar";
+import Navbar from "@/Components/Navbar";
 
 
 export default function Contact() {
@@ -44,14 +44,7 @@ export default function Contact() {
 
   return (
     <>
-      <Head>
-        <title>Contact Us - FitSyncPro</title>
-        {/* Ensure FontAwesome is imported for icons */}
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-        />
-      </Head>
+     
       <div
         className="bg-gray-100 min-h-screen p-10"
         style={{
@@ -60,6 +53,7 @@ export default function Contact() {
           backgroundPosition: 'center',
         }}
       >
+        <Navbar/>
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Left Section */}
           <div className="bg-white shadow-md rounded-lg p-10">
