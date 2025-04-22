@@ -1,37 +1,38 @@
+// app/api/contact/route.js
+
 import nodemailer from 'nodemailer';
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Only POST requests allowed' });
-  }
-
-  const { name, email, subject, message } = req.body;
+export async function POST(req) {
+  const body = await req.json();
+  const { name, email, subject, message } = body;
 
   try {
-    // Set up the transporter using Gmail and App Password
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER,  // Your Gmail address
-        pass: process.env.EMAIL_PASS,  // The App Password you generated
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
-    // Send the email
     await transporter.sendMail({
-      from: email,   // Sender email address
-      to: process.env.EMAIL_USER,  // Receiver email address (your Gmail)
-      subject: subject,
+      from: email,
+      to: process.env.EMAIL_USER,
+      subject,
       text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`,
     });
 
-    res.status(200).json({ success: true });
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+    });
   } catch (error) {
-    console.error('Error sending email:', error); // Log the full error here
-    res.status(500).json({
-      success: false, 
+    console.error('Error sending email:', error);
+    return new Response(JSON.stringify({
+      success: false,
       error: 'Failed to send message',
-      details: error.message  // Include detailed error message in response
+      details: error.message,
+    }), {
+      status: 500,
     });
   }
 }
