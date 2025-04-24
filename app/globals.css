@@ -37,3 +37,24 @@ html, body {
   padding: 0;
   box-sizing: border-box;
 }
+
+.gallery-bg {
+  background-image: url('https://img.freepik.com/free-photo/black-white-marble-textured-background_53876-100058.jpg?t=st=1739687985~exp=1739691585~hmac=4dc8f93362a1179a310d146af89d4a714f933bc781857e6bc4ae6f53f19f3bda&w=996');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.gallery-bg::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(255, 255, 255, 0.4); /* Light overlay */
+  z-index: 0;
+}
+
+.break-inside-avoid {
+  break-inside: avoid;
+}

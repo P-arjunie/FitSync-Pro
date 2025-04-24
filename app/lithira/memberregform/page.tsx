@@ -1,35 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaCamera } from "react-icons/fa";
-
-// Define form data interface
-interface FormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  dob: string;
-  gender: string;
-  address: string;
-  currentWeight: string;
-  height: string;
-  bmi: string;
-  goalWeight: string;
-  emergencyName: string;
-  emergencyPhone: string;
-  relationship: string;
-  membershipType: string;
-  startDate: string;
-  termsAccepted: boolean;
-}
+import { useRouter } from "next/navigation";
 
 const MemberRegistrationForm: React.FC = () => {
-  const [formData, setFormData] = useState<FormData>({
+  const router = useRouter();
+
+  const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
+    contactNumber: "",
     dob: "",
     gender: "",
     address: "",
@@ -37,32 +19,87 @@ const MemberRegistrationForm: React.FC = () => {
     height: "",
     bmi: "",
     goalWeight: "",
-    emergencyName: "",
-    emergencyPhone: "",
-    relationship: "",
-    membershipType: "",
-    startDate: "",
+    image: "",
+    emergencyContact: {
+      name: "",
+      phone: "",
+      relationship: "",
+    },
+    membershipInfo: {
+      plan: "",
+      startDate: "",
+    },
     termsAccepted: false,
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type, checked } = e.target as HTMLInputElement;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+  useEffect(() => {
+    const storedImage = localStorage.getItem("memberProfileImage");
+    if (storedImage) {
+      setFormData((prev) => ({ ...prev, image: storedImage }));
+    }
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<any>) => {
+    const { name, value, checked, type } = e.target;
+
+    if (name.startsWith("emergencyContact.")) {
+      const key = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        emergencyContact: {
+          ...prev.emergencyContact,
+          [key]: value,
+        },
+      }));
+    } else if (name.startsWith("membershipInfo.")) {
+      const key = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        membershipInfo: {
+          ...prev.membershipInfo,
+          [key]: value,
+        },
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!formData.termsAccepted) {
       alert("Please accept the terms and conditions.");
       return;
     }
-    console.log("Form submitted:", formData);
-    alert("Registration Successful!");
+
+    if (!formData.image) {
+      alert("Profile image is required.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/member/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Registration failed");
+      }
+
+      alert("Registration submitted for admin approval.");
+      localStorage.removeItem("memberProfileImage");
+      router.push("/some/confirmation-page");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Registration failed.");
+    }
   };
 
   return (
@@ -71,15 +108,21 @@ const MemberRegistrationForm: React.FC = () => {
         onSubmit={handleSubmit}
         className="w-[800px] bg-gray-100 p-6 rounded-lg shadow-xl relative"
       >
-        {/* Camera Icon */}
-        <div className="absolute top-6 right-6 border-4 border-red-500 rounded-full w-16 h-16 flex justify-center items-center cursor-pointer">
-          <label className="cursor-pointer">
-            <FaCamera className="text-3xl text-gray-800" />
-            <input type="file" className="hidden" accept="image/*" />
-          </label>
+        <div className="absolute top-6 right-6 w-20 h-20 rounded-full overflow-hidden border-4 border-red-500 bg-white flex items-center justify-center">
+          {formData.image ? (
+            <img
+              src={formData.image}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <label className="cursor-pointer flex items-center justify-center w-full h-full">
+              <FaCamera className="text-2xl text-gray-600" />
+              <input type="file" className="hidden" accept="image/*" />
+            </label>
+          )}
         </div>
 
-        {/* Title */}
         <h2 className="text-3xl font-bold text-center mb-2">
           Registration Form - Member
         </h2>
@@ -87,7 +130,7 @@ const MemberRegistrationForm: React.FC = () => {
           Join Our Team & Inspire Fitness!
         </p>
 
-        {/* Personal Information */}
+        {/* Personal Info */}
         <fieldset className="mb-6">
           <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">
             Personal Information
@@ -97,7 +140,7 @@ const MemberRegistrationForm: React.FC = () => {
               { label: "First Name", name: "firstName" },
               { label: "Last Name", name: "lastName" },
               { label: "Email Address", name: "email" },
-              { label: "Phone Number", name: "phone" },
+              { label: "Phone Number", name: "contactNumber" },
               { label: "Date of Birth", name: "dob" },
               { label: "Address", name: "address" },
               { label: "Current Weight", name: "currentWeight" },
@@ -110,9 +153,8 @@ const MemberRegistrationForm: React.FC = () => {
                 <input
                   type={name === "dob" ? "date" : "text"}
                   name={name}
-                  placeholder={`Enter ${label}`}
                   className="border border-red-500 p-2 rounded"
-                  value={formData[name as keyof FormData]}
+                  value={(formData as any)[name]}
                   onChange={handleChange}
                   required
                 />
@@ -120,7 +162,6 @@ const MemberRegistrationForm: React.FC = () => {
             ))}
           </div>
 
-          {/* Gender Selection */}
           <div className="flex items-center gap-4 mt-4">
             <span className="font-semibold">Gender:</span>
             {["Male", "Female", "Other"].map((gender) => (
@@ -139,50 +180,53 @@ const MemberRegistrationForm: React.FC = () => {
           </div>
         </fieldset>
 
-        {/* Emergency Contact Information */}
+        {/* Emergency Contact */}
         <fieldset className="mb-6">
           <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">
             Emergency Contact Information
           </legend>
           <div className="grid grid-cols-2 gap-4">
-            {[
-              { label: "Emergency Contact Name", name: "emergencyName" },
-              { label: "Emergency Contact Phone Number", name: "emergencyPhone" },
-            ].map(({ label, name }) => (
-              <div key={name} className="flex flex-col">
-                <label className="text-sm font-semibold">{label}</label>
-                <input
-                  type="text"
-                  name={name}
-                  placeholder={`Enter ${label}`}
-                  className="border border-red-500 p-2 rounded"
-                  value={formData[name as keyof FormData]}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            ))}
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Name</label>
+              <input
+                type="text"
+                name="emergencyContact.name"
+                className="border border-red-500 p-2 rounded"
+                value={formData.emergencyContact.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Phone</label>
+              <input
+                type="text"
+                name="emergencyContact.phone"
+                className="border border-red-500 p-2 rounded"
+                value={formData.emergencyContact.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
             <div className="col-span-2">
               <label className="text-sm font-semibold">Relationship</label>
               <input
                 type="text"
-                name="relationship"
-                placeholder="Enter Relationship"
+                name="emergencyContact.relationship"
                 className="border border-red-500 p-2 rounded w-full"
-                value={formData.relationship}
+                value={formData.emergencyContact.relationship}
                 onChange={handleChange}
               />
             </div>
           </div>
         </fieldset>
 
-        {/* Membership Information */}
+        {/* Membership Info */}
         <fieldset className="mb-6">
           <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">
             Membership Information
           </legend>
           <div className="flex flex-col gap-4">
-            {/* Membership Type */}
             <div>
               <span className="font-semibold">Choose Membership Type:</span>
               <div className="flex gap-4 mt-2">
@@ -191,9 +235,9 @@ const MemberRegistrationForm: React.FC = () => {
                     <label key={type} className="flex items-center gap-2">
                       <input
                         type="radio"
-                        name="membershipType"
+                        name="membershipInfo.plan"
                         value={type}
-                        checked={formData.membershipType === type}
+                        checked={formData.membershipInfo.plan === type}
                         onChange={handleChange}
                         required
                       />
@@ -204,20 +248,20 @@ const MemberRegistrationForm: React.FC = () => {
               </div>
             </div>
 
-            {/* Preferred Start Date */}
             <div className="flex flex-col">
-              <label className="text-sm font-semibold">Preferred Start Date</label>
+              <label className="text-sm font-semibold">
+                Preferred Start Date
+              </label>
               <input
                 type="date"
-                name="startDate"
+                name="membershipInfo.startDate"
                 className="border border-red-500 p-2 rounded"
-                value={formData.startDate}
+                value={formData.membershipInfo.startDate}
                 onChange={handleChange}
                 required
               />
             </div>
 
-            {/* Terms Checkbox */}
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -231,7 +275,6 @@ const MemberRegistrationForm: React.FC = () => {
           </div>
         </fieldset>
 
-        {/* Submit Button */}
         <button
           type="submit"
           className="w-full bg-red-600 text-white font-semibold p-3 rounded-lg hover:bg-red-700 transition"
@@ -244,4 +287,3 @@ const MemberRegistrationForm: React.FC = () => {
 };
 
 export default MemberRegistrationForm;
-
