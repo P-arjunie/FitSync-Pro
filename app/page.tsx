@@ -17,9 +17,11 @@ const HomePage: React.FC = () => {
         {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-text">
-            <h1 className="hero-title">MAKE YOUR BODY STRONG WITH FITSYNC PRO</h1>
+            <h2 className="hero-title2">MAKE YOUR BODY</h2>
+            <h2 className="hero-title2">STRONG WITH </h2>
+            <h1 className="hero-title">FITSYNC PRO</h1>
             <p className="hero-description">
-              Gymmen an unknown printer took a galley of type and scrambled. It has survived unknown printcenturies.
+            "At FitSync Pro, we provide personalized fitness programs to help you build strength, improve endurance, and reach your goals faster. Join us today and take your workout to the next level!"
             </p>
             <div className="hero-button-container">
               <button className="button">Log In</button>
@@ -33,23 +35,27 @@ const HomePage: React.FC = () => {
 
         {/* Progression, Workout, Nutrition Section */}
         <section className="three-card-section">
-          <div className="progression-card">
-            <img src="/progressionicon.png" alt="Progression" className="icon-image" />
-            <p className="card-title">Progression</p>
-            <p className="card-text">Tracking your progress is key to reaching your fitness goals. Whether you're building strength, losing weight, or improving endurance, seeing measurable progress keeps you motivated and focused on your journey. Celebrate each milestone along the way!</p>
+          <div className="card-item">
+            <img src="/progressionicon.png" alt="Progression" />
+            <h3 className="card-title">Progression</h3>
+            <p className="card-text">Track your progress and stay motivated to reach your fitness goals faster.</p>
+            <button className="card-button">Learn More</button>
           </div>
-          <div className="workout-card">
-            <img src="/workouticon.png" alt="Workout" className="icon-image" />
-            <p className="card-title">Workout</p>
-            <p className="card-text">Our expertly designed workouts are tailored to meet your specific fitness level and goals. Whether you're a beginner or an advanced athlete, we provide diverse routines that target all aspects of fitness, from strength training to cardiovascular endurance.</p>
+
+          <div className="card-item">
+            <img src="/workouticon.png" alt="Workout" />
+            <h3 className="card-title">Workout</h3>
+            <p className="card-text">Custom workouts designed to help you improve strength, endurance, and more.</p>
+            <button className="card-button">Get Started</button>
           </div>
-          <div className="nutrition-card">
-            <img src="/nutritionicon.png" alt="Nutrition" className="icon-image" />
-            <p className="card-title">Nutrition</p>
-            <p className="card-text">Nutrition plays a crucial role in your fitness success. We offer personalized meal plans that help you fuel your body for maximum performance. Learn how to nourish your body with the right balance of protein, carbohydrates, and healthy fats to support muscle growth and recovery.</p>
-            <button className="read-more-button">Read More</button>
+
+          <div className="card-item">
+            <img src="/nutritionicon.png" alt="Nutrition" />
+            <h3 className="card-title">Nutrition</h3>
+            <p className="card-text">Personalized meal plans to fuel your body and maximize your performance.</p>
+            <button className="card-button">Explore Plans</button>
           </div>
-        </section>
+      </section>
 
         {/* Who We Are Section */}
         <section className="who-we-are">

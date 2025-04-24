@@ -30,13 +30,18 @@
 .hero-text {
   max-width: 50%;
   color: #fff;
-  margin: 0;
+  margin-right: 20px;
 }
 
 .hero-title {
-  font-size: 3rem;
+  font-size: 5rem;
   margin-bottom: 20px;
   font-weight: bold;
+}
+
+.hero-title2 {
+  font-size: 4rem;
+  margin-bottom: 6px;
 }
 
 .hero-description {
@@ -50,25 +55,117 @@
 }
 
 .button {
+  border: 2px solid #fff;
+  background-color: transparent;
+  color: #fff;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+.button:focus {
+  outline: none;
+  box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.7); /* Optional: a glow effect */
+}
+
+.hero-image {
+  max-width: 35%; /* Image will take up the other half */
+  width: 100%;
+  height: auto;
+  animation: fadeInUp 1.5s ease-out;
+}
+
+.hero-image img {
+  width: 100%; /* Ensure image takes up full width of its container */
+  height: auto; /* Maintain aspect ratio */
+  object-fit: cover; /* Cover the container without stretching the image */
+}
+
+/* Keyframes for fade-in and slide-up effect */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px); /* Starts 20px below */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0); /* Ends in the normal position */
+  }
+}
+
+/* Progression, Workout, Nutrition Section */
+/* 3 Card Section */
+/* 3 Card Section */
+.three-card-section {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(250px, 1fr)
+  ); /* Make the grid responsive */
+  gap: 30px; /* Add spacing between cards */
+  padding: 50px;
+  background-color: #f9f9f9; /* Light background */
+  border-radius: 8px;
+  background-image: url("/whoweare.jpg");
+  background-size: cover;
+}
+
+.card-item {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-item:hover {
+  transform: translateY(-10px); /* Hover effect to lift the cards */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Darker shadow on hover */
+}
+
+.card-item img {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.card-text {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.card-button {
   padding: 10px 20px;
   background-color: #e60000;
   color: white;
   border: none;
-  cursor: pointer;
+  border-radius: 4px;
   font-size: 1rem;
-  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
-.hero-image {
-  max-width: 40%;
+.card-button:hover {
+  background-color: #c10000;
 }
 
-.hero-image-style {
-  width: 100%;
-  height: auto;
-}
-
-/* Progression, Workout, Nutrition Section */
+/*
 .three-card-section {
   display: flex;
   justify-content: space-between;
@@ -127,7 +224,7 @@
   margin-top: 10px;
   border-radius: 5px;
 }
-
+*/
 /* Who We Are Section */
 .who-we-are {
   background: #f8f8f8;
