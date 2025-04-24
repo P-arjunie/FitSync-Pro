@@ -3,54 +3,70 @@ import mongoose, { Schema, Document, models, model } from "mongoose";
 export interface IPendingMember extends Document {
   firstName: string;
   lastName: string;
-  email: string;
-  phone: string;
-  gender: string;
   dob: string;
+  gender: string;
+  nic: string;
   address: string;
-  image: string;
+  contactNumber: string;
+  email: string;
   emergencyContact: {
     name: string;
+    relationship: string;
     phone: string;
-    relation:string;
   };
   membershipInfo: {
     plan: string;
     startDate: string;
+    paymentPlan: string;
   };
-  termsAccepted:boolean;
-  userID:string;
-  role: "member";
+  image: string;
+  currentWeight: number;
+  height: number;
+  bmi: number;
+  goalWeight: number;
+  status: string;
+  role: string;
 }
 
-const pendingMemberSchema = new Schema<IPendingMember>({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, required: true },
-  gender: { type: String, required: true },
-  dob: { type: String, required: true },
-  address: { type: String, required: true },
-  image: { type: String, required: true },
-  emergencyContact: {
-    name: { type: String, required: true },
-    phone: { type: String, required: true },
-    relation: { type: String, required: true },
-  },
-  membershipInfo: {
-    plan: { type: String, required: true },
-    startDate: { type: String, required: true },
-  },
-  termsAccepted:{ type: Boolean, required: true },
-  userID:{ type: String, required: true }, 
-  role: {
-    type: String,
-    enum: ["member"],
-    default: "member",
-  },
-});
 
-const PendingMember =
-  models.PendingMember || model<IPendingMember>("PendingMember", pendingMemberSchema);
+const pendingMemberSchema: Schema = new Schema(
+  {
+    firstName: String,
+    lastName: String,
+    dob: String,
+    gender: String,
+    nic: String,
+    address: String,
+    contactNumber: String,
+    email: String,
+    emergencyContact: {
+      name: String,
+      relationship: String,
+      phone: String,
+    },
+    membershipInfo: {
+      plan: String,
+      startDate: String,
+      paymentPlan: String,
+    },
+    image: String,
+    currentWeight: Number,
+    height: Number,
+    bmi: Number,
+    goalWeight: Number,
+    status: {
+      type: String,
+      default: "pending",
+    },
+    role: {
+      type: String,
+      default: "member",
+    },
+  },
+  { timestamps: true }
+);
 
+
+const PendingMember = models.PendingMember || model<IPendingMember>("PendingMember", pendingMemberSchema);
 export default PendingMember;
+

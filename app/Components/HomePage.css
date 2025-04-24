@@ -1,0 +1,409 @@
+/* HomePage.css */
+
+.pagecontainer {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.main {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.hero-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  padding: 100px;
+  background-image: url("/herobackground.jpg");
+  background-size: cover;
+  background-position: center;
+  width: 100%;
+  height: 800px;
+}
+
+.hero-text {
+  max-width: 50%;
+  color: #fff;
+  margin-right: 20px;
+}
+
+.hero-title {
+  font-size: 5rem;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.hero-title2 {
+  font-size: 4rem;
+  margin-bottom: 6px;
+}
+
+.hero-description {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
+
+.hero-button-container {
+  display: flex;
+  gap: 20px;
+}
+
+.button {
+  border: 2px solid #fff;
+  background-color: transparent;
+  color: #fff;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+.button:focus {
+  outline: none;
+  box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.7); /* Optional: a glow effect */
+}
+
+.hero-image {
+  max-width: 35%; /* Image will take up the other half */
+  width: 100%;
+  height: auto;
+  animation: fadeInUp 1.5s ease-out;
+}
+
+.hero-image img {
+  width: 100%; /* Ensure image takes up full width of its container */
+  height: auto; /* Maintain aspect ratio */
+  object-fit: cover; /* Cover the container without stretching the image */
+}
+
+/* Keyframes for fade-in and slide-up effect */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px); /* Starts 20px below */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0); /* Ends in the normal position */
+  }
+}
+
+/* Progression, Workout, Nutrition Section */
+/* 3 Card Section */
+/* 3 Card Section */
+.three-card-section {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(250px, 1fr)
+  ); /* Make the grid responsive */
+  gap: 30px; /* Add spacing between cards */
+  padding: 50px;
+  background-color: #f9f9f9; /* Light background */
+  border-radius: 8px;
+  background-image: url("/whoweare.jpg");
+  background-size: cover;
+}
+
+.card-item {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-item:hover {
+  transform: translateY(-10px); /* Hover effect to lift the cards */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Darker shadow on hover */
+}
+
+.card-item img {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.card-text {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.card-button {
+  padding: 10px 20px;
+  background-color: #e60000;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.card-button:hover {
+  background-color: #c10000;
+}
+
+/*
+.three-card-section {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0;
+  margin-top: 0;
+  padding: 100px;
+  height: 800px;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url("/cardbackground.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+.card-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.progression-card,
+.workout-card,
+.nutrition-card {
+  position: relative;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)),
+    url("/gymprogress.jpg");
+  background-size: cover;
+  background-position: center;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 30%;
+  text-align: center;
+  color: white;
+}
+
+.icon-image {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 10px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.card-text {
+  font-size: 1rem;
+}
+
+.read-more-button {
+  padding: 8px 16px;
+  background-color: #e60000;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 10px;
+  border-radius: 5px;
+}
+*/
+/* Who We Are Section */
+.who-we-are {
+  background: #f8f8f8;
+  padding: 50px 20px;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)),
+    url("/whoweare2.png");
+  background-size: cover;
+  background-position: center;
+  height: 800px;
+  color: white;
+}
+
+.who-we-are-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.who-we-are-text {
+  flex: 1;
+}
+
+.who-we-are-image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.bodybuilder-image {
+  width: 80%;
+  height: 730px;
+  border-radius: 10px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 50px;
+}
+
+.red-titles {
+  background-color: #ff0000;
+  color: #ffffff;
+  padding: 10px;
+  display: inline-block;
+}
+
+.section-title {
+  padding: 50px;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 20px 0;
+}
+
+.description-text {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
+
+.icon-section {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 30px;
+}
+
+.icon-item {
+  text-align: center;
+  flex: 1;
+}
+
+.icon-image2 {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 10px;
+}
+
+.icon-text {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+/* Featured Classes Section */
+.featured-classes {
+  padding: 50px 20px;
+  margin-bottom: 50px;
+}
+
+.class-items {
+  padding: 50px;
+  display: flex;
+  justify-content: space-around;
+}
+
+.class-item {
+  width: 90%;
+  text-align: center;
+}
+
+.class-image {
+  width: 100%;
+  height: 250px;
+  margin-bottom: 10px;
+}
+
+.class-text {
+  font-size: 1.5rem;
+}
+
+.date-button {
+  padding: 8px 16px;
+  background-color: #e60000;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+}
+
+/* Fitness Service Section */
+.fitness-service {
+  padding: 50px 20px;
+  margin-bottom: 50px;
+}
+
+.service-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.service-item {
+  width: 60%;
+  text-align: center;
+}
+
+.service-title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.service-description {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+}
+
+.service-image {
+  width: 35%;
+}
+
+.service-image-style {
+  width: 100%;
+  height: auto;
+}
+
+/* BMI Calculator Section */
+.bmi-calculator {
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.bmi-form {
+  display: inline-block;
+}
+
+.input {
+  padding: 10px;
+  font-size: 1rem;
+  margin: 10px;
+  width: 200px;
+  border-radius: 5px;
+}
+
+.calculate-button {
+  padding: 10px 20px;
+  background-color: #e60000;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  border-radius: 5px;
+}

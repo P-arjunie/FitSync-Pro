@@ -3,47 +3,73 @@ import mongoose, { Schema, Document, models, model } from "mongoose";
 export interface IMember extends Document {
   firstName: string;
   lastName: string;
-  email: string;
-  phone: string;
-  gender: string;
   dob: string;
+  gender: string;
+  nic: string;
   address: string;
-  image: string;
+  contactNumber: string;
+  email: string;
   emergencyContact: {
     name: string;
+    relationship: string;
     phone: string;
   };
   membershipInfo: {
     plan: string;
     startDate: string;
+    paymentPlan: string;
   };
-  role: "member";
+  image: string;
+  currentWeight: number;
+  height: number;
+  bmi: number;
+  goalWeight: number;
+  status: string;
+  role: string;
 }
 
-const memberSchema = new Schema<IMember>({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, required: true },
-  gender: { type: String, required: true },
-  dob: { type: String, required: true },
-  address: { type: String, required: true },
-  image: { type: String, required: true },
-  emergencyContact: {
-    name: { type: String, required: true },
-    phone: { type: String, required: true },
+
+const memberSchema: Schema = new Schema(
+  {
+    firstName: String,
+    lastName: String,
+    dob: String,
+    gender: String,
+    nic: String,
+    address: String,
+    contactNumber: String,
+    email: String,
+    emergencyContact: {
+      name: String,
+      relationship: String,
+      phone: String,
+    },
+    membershipInfo: {
+      plan: String,
+      startDate: String,
+      paymentPlan: String,
+    },
+    image: String,
+    currentWeight: Number,
+    height: Number,
+    bmi: Number,
+    goalWeight: Number,
+    status: {
+      type: String,
+      enum:["pending","approved"],
+      default: "approved",
+    },
+    role: {
+      type: String,
+      default: "member",
+    },
   },
-  membershipInfo: {
-    plan: { type: String, required: true },
-    startDate: { type: String, required: true },
-  },
-  role: {
-    type: String,
-    enum: ["member"],
-    default: "member",
-  },
-});
+  { timestamps: true }
+);
+
 
 const Member = models.Member || model<IMember>("Member", memberSchema);
-
 export default Member;
+
+
+
