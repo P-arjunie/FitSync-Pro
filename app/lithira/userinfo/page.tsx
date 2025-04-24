@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Trainer {
   _id: string;
@@ -20,6 +21,7 @@ interface Member {
 const UserManagement: React.FC = () => {
   const [pendingTrainers, setPendingTrainers] = useState<Trainer[]>([]);
   const [pendingMembers, setPendingMembers] = useState<Member[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchPendingUsers = async () => {
@@ -90,9 +92,13 @@ const UserManagement: React.FC = () => {
                   alt={`${trainer.firstName} ${trainer.lastName}`}
                   className="w-12 h-12 rounded-full mr-4 border-2 border-white object-cover"
                 />
-                <span className="text-lg font-semibold text-white mr-2">
+                <button
+                  onClick={() => router.push(`/admin/pending-trainer/${trainer._id}`)}
+                  className="text-lg font-semibold text-white mr-2 transition hover:text-red-500 hover:scale-[1.03] focus:outline-none"
+                >
                   {trainer.firstName} {trainer.lastName}
-                </span>
+                </button>
+
                 <div className="flex-1 mx-2 h-[2px] bg-gray-600"></div>
                 <button
                   className="px-4 py-1 bg-black text-white font-bold rounded hover:bg-zinc-700"
@@ -124,9 +130,13 @@ const UserManagement: React.FC = () => {
                   alt={`${member.firstName} ${member.lastName}`}
                   className="w-12 h-12 rounded-full mr-4 border-2 border-white object-cover"
                 />
-                <span className="text-lg font-semibold text-white mr-2">
+                <button
+                  onClick={() => router.push(`/admin/pending-member/${member._id}`)}
+                  className="text-lg font-semibold text-white mr-2 transition hover:text-red-500 hover:scale-[1.03] focus:outline-none"
+                >
                   {member.firstName} {member.lastName}
-                </span>
+                </button>
+
                 <div className="flex-1 mx-2 h-[2px] bg-gray-600"></div>
                 <button
                   className="px-4 py-1 bg-black text-white font-bold rounded hover:bg-zinc-700"
@@ -150,5 +160,3 @@ const UserManagement: React.FC = () => {
 };
 
 export default UserManagement;
-
-

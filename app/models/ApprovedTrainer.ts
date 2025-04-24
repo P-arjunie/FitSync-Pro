@@ -9,7 +9,7 @@ export interface IApprovedTrainer extends Document {
   gender: string;
   address: string;
   specialization: string;
-  certifications: string;
+  certifications: string[]; // changed from string to array
   preferredTrainingHours: string;
   yearsOfExperience: string;
   availability: string;
@@ -21,6 +21,8 @@ export interface IApprovedTrainer extends Document {
   termsAccepted: boolean;
   profileImage: string;
   submittedAt: Date;
+  biography?: string;
+  skills?: { name: string; level: number }[];
 }
 
 const approvedTrainerSchema = new Schema<IApprovedTrainer>({
@@ -32,7 +34,7 @@ const approvedTrainerSchema = new Schema<IApprovedTrainer>({
   gender: { type: String, required: true },
   address: { type: String, required: true },
   specialization: { type: String, required: true },
-  certifications: { type: String, required: true },
+  certifications: { type: [String], required: true }, // array of strings
   preferredTrainingHours: { type: String, required: true },
   yearsOfExperience: { type: String, required: true },
   availability: { type: String, required: true },
@@ -44,8 +46,14 @@ const approvedTrainerSchema = new Schema<IApprovedTrainer>({
   termsAccepted: { type: Boolean, required: true },
   profileImage: { type: String, required: true },
   submittedAt: { type: Date, default: Date.now },
+  biography: { type: String, default: "" },
+  skills: [
+    {
+      name: { type: String, required: true },
+      level: { type: Number, min: 0, max: 100 },
+    },
+  ],
 });
 
 export default mongoose.models.ApprovedTrainer ||
   mongoose.model<IApprovedTrainer>("ApprovedTrainer", approvedTrainerSchema);
-
