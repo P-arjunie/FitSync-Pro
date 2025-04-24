@@ -1,7 +1,22 @@
-import React from 'react';
 
-const lithiraHome = () => {
-    return <div>Welcome to Pasindi's Home Page hiiiiii</div>;
-};
+"use client";
 
-export default lithiraHome;
+import React from "react";
+import AuthForm from "./Authform/page";
+
+const ParentComponent: React.FC = () => {
+const handleNewUser = (user: { name: string; role: "member" | "trainer" }) => {
+     console.log("New user created:", user);
+     // Add any API call or logic to save user data
+   };
+
+   return (
+     <div>
+       {/* Ensure the prop is passed correctly */}
+       <AuthForm onNewUser={handleNewUser} />
+     </div>
+   );
+ };
+
+ export default ParentComponent;
+
