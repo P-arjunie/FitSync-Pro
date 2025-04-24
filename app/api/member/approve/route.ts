@@ -21,6 +21,11 @@ export async function POST(req: NextRequest) {
       gender: pendingMember.gender,
       contactNumber: pendingMember.contactNumber,
       email: pendingMember.email,
+      currentWeight: pendingMember.currentWeight,
+      height: pendingMember.height,
+      bmi: pendingMember.bmi,
+      goalWeight: pendingMember.goalWeight,
+
       address: pendingMember.address,
       emergencyContactName: pendingMember.emergencyContactName,
       emergencyContactRelation: pendingMember.emergencyContactRelation,
@@ -30,6 +35,7 @@ export async function POST(req: NextRequest) {
       termsAccepted: pendingMember.termsAccepted,
       image: pendingMember.image,
       userId: pendingMember.userId,
+      status: "approved",
     });
 
     await approvedMember.save();
