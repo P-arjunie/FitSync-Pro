@@ -32,6 +32,8 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
     termsAccepted,
     profileImage,
     submittedAt,
+    biography,
+    skills,
   } = trainer;
 
   await ApprovedTrainer.create({
@@ -55,10 +57,11 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
     termsAccepted,
     profileImage,
     submittedAt,
+    biography,
+    skills,
   });
 
   await trainer.deleteOne();
 
   return NextResponse.json({ message: "Trainer approved" });
 }
-
