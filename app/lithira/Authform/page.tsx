@@ -154,9 +154,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 
       if (res.ok) {
         alert(data.message);
+        localStorage.setItem("userId", data.userId); // ✅ store userId for both member and trainer
+
         if (onNewUser) {
           onNewUser({ name: signUpData.name, role: signUpData.role });
         }
+
+        
         
         if (signUpData.role === "trainer") {
           localStorage.setItem("trainerProfileImage", imageUrl);

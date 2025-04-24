@@ -1,57 +1,79 @@
-import { NextRequest, NextResponse } from "next/server";
 import connectMongoDB from "@/lib/mongodb";
 import PendingMember from "@/models/pendingMember";
+import { NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     await connectMongoDB();
     const body = await req.json();
+    console.log("📦 Incoming Member Registration Body:", body);
 
     const {
       firstName,
       lastName,
       dob,
       gender,
+      nic,
       contactNumber,
       email,
       address,
-      emergencyContactName,
-      emergencyContactRelation,
-      emergencyContactNumber,
-      membershipType,
-      preferredWorkoutTime,
-      termsAccepted,
+      emergencyContact,
+      membershipInfo,
       image,
-      userId,
+      currentWeight,
+      height,
+      bmi,
+      goalWeight,
+      termsAccepted,
     } = body;
 
-    // Basic validation
-    if (!firstName || !lastName || !email || !image || !termsAccepted) {
+    // Validate required fields
+    if (
+      !firstName || !lastName || !dob || !gender || !contactNumber || !email || !address ||
+      !emergencyContact?.name || !emergencyContact?.phone || !emergencyContact?.relationship ||
+      !membershipInfo?.plan || !membershipInfo?.startDate ||
+      !termsAccepted || !image ||
+      currentWeight === undefined || height === undefined || bmi === undefined || goalWeight === undefined
+    ) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
     }
 
-    const newMember = await PendingMember.create({
+    // Ensure the emergency contact phone is provided
+    if (!emergencyContact?.phone) {
+      return NextResponse.json({ message: "Emergency contact phone is required" }, { status: 400 });
+    }
+
+    // Create the pending member record
+    await PendingMember.create({
       firstName,
       lastName,
       dob,
       gender,
-      phone: contactNumber,
+      nic,
+      contactNumber,
       email,
       address,
-      emergencyContactName,
-      emergencyContactRelation,
-      emergencyContactNumber,
-      membershipType,
-      preferredWorkoutTime,
-      termsAccepted,
       image,
+      emergencyContact,
+      membershipInfo,
+      currentWeight,
+      height,
+      bmi,
+      goalWeight,
+      termsAccepted, // Make sure this is correctly passed and validated
       role: "member",
-      userId,
+      status: "pending",
     });
 
-    return NextResponse.json({ message: "Member registration submitted", member: newMember }, { status: 201 });
+    return NextResponse.json(
+      { message: "Member registration submitted successfully!" },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error("Error in member register:", error);
-    return NextResponse.json({ message: "Server error" }, { status: 500 });
+    console.error("Registration error:", error);
+    return NextResponse.json(
+      { message: "An unexpected error occurred." },
+      { status: 500 }
+    );
   }
 }
