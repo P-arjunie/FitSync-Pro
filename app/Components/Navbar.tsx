@@ -8,10 +8,10 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="bg-black text-white py-2 px-2 flex items-center justify-between w-full border-b border-white">
+    <nav className="bg-black text-white py-7 px-2 flex items-center justify-between w-full border-b border-black">
       {/* Logo and Text */}
       <Link href="/" className="flex items-center">
-        <Image src="/logo.png" alt="FitSync Pro Logo" width={40} height={40} />
+        <Image src="/logo.png" alt="FitSync Pro Logo" width={50} height={50} />
         <div className="ml-2 flex flex-col text-left">
           <span className="text-sm font-normal">FITSYNC PRO</span>
           <span className="text-xs font-normal">ULTIMATE GYM CENTER</span>
@@ -48,7 +48,7 @@ const Navbar: React.FC = () => {
 
         {/* Join Class Button (visible on desktop only) */}
         <Link href="/join">
-          <button className="bg-red-600 px-3 py-1 text-sm hidden md:block">Join Class Now</button>
+          <button className="bg-red-600 px-2 py-1.5 text-sm mr - 10 hidden md:block">Join Class Now</button>
         </Link>
 
         {/* Mobile Menu Button (☰) */}
