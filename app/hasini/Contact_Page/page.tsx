@@ -1,17 +1,50 @@
-import React from 'react';
-import Head from 'next/head'; // Import Head from next/head
+"use client";
+
+import React, { useState } from 'react';
+import Head from 'next/head';
+import Navbar from "@/Components/Navbar";
+
 
 export default function Contact() {
+  // Initialize form state using useState hook
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+
+  // Handle change for form fields
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();  // Prevent default form behavior
+  
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+  
+      const data = await res.json();
+      if (data.success) {
+        alert('Message sent successfully!');
+        setForm({ name: '', email: '', subject: '', message: '' });  // Reset form after submission
+      } else {
+        alert(`Something went wrong! Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Error sending message.');
+    }
+  };
+
   return (
     <>
-      <Head>
-        <title>Contact Us - FitSyncPro</title>
-        {/* Ensure FontAwesome is imported for icons */}
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-        />
-      </Head>
+     
       <div
         className="bg-gray-100 min-h-screen p-10"
         style={{
@@ -20,6 +53,7 @@ export default function Contact() {
           backgroundPosition: 'center',
         }}
       >
+        <Navbar/>
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
           {/* Left Section */}
           <div className="bg-white shadow-md rounded-lg p-10">
@@ -56,7 +90,7 @@ export default function Contact() {
                   Information
                 </h2>
                 <p className="text-black">+9471 2781 444</p>
-                <p className="text-black">email@fitSyncPro.com</p>
+                <p className="text-black">fitsyncpro@gmail.com</p>
               </div>
 
               <div>
@@ -84,15 +118,18 @@ export default function Contact() {
           {/* Right Section - Form */}
           <div className="bg-gray-50 shadow-md rounded-lg p-10">
             <h2 className="text-xl font-bold mb-5 text-black underline-custom">Leave Us Your Info</h2>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label className="block font-medium mb-1 text-black">
                   Full Name<span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
+                  name="name"
                   className="w-full p-2 border border-gray-300 rounded"
                   required
+                  value={form.name}  // Bind form state
+                  onChange={handleChange}  // Update form state on change
                 />
               </div>
               <div className="mb-4">
@@ -101,24 +138,33 @@ export default function Contact() {
                 </label>
                 <input
                   type="email"
+                  name="email"
                   className="w-full p-2 border border-gray-300 rounded"
                   required
+                  value={form.email}  // Bind form state
+                  onChange={handleChange}  // Update form state on change
                 />
               </div>
               <div className="mb-4">
                 <label className="block font-medium mb-1 text-black">
-                  Address<span className="text-red-600">*</span>
+                  Subject<span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
+                  name="subject"
                   className="w-full p-2 border border-gray-300 rounded"
                   required
+                  value={form.subject}  // Bind form state
+                  onChange={handleChange}  // Update form state on change
                 />
               </div>
               <div className="mb-4">
                 <label className="block font-medium mb-1 text-black">Comment</label>
                 <textarea
+                  name="message"
                   className="w-full p-2 border border-gray-300 rounded"
+                  value={form.message}  // Bind form state
+                  onChange={handleChange}  // Update form state on change
                 ></textarea>
               </div>
               <button
