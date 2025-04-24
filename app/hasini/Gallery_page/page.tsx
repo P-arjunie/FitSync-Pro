@@ -3,13 +3,14 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { Dialog } from '@headlessui/react';
+import Navbar from "@/Components/Navbar";
 
 const IMAGES_FIRST_PAGE = 11;
 const IMAGES_PER_PAGE = 9;
 
 export default function GalleryPage() {
   const [images, setImages] = useState<string[]>([
-    '/gallery01.jpg',
+   '/gallery01.jpg',
     '/gallery02.jpg',
     '/galley03.jpg',
     '/galley04.jpg',
@@ -51,70 +52,74 @@ export default function GalleryPage() {
   };
 
   return (
-    <div className="min-h-screen p-4 relative gallery-bg">
-      {/* Light overlay for background */}
-      <div className="absolute inset-0 bg-white/30 backdrop-blur-sm z-0" />
+    <div className="min-h-screen relative bg-white">
+      <Navbar /> {/* Outside blur area */}
 
-      <div className="relative z-10">
-        <h1 className="text-3xl font-bold text-center text-black mb-6 drop-shadow-lg">FitSyncPro Gallery</h1>
+      {/* Gallery content with blur background */}
+      <div className="p-4 gallery-bg relative z-10">
+        <div className="absolute inset-0 bg-white/30 backdrop-blur-sm z-0" />
 
-        {/* Upload Button */}
-        <div className="flex justify-center mb-6">
-          <label className="cursor-pointer bg-red-500 text-white px-6 py-2 font-semibold rounded-lg shadow hover:bg-red-600 transition">
-            📤 Upload Image
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleUpload}
-              className="hidden"
-            />
-          </label>
-        </div>
+        <div className="relative z-10">
+          <h1 className="text-3xl font-bold text-center text-black mb-6 drop-shadow-lg">FitSyncPro Gallery</h1>
 
-        {/* Masonry Layout */}
-        <div className="columns-2 sm:columns-3 gap-3 max-w-6xl mx-auto space-y-3 px-2">
-          {currentImages.map((src, index) => (
-            <div
-              key={index}
-              className="overflow-hidden rounded-lg cursor-pointer break-inside-avoid"
-              onClick={() => setLightboxImg(src)}
-            >
-              <Image
-                src={src}
-                alt={`Gallery ${index + 1}`}
-                width={600}
-                height={400}
-                className="w-full h-auto object-cover transition-transform hover:scale-105 duration-200"
+          {/* Upload Button */}
+          <div className="flex justify-center mb-6">
+            <label className="cursor-pointer bg-red-500 text-white px-6 py-2 font-semibold rounded-lg shadow hover:bg-red-600 transition">
+              📤 Upload Image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleUpload}
+                className="hidden"
               />
-            </div>
-          ))}
-        </div>
+            </label>
+          </div>
 
-        {/* Pagination */}
-        <div className="flex justify-center items-center gap-2 mt-8">
-          <button
-            onClick={() => setPage(p => Math.max(p - 1, 1))}
-            className="px-3 py-1 bg-white border rounded shadow hover:bg-gray-100"
-          >
-            ←
-          </button>
-          {[...Array(totalPages)].map((_, i) => (
+          {/* Masonry Layout */}
+          <div className="columns-2 sm:columns-3 gap-3 max-w-6xl mx-auto space-y-3 px-2">
+            {currentImages.map((src, index) => (
+              <div
+                key={index}
+                className="overflow-hidden rounded-lg cursor-pointer break-inside-avoid"
+                onClick={() => setLightboxImg(src)}
+              >
+                <Image
+                  src={src}
+                  alt={`Gallery ${index + 1}`}
+                  width={600}
+                  height={400}
+                  className="w-full h-auto object-cover transition-transform hover:scale-105 duration-200"
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex justify-center items-center gap-2 mt-8">
             <button
-              key={i}
-              onClick={() => setPage(i + 1)}
-              className={`w-8 h-8 rounded-full text-sm font-bold ${
-                page === i + 1 ? 'bg-red-500 text-white' : 'bg-white'
-              } shadow hover:bg-gray-100`}
+              onClick={() => setPage(p => Math.max(p - 1, 1))}
+              className="px-3 py-1 bg-white border rounded shadow hover:bg-gray-100"
             >
-              {i + 1}
+              ←
             </button>
-          ))}
-          <button
-            onClick={() => setPage(p => Math.min(p + 1, totalPages))}
-            className="px-3 py-1 bg-white border rounded shadow hover:bg-gray-100"
-          >
-            →
-          </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i + 1)}
+                className={`w-8 h-8 rounded-full text-sm font-bold ${
+                  page === i + 1 ? 'bg-red-500 text-white' : 'bg-white'
+                } shadow hover:bg-gray-100`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+              className="px-3 py-1 bg-white border rounded shadow hover:bg-gray-100"
+            >
+              →
+            </button>
+          </div>
         </div>
       </div>
 
