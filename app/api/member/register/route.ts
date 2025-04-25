@@ -1,10 +1,12 @@
-import connectMongoDB from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct for named export
+
 import PendingMember from "@/models/pendingMember";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
+
     const body = await req.json();
     console.log("📦 Incoming Member Registration Body:", body);
 
