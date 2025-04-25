@@ -1,125 +1,79 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-
-interface Member {
-  _id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  profileImage: string;
-  dob: string;
-  gender: string;
-  address: string;
-  emergencyContactName: string;
-  emergencyContactPhone: string;
-  currentWeight: string;
-  goalWeight: string;
-  height: string;
-  bmi: string;
-  membershipType: string;
-  paymentMethod: string;
-  preferredWorkoutTime: string;
-}
+import { useEffect, useState } from 'react';
 
 const MemberProfilePage = () => {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [memberData, setMemberData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchMemberData = async () => {
       try {
-        const res = await fetch('/api/member/getApproved');
+        const email = localStorage.getItem("userEmail");
+        if (!email) throw new Error("No email found in localStorage");
 
-        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+        const res = await fetch(`/api/member/getByEmail?email=${email}`);
         const data = await res.json();
-        setMembers(data.data);
-      } catch (err) {
-        console.error("Error fetching members:", err);
-        setError("Could not load member data.");
+
+        if (!res.ok) throw new Error(data.message || 'Failed to fetch member');
+
+        setMemberData(data.data);
+      } catch (err: any) {
+        console.error("Error fetching member profile:", err);
+        setError(err.message || 'Unknown error');
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchMembers();
+    fetchMemberData();
   }, []);
 
+  if (loading) return <p>Loading your profile...</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
+
   return (
-    <div className="bg-black min-h-screen px-6 py-10 font-sans text-white">
-      <h2 className="text-3xl font-bold text-center mb-8 tracking-wide">
-        <span className="text-white">FitSyncPro</span>{' '}
-        <span className="text-red-600">- Members</span>
-      </h2>
+    <div className="p-6 max-w-3xl mx-auto bg-white rounded shadow">
+      <h2 className="text-2xl font-bold mb-6 text-center">Member Profile</h2>
 
-      {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-10">
-        {members.map((member) => (
-          <div key={member._id} className="rounded-xl bg-white text-black shadow-lg p-5 hover:shadow-2xl transition">
-            <div className="relative mb-4">
-              <img
-                src={member.profileImage || "/placeholder.jpg"}
-                alt={member.fullName}
-                className="rounded-xl w-full h-56 object-cover"
-              />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900">{member.fullName}</h3>
-            <p className="text-sm text-gray-700">{member.email}</p>
-            <p className="text-sm text-gray-700 mb-2">{member.phone}</p>
-            <button
-              onClick={() => setSelectedMember(member)}
-              className="mt-4 text-sm text-red-600 hover:underline font-medium"
-            >
-              See more
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {selectedMember && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 px-4">
-          <div className="bg-white text-black p-6 rounded-2xl max-w-4xl w-full relative max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setSelectedMember(null)}
-              className="absolute top-3 right-4 text-red-600 hover:text-black text-2xl font-bold"
-            >
-              ×
-            </button>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <img
-                  src={selectedMember.profileImage || "/placeholder.jpg"}
-                  alt={selectedMember.fullName}
-                  className="w-full h-64 object-cover rounded-xl mb-4"
-                />
-                <h3 className="text-2xl font-bold">{selectedMember.fullName}</h3>
-                <p className="text-gray-600">{selectedMember.email}</p>
-                <p className="text-gray-600">{selectedMember.phone}</p>
-                <p className="text-sm text-gray-600 mt-2">DOB: {selectedMember.dob}</p>
-                <p className="text-sm text-gray-600">Gender: {selectedMember.gender}</p>
-                <p className="text-sm text-gray-600">Address: {selectedMember.address}</p>
-              </div>
-
-              <div className="space-y-3">
-                <h4 className="text-xl font-bold mb-1">Fitness Info</h4>
-                <p>Current Weight: <span className="font-medium">{selectedMember.currentWeight} kg</span></p>
-                <p>Goal Weight: <span className="font-medium">{selectedMember.goalWeight} kg</span></p>
-                <p>Height: <span className="font-medium">{selectedMember.height} cm</span></p>
-                <p>BMI: <span className="font-medium">{selectedMember.bmi}</span></p>
-
-                <h4 className="text-xl font-bold mt-4 mb-1">Membership</h4>
-                <p>Type: <span className="font-medium">{selectedMember.membershipType}</span></p>
-                <p>Preferred Time: <span className="font-medium">{selectedMember.preferredWorkoutTime}</span></p>
-                <p>Payment Method: <span className="font-medium">{selectedMember.paymentMethod}</span></p>
-
-                <h4 className="text-xl font-bold mt-4 mb-1">Emergency Contact</h4>
-                <p>{selectedMember.emergencyContactName} - {selectedMember.emergencyContactPhone}</p>
-              </div>
-            </div>
-          </div>
+      {memberData?.image && (
+        <div className="flex justify-center mb-4">
+          <img src={memberData.image} alt="Profile" className="w-32 h-32 rounded-full object-cover" />
         </div>
       )}
+
+      <div className="space-y-3">
+        <p><strong>First Name:</strong> {memberData?.firstName}</p>
+        <p><strong>Last Name:</strong> {memberData?.lastName}</p>
+        <p><strong>Email:</strong> {memberData?.email}</p>
+        <p><strong>Phone:</strong> {memberData.contactNumber}</p>
+
+        <p><strong>Gender:</strong> {memberData?.gender}</p>
+        <p><strong>Date of Birth:</strong> {memberData?.dob}</p>
+        <p><strong>Address:</strong> {memberData?.address}</p>
+
+        <hr className="my-4" />
+
+        <h3 className="font-semibold text-lg">Emergency Contact</h3>
+        <p><strong>Name:</strong> {memberData?.emergencyContact?.name}</p>
+        <p><strong>Phone:</strong> {memberData?.emergencyContact?.phone}</p>
+        <p><strong>Relationship:</strong> {memberData?.emergencyContact?.relationship}</p>
+
+        <hr className="my-4" />
+
+        <h3 className="font-semibold text-lg">Membership Info</h3>
+        <p><strong>Plan:</strong> {memberData?.membershipInfo?.plan}</p>
+        <p><strong>Start Date:</strong> {memberData?.membershipInfo?.startDate?.slice(0, 10)}</p>
+
+        <hr className="my-4" />
+
+        <h3 className="font-semibold text-lg">Fitness Info</h3>
+        <p><strong>Height:</strong> {memberData?.height} cm</p>
+        <p><strong>Current Weight:</strong> {memberData?.currentWeight} kg</p>
+        <p><strong>Goal Weight:</strong> {memberData?.goalWeight} kg</p>
+        <p><strong>BMI:</strong> {memberData?.bmi}</p>
+      </div>
     </div>
   );
 };
