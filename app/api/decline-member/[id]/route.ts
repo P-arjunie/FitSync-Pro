@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectMongoDB from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct for named export
+
 import PendingMember from "@/models/pendingMember";
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
+
     await PendingMember.findByIdAndDelete(params.id);
     return NextResponse.json({ message: "Member declined and deleted" });
   } catch (error) {

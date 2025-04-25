@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import connectMongoDB from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct for named export
+
 import Trainer from "@/models/Trainer";
 import ApprovedTrainer from "@/models/ApprovedTrainer";
 
 export async function POST(_: Request, { params }: { params: { id: string } }) {
-  await connectMongoDB();
+  await connectToDatabase();
+
   
   const trainer = await Trainer.findById(params.id);
   if (!trainer) {
