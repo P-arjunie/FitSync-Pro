@@ -91,7 +91,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
         if (data.user.role === "member") {
           window.location.href = "/lithira/MemberProfilePage";
         } else if (data.user.role === "trainer") {
-          window.location.href = "/sathya/trainerDetails";
+          window.location.href = "/lithira/TrainerProfilePage";
         } else {
           alert("Unknown user role.");
         }
