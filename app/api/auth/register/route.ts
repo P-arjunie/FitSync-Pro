@@ -1,11 +1,14 @@
+// route.ts
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import User from "@/models/User";
-import connectMongoDB from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct named import
 
 export async function POST(req: Request) {
   try {
-    await connectMongoDB();
+    console.log("📥 Incoming registration request...");
+    await connectToDatabase(); // ✅ updated function call
+    console.log("✅ Connected to MongoDB");
 
     const { name, email, password, role, profileImage } = await req.json();
 
@@ -25,7 +28,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "User registered successfully" }, { status: 201 });
 
   } catch (error) {
+    console.error("❌ Error during registration:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-

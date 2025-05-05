@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, models } from "mongoose";
 
 export interface IUser extends Document {
   name: string;
@@ -14,13 +14,12 @@ const UserSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ["member", "trainer"], required: true },
-    profileImage: {
-      type: String,
-      required: false,
-    },
-    
+    profileImage: { type: String },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+// ✅ This avoids re-compiling the model on hot reload
+const User = models.User || mongoose.model<IUser>("User", UserSchema);
+
+export default User;
