@@ -3,7 +3,7 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import AnalyticsDashboard from "./components/AnalyticsDashboard"; // Default import
+import AnalyticsDashboard from "../../Components/analytics/AnalyticsDashboard"; // Default import
 
 const AnalyticsPage: React.FC = () => {
   const [bookingsData, setBookingsData] = useState<number[]>([]);
