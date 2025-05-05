@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import connectMongoDB from "@/lib/mongodb";
+import {connectToDatabase} from "../../../lib/mongodb";
 import Trainer from "@/models/Trainer";
 
 export async function PUT(req) {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
     const body = await req.json();
     console.log("Incoming PUT payload:", body); // <-- DEBUG
 
