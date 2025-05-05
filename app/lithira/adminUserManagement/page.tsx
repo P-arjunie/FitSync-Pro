@@ -1,13 +1,36 @@
-"use client";
-import { useEffect, useState } from "react";
-import axios from "axios";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/Components/ui/table';
+import { Button } from '@/Components/ui/button';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from '@/Components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@/Components/ui/tooltip';
 
 interface Member {
   _id: string;
   firstName: string;
   lastName: string;
   email: string;
-  dateOfBirth: string;
+  dob: string;
   gender: string;
   address: string;
   bmi: number;
@@ -19,8 +42,10 @@ interface Member {
     phone: string;
     relationship: string;
   };
-  membershipType: string;
-  preferredDate: string;
+  membershipInfo: {
+    paymentPlan: string;
+    startDate: string;
+  };
 }
 
 interface Trainer {
@@ -28,154 +53,183 @@ interface Trainer {
   firstName: string;
   lastName: string;
   email: string;
-  dateOfBirth: string;
+  dob: string;
   gender: string;
   specialization: string;
-  experience: number;
-  preferredHours: string;
+  yearsOfExperience: string;
+  preferredTrainingHours: string;
   certifications: string[];
   pricingPlan: string;
-  contactNumber: string;
+  phone: string;
   availability: string;
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
+  emergencyName: string;
+  emergencyPhone: string;
+  relationship: string;
 }
 
-export default function AdminUserManagementPage() {
+export default function AdminUserManagement() {
   const [members, setMembers] = useState<Member[]>([]);
   const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [memberRes, trainerRes] = await Promise.all([
-          axios.get("/api/admin/members"),
-          axios.get("/api/admin/trainers"),
+          axios.get('/api/admin/members'),
+          axios.get('/api/admin/trainers'),
         ]);
         setMembers(memberRes.data);
         setTrainers(trainerRes.data);
       } catch (error) {
-        console.error("Error loading user data:", error);
+        console.error('Error loading user data:', error);
       }
     };
 
     fetchData();
   }, []);
 
+  const handleViewDetails = (id: string, role: 'member' | 'trainer') => {
+    const basePath = role === 'member' ? '/lithira/memberdetails' : '/lithira/trainerdetails';
+    router.push(`${basePath}?id=${id}`);
+  };
+
   return (
-    <div className="p-6 space-y-12">
-      {/* Member Section */}
-      <section>
-        <h2 className="text-2xl font-bold text-red-600 mb-4">Member</h2>
-        <div className="overflow-auto">
-          <table className="w-full border border-gray-300 text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Email</th>
-                <th>DOB</th>
-                <th>Gender</th>
-                <th>Address</th>
-                <th>BMI</th>
-                <th>Phone</th>
-                <th>Weight</th>
-                <th>Height</th>
-                <th>Emergency Name</th>
-                <th>Emergency No</th>
-                <th>Relationship</th>
-                <th>Membership</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => (
-                <tr key={m._id} className="text-center border-b">
-                  <td>{m.firstName}</td>
-                  <td>{m.lastName}</td>
-                  <td>{m.email}</td>
-                  <td>{m.dateOfBirth}</td>
-                  <td>{m.gender}</td>
-                  <td>{m.address}</td>
-                  <td>{m.bmi}</td>
-                  <td>{m.contactNumber}</td>
-                  <td>{m.currentWeight}</td>
-                  <td>{m.height}</td>
-                  <td>{m.emergencyContact?.name || "—"}</td>
-                  <td>{m.emergencyContact?.phone || "—"}</td>
-                  <td>{m.emergencyContact?.relationship || "—"}</td>
-                  <td>{m.membershipType}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <TooltipProvider>
+      <div className="p-6 space-y-6">
+        <h1 className="text-2xl font-bold">User Management</h1>
+        <Tabs defaultValue="members" className="w-full">
+          <TabsList>
+            <TabsTrigger value="members">Members</TabsTrigger>
+            <TabsTrigger value="trainers">Trainers</TabsTrigger>
+          </TabsList>
 
-          <div className="flex gap-4 mt-4">
-            <button className="border px-4 py-2 rounded text-sm">Add User</button>
-            <button className="border px-4 py-2 rounded text-sm">Edit User</button>
-            <button className="border px-4 py-2 rounded text-sm">Suspend User</button>
-            <button className="border px-4 py-2 rounded text-sm">Remove User</button>
-          </div>
-        </div>
-      </section>
+          {/* Members Table */}
+          <TabsContent value="members">
+            <div className="overflow-auto">
+              <Table className="min-w-[1600px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>DOB</TableHead>
+                    <TableHead>Gender</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead>Contact Number</TableHead>
+                    <TableHead>Height (cm)</TableHead>
+                    <TableHead>Weight (kg)</TableHead>
+                    <TableHead>BMI</TableHead>
+                    <TableHead>Payment Plan</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>Emergency Name</TableHead>
+                    <TableHead>Emergency Phone</TableHead>
+                    <TableHead>Relationship</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {members.map((member) => (
+                    <TableRow key={member._id}>
+                      <TableCell>
+                        <Button variant="link" onClick={() => handleViewDetails(member._id, 'member')}>
+                          {member.firstName} {member.lastName}
+                        </Button>
+                      </TableCell>
+                      <TableCell>{member.email}</TableCell>
+                      <TableCell>{member.dob}</TableCell>
+                      <TableCell>{member.gender}</TableCell>
+                      <TableCell>{member.address}</TableCell>
+                      <TableCell>{member.contactNumber}</TableCell>
+                      <TableCell>{member.height}</TableCell>
+                      <TableCell>{member.currentWeight}</TableCell>
+                      <TableCell>{member.bmi}</TableCell>
+                      <TableCell>{member.membershipInfo?.paymentPlan}</TableCell>
+                      <TableCell>{member.membershipInfo?.startDate}</TableCell>
+                      <TableCell>{member.emergencyContact?.name}</TableCell>
+                      <TableCell>{member.emergencyContact?.phone}</TableCell>
+                      <TableCell>{member.emergencyContact?.relationship}</TableCell>
+                      <TableCell>
+                        <Button variant="outline" onClick={() => handleViewDetails(member._id, 'member')}>
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
 
-      {/* Trainer Section */}
-      <section>
-        <h2 className="text-2xl font-bold text-red-600 mb-4">Trainer</h2>
-        <div className="overflow-auto">
-          <table className="w-full border border-gray-300 text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Email</th>
-                <th>DOB</th>
-                <th>Gender</th>
-                <th>Specialization</th>
-                <th>Experience</th>
-                <th>Preferred Hours</th>
-                <th>Certifications</th>
-                <th>Pricing</th>
-                <th>Contact</th>
-                <th>Availability</th>
-                <th>Emergency Name</th>
-                <th>Emergency No</th>
-                <th>Relationship</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trainers.map((t) => (
-                <tr key={t._id} className="text-center border-b">
-                  <td>{t.firstName}</td>
-                  <td>{t.lastName}</td>
-                  <td>{t.email}</td>
-                  <td>{t.dateOfBirth}</td>
-                  <td>{t.gender}</td>
-                  <td>{t.specialization}</td>
-                  <td>{t.experience}</td>
-                  <td>{t.preferredHours}</td>
-                  <td>{t.certifications?.join(", ")}</td>
-                  <td>{t.pricingPlan}</td>
-                  <td>{t.contactNumber}</td>
-                  <td>{t.availability}</td>
-                  <td>{t.emergencyContact?.name || "—"}</td>
-                  <td>{t.emergencyContact?.phone || "—"}</td>
-                  <td>{t.emergencyContact?.relationship || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="flex gap-4 mt-4">
-            <button className="border px-4 py-2 rounded text-sm">Add User</button>
-            <button className="border px-4 py-2 rounded text-sm">Edit User</button>
-            <button className="border px-4 py-2 rounded text-sm">Suspend User</button>
-            <button className="border px-4 py-2 rounded text-sm">Remove User</button>
-          </div>
-        </div>
-      </section>
-    </div>
+          {/* Trainers Table */}
+          <TabsContent value="trainers">
+            <div className="overflow-auto">
+              <Table className="min-w-[1800px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>DOB</TableHead>
+                    <TableHead>Gender</TableHead>
+                    <TableHead>Specialization</TableHead>
+                    <TableHead>Years of Experience</TableHead>
+                    <TableHead>Preferred Hours</TableHead>
+                    <TableHead>Certifications</TableHead>
+                    <TableHead>Pricing</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Availability</TableHead>
+                    <TableHead>Emergency Name</TableHead>
+                    <TableHead>Emergency Phone</TableHead>
+                    <TableHead>Relationship</TableHead>
+                    <TableHead>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {trainers.map((trainer) => (
+                    <TableRow key={trainer._id}>
+                      <TableCell>
+                        <Button variant="link" onClick={() => handleViewDetails(trainer._id, 'trainer')}>
+                          {trainer.firstName} {trainer.lastName}
+                        </Button>
+                      </TableCell>
+                      <TableCell>{trainer.email}</TableCell>
+                      <TableCell>{trainer.dob}</TableCell>
+                      <TableCell>{trainer.gender}</TableCell>
+                      <TableCell>{trainer.specialization}</TableCell>
+                      <TableCell>{trainer.yearsOfExperience}</TableCell>
+                      <TableCell>{trainer.preferredTrainingHours}</TableCell>
+                      <TableCell>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="underline cursor-help">
+                              {trainer.certifications?.length || 0} certs
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {trainer.certifications?.map((c, i) => (
+                              <div key={i}>{c}</div>
+                            ))}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>{trainer.pricingPlan}</TableCell>
+                      <TableCell>{trainer.phone}</TableCell>
+                      <TableCell>{trainer.availability}</TableCell>
+                      <TableCell>{trainer.emergencyName}</TableCell>
+                      <TableCell>{trainer.emergencyPhone}</TableCell>
+                      <TableCell>{trainer.relationship}</TableCell>
+                      <TableCell>
+                        <Button variant="outline" onClick={() => handleViewDetails(trainer._id, 'trainer')}>
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </TooltipProvider>
   );
 }
