@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import connectMongoDB from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct for named export
+
 import PendingMember from "@/models/pendingMember";
 
 export async function GET() {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
+
     const pendingMembers = await PendingMember.find().select("firstName lastName image role");
     return NextResponse.json(pendingMembers);
   } catch (error) {
@@ -38,7 +40,8 @@ export async function POST(req: Request) {
     } = body;
     
 
-    await connectMongoDB();
+    await connectToDatabase();
+
 
     const newPendingMember = new PendingMember({
       userId,

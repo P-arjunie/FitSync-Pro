@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import connectMongoDB from "../../../lib/mongodb.js";
+import {connectToDatabase} from "../../../lib/mongodb";
 import Review from "../../../models/Review.js";
 export async function POST(req) {
   try {
@@ -10,7 +10,7 @@ export async function POST(req) {
     }
 
     // Connect to MongoDB
-    await connectMongoDB();
+    await connectToDatabase();
 
     // Create new review using Mongoose model
     const newReview = new Review({

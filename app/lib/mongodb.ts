@@ -1,29 +1,26 @@
 // lib/mongodb.ts
-import { MongoClient } from "mongodb";
+import mongoose from "mongoose";
 
-// Use non-null assertion to ensure MONGODB_URI is a string
-const uri = process.env.MONGODB_URI!;  // Force TypeScript to treat it as a string
+const MONGODB_URI = process.env.MONGODB_URI!;
 
-if (!uri) {
-  throw new Error("MONGODB_URI is not defined in the environment variables.");
+if (!MONGODB_URI) {
+  throw new Error("❌ MONGODB_URI not defined in environment variables");
 }
 
-const dbName = "your-db-name"; // Replace with your actual database name
+let isConnected = false;
 
-let cachedClient: MongoClient | null = null;
-let cachedDb: any = null;
+export const connectToDatabase = async () => {
+  if (isConnected) return;
 
-export async function connectToDatabase() {
-  if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      dbName: "fit-sync", // ✅ Replace with your actual DB name
+    });
+
+    isConnected = true;
+    console.log("✅ MongoDB connected via Mongoose");
+  } catch (error) {
+    console.error("❌ Mongoose connection error:", error);
+    throw error;
   }
-
-  const client = new MongoClient(uri);  // MongoClient expects a string URI
-  await client.connect();
-  const db = client.db(dbName);
-
-  cachedClient = client;
-  cachedDb = db;
-
-  return { client, db };
-}
+};

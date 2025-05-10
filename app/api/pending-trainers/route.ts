@@ -1,24 +1,69 @@
 import { NextResponse } from "next/server";
-import connectMongoDB from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct for named export
+
 import Trainer from "@/models/Trainer";
 
 export async function POST(req: Request) {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
 
-    const data = await req.json();
+    const body = await req.json();
 
-    // Basic validation (optional)
-    if (!data.email || !data.firstName || !data.profileImage) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
-    }
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      dob,
+      gender,
+      address,
+      specialization,
+      certifications,
+      preferredTrainingHours,
+      yearsOfExperience,
+      availability,
+      pricingPlan,
+      emergencyName,
+      emergencyPhone,
+      relationship,
+      startDate,
+      termsAccepted,
+      profileImage,
+      biography,
+      skills,
+    } = body;
 
-    const newTrainer = new Trainer(data);
-    await newTrainer.save();
+    const newTrainer = await Trainer.create({
+      firstName,
+      lastName,
+      email,
+      phone,
+      dob,
+      gender,
+      address,
+      specialization,
+      certifications: Array.isArray(certifications) ? certifications : [certifications],
+      preferredTrainingHours,
+      yearsOfExperience,
+      availability,
+      pricingPlan,
+      emergencyName,
+      emergencyPhone,
+      relationship,
+      startDate: startDate || null,
+      termsAccepted,
+      profileImage,
+      biography: biography || "",
+      skills: skills || [],
+      status: "pending",
+    });
 
-    return NextResponse.json({ message: "Trainer registration submitted successfully" }, { status: 201 });
+    return NextResponse.json({ success: true, trainer: newTrainer });
   } catch (error) {
-    console.error("Trainer submission error:", error);
-    return NextResponse.json({ message: "Server error" }, { status: 500 });
+    console.error("Trainer registration error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

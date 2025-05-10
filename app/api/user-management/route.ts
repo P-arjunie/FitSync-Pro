@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import connectMongoDB from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct for named export
+
 import Trainer from "@/models/Trainer";
 
 export async function GET() {
-  await connectMongoDB();
+  await connectToDatabase();
+
   const trainers = await Trainer.find();
   return NextResponse.json(trainers);
 }

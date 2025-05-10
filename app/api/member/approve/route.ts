@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectMongoDB from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct for named export
+
 import PendingMember from "@/models/pendingMember";
 import Member from "@/models/member";
 
 export async function POST(req: NextRequest) {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
+
     const { memberId } = await req.json();
 
     const pendingMember = await PendingMember.findById(memberId);

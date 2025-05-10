@@ -69,19 +69,32 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       alert("Please enter email and password to login.");
       return;
     }
-
+  
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
       });
-
+  
       const data = await res.json();
-
+  
       if (res.ok) {
         alert(data.message);
-        // TODO: Replace with actual redirect after login
+  
+        // Store user info in localStorage
+        localStorage.setItem("userRole", data.user.role);
+        localStorage.setItem("userEmail", data.user.email);
+        localStorage.setItem("userName", data.user.name);
+  
+        // Redirect based on role
+        if (data.user.role === "member") {
+          window.location.href = "/lithira/MemberProfilePage";
+        } else if (data.user.role === "trainer") {
+          window.location.href = "/lithira/TrainerProfilePage";
+        } else {
+          alert("Unknown user role.");
+        }
       } else {
         alert(data.error);
       }
@@ -89,6 +102,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       alert("Login failed");
     }
   };
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

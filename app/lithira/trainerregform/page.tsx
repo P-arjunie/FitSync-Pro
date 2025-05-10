@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FaCamera } from "react-icons/fa";
+
+interface Skill {
+  name: string;
+  level: number;
+}
 
 interface TrainerFormData {
   firstName: string;
@@ -12,7 +18,7 @@ interface TrainerFormData {
   gender: string;
   address: string;
   specialization: string;
-  certifications: string;
+  certifications: string[];
   preferredTrainingHours: string;
   yearsOfExperience: string;
   availability: string;
@@ -22,33 +28,14 @@ interface TrainerFormData {
   relationship: string;
   startDate: string;
   termsAccepted: boolean;
+  biography: string;
+  skills: Skill[];
 }
 
-const TrainerRegistrationForm: React.FC = () => {
+export default function TrainerRegistrationForm() {
+  const router = useRouter();
   const [profileImage, setProfileImage] = useState<string | null>(null);
-
-  // Load image from localStorage only once on mount if no upload yet
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const imageFromAuth = localStorage.getItem("trainerProfileImage");
-      if (imageFromAuth) {
-        setProfileImage(imageFromAuth);
-      }
-    }
-  }, []);
-  
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
+  const [newSkill, setNewSkill] = useState<Skill>({ name: "", level: 1 });
   const [formData, setFormData] = useState<TrainerFormData>({
     firstName: "",
     lastName: "",
@@ -58,7 +45,7 @@ const TrainerRegistrationForm: React.FC = () => {
     gender: "",
     address: "",
     specialization: "",
-    certifications: "",
+    certifications: [""],
     preferredTrainingHours: "",
     yearsOfExperience: "",
     availability: "",
@@ -68,16 +55,40 @@ const TrainerRegistrationForm: React.FC = () => {
     relationship: "",
     startDate: "",
     termsAccepted: false,
+    biography: "",
+    skills: [],
   });
 
+  useEffect(() => {
+    const storedImage = localStorage.getItem("trainerProfileImage");
+    if (storedImage) setProfileImage(storedImage);
+  }, []);
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value, type, checked } = e.target as HTMLInputElement;
+    const target = e.target;
+    const { name, type, value } = target;
+
+    const newValue =
+      type === "checkbox" && target instanceof HTMLInputElement
+        ? target.checked
+        : value;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: newValue,
     }));
+  };
+
+  const handleAddSkill = () => {
+    if (newSkill.name.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        skills: [...prev.skills, newSkill],
+      }));
+      setNewSkill({ name: "", level: 1 });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,13 +114,13 @@ const TrainerRegistrationForm: React.FC = () => {
 
       if (res.ok) {
         alert("Trainer registration submitted for approval.");
-        // Reset form or redirect as needed
+        router.push("/thank-you");
       } else {
         const err = await res.json();
         alert("Submission failed: " + err.message);
       }
-    } catch (error) {
-      console.error("Submission error:", error);
+    } catch (err) {
+      console.error("Submission error:", err);
       alert("Something went wrong. Please try again later.");
     }
   };
@@ -120,37 +131,41 @@ const TrainerRegistrationForm: React.FC = () => {
         onSubmit={handleSubmit}
         className="w-[800px] bg-gray-100 p-6 rounded-lg shadow-xl relative"
       >
-        {/* Profile Image Display or Upload */}
+        {/* Profile Image Upload */}
         <div className="absolute top-6 right-6 border-4 border-red-500 rounded-full w-16 h-16 overflow-hidden cursor-pointer">
           <label className="cursor-pointer">
             {profileImage ? (
-              <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+              <img
+                src={profileImage}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
             ) : (
               <FaCamera className="text-3xl text-gray-800 mx-auto mt-3" />
             )}
-            <input
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleImageChange}
-            />
+            <input type="file" className="hidden" accept="image/*" disabled />
           </label>
         </div>
 
-        {/* Title */}
-        <h2 className="text-3xl font-bold text-center mb-2">Registration Form - Trainer</h2>
-        <p className="text-center text-sm mb-6">Join Our Team & Inspire Fitness!</p>
+        <h2 className="text-3xl font-bold text-center mb-2">
+          Registration Form - Trainer
+        </h2>
+        <p className="text-center text-sm mb-6">
+          Join Our Team & Inspire Fitness!
+        </p>
 
-        {/* Personal Information */}
+        {/* Personal Info */}
         <fieldset className="mb-6">
-          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">Personal Information</legend>
+          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">
+            Personal Information
+          </legend>
           <div className="grid grid-cols-2 gap-4">
             {[
               { label: "First Name", name: "firstName" },
               { label: "Last Name", name: "lastName" },
-              { label: "Email Address", name: "email" },
-              { label: "Phone Number", name: "phone" },
-              { label: "Date of Birth", name: "dob" },
+              { label: "Email", name: "email" },
+              { label: "Phone", name: "phone" },
+              { label: "DOB", name: "dob" },
               { label: "Address", name: "address" },
             ].map(({ label, name }) => (
               <div key={name} className="flex flex-col">
@@ -158,30 +173,27 @@ const TrainerRegistrationForm: React.FC = () => {
                 <input
                   type={name === "dob" ? "date" : "text"}
                   name={name}
-                  placeholder={`Enter ${label}`}
                   className="border border-red-500 p-2 rounded"
-                  value={formData[name as keyof TrainerFormData]}
+                  value={formData[name as keyof TrainerFormData] as string}
                   onChange={handleChange}
                   required
                 />
               </div>
             ))}
           </div>
-
-          {/* Gender */}
-          <div className="flex items-center gap-4 mt-4">
+          <div className="flex gap-4 mt-4">
             <span className="font-semibold">Gender:</span>
-            {["Male", "Female", "Other"].map((gender) => (
-              <label key={gender} className="flex items-center gap-2">
+            {["Male", "Female", "Other"].map((g) => (
+              <label key={g} className="flex items-center gap-1">
                 <input
                   type="radio"
                   name="gender"
-                  value={gender}
-                  checked={formData.gender === gender}
+                  value={g}
+                  checked={formData.gender === g}
                   onChange={handleChange}
                   required
                 />
-                <span>{gender}</span>
+                {g}
               </label>
             ))}
           </div>
@@ -189,82 +201,158 @@ const TrainerRegistrationForm: React.FC = () => {
 
         {/* Emergency Contact */}
         <fieldset className="mb-6">
-          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">Emergency Contact Information</legend>
+          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">
+            Emergency Contact
+          </legend>
           <div className="grid grid-cols-2 gap-4">
-            {[
-              { label: "Emergency Contact Name", name: "emergencyName" },
-              { label: "Emergency Contact Phone Number", name: "emergencyPhone" },
-            ].map(({ label, name }) => (
-              <div key={name} className="flex flex-col">
-                <label className="text-sm font-semibold">{label}</label>
-                <input
-                  type="text"
-                  name={name}
-                  placeholder={`Enter ${label}`}
-                  className="border border-red-500 p-2 rounded"
-                  value={formData[name as keyof TrainerFormData]}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            ))}
-            <div className="col-span-2">
-              <label className="text-sm font-semibold">Relationship</label>
-              <input
-                type="text"
-                name="relationship"
-                placeholder="Enter Relationship"
-                className="border border-red-500 p-2 rounded w-full"
-                value={formData.relationship}
-                onChange={handleChange}
-              />
-            </div>
+            <input
+              type="text"
+              name="emergencyName"
+              placeholder="Contact Name"
+              value={formData.emergencyName}
+              onChange={handleChange}
+              className="border border-red-500 p-2 rounded"
+              required
+            />
+            <input
+              type="text"
+              name="emergencyPhone"
+              placeholder="Contact Phone"
+              value={formData.emergencyPhone}
+              onChange={handleChange}
+              className="border border-red-500 p-2 rounded"
+              required
+            />
+            <input
+              type="text"
+              name="relationship"
+              placeholder="Relationship"
+              value={formData.relationship}
+              onChange={handleChange}
+              className="border border-red-500 p-2 rounded col-span-2"
+              required
+            />
           </div>
         </fieldset>
 
         {/* Professional Qualifications */}
         <fieldset className="mb-6">
-          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">Professional Qualifications</legend>
+          <legend className="text-lg font-bold border-b-4 border-red-500 mb-4">
+            Qualifications
+          </legend>
           <div className="grid grid-cols-2 gap-4">
             {[
               { label: "Specialization", name: "specialization" },
-              { label: "Years of Experience", name: "yearsOfExperience" },
-              { label: "Certifications", name: "certifications" },
+              { label: "Experience", name: "yearsOfExperience" },
               { label: "Availability", name: "availability" },
-              { label: "Preferred Training Hours", name: "preferredTrainingHours" },
+              { label: "Preferred Hours", name: "preferredTrainingHours" },
             ].map(({ label, name }) => (
               <div key={name} className="flex flex-col">
                 <label className="text-sm font-semibold">{label}</label>
                 <input
                   type="text"
                   name={name}
-                  placeholder={`Enter ${label}`}
-                  className="border border-red-500 p-2 rounded"
-                  value={formData[name as keyof TrainerFormData]}
+                  value={formData[name as keyof TrainerFormData] as string}
                   onChange={handleChange}
+                  className="border border-red-500 p-2 rounded"
                   required
                 />
               </div>
             ))}
+            <div className="flex flex-col">
+  <label className="text-sm font-semibold">Pricing Plan</label>
+  <select
+    name="pricingPlan"
+    value={formData.pricingPlan}
+    onChange={handleChange}
+    className="border border-red-500 p-2 rounded"
+    required
+  >
+    <option value="">Select a plan</option>
+    <option value="Basic">Basic - $30/month</option>
+    <option value="Standard">Standard - $50/month</option>
+    <option value="Premium">Premium - $80/month</option>
+  </select>
+</div>
+
             <div className="col-span-2">
-              <label className="text-sm font-semibold">Pricing Plan</label>
-              <select
-                name="pricingPlan"
+              <label className="text-sm font-semibold">
+                Certifications (comma separated)
+              </label>
+              <input
+                type="text"
+                name="certifications"
+                value={formData.certifications.join(", ")}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    certifications: e.target.value
+                      .split(",")
+                      .map((c) => c.trim()),
+                  }))
+                }
                 className="border border-red-500 p-2 rounded w-full"
-                value={formData.pricingPlan}
+                required
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="text-sm font-semibold">Biography</label>
+              <textarea
+                name="biography"
+                className="border border-red-500 p-2 rounded w-full h-24"
+                value={formData.biography}
                 onChange={handleChange}
                 required
-              >
-                <option value="">Select a Plan</option>
-                <option value="hourly">Hourly Rate</option>
-                <option value="session">Per Session</option>
-                <option value="monthly">Monthly Package</option>
-              </select>
+              />
+            </div>
+
+            {/* Skills */}
+            <div className="col-span-2">
+              <label className="text-sm font-semibold">Skills</label>
+              <div className="flex gap-4 mb-2">
+                <input
+                  type="text"
+                  placeholder="Skill name"
+                  value={newSkill.name}
+                  onChange={(e) =>
+                    setNewSkill({ ...newSkill, name: e.target.value })
+                  }
+                  className="border border-red-500 p-2 rounded w-1/2"
+                />
+                <input
+                  type="number"
+                  placeholder="Level (1-5)"
+                  min={1}
+                  max={5}
+                  value={newSkill.level}
+                  onChange={(e) =>
+                    setNewSkill({
+                      ...newSkill,
+                      level: parseInt(e.target.value),
+                    })
+                  }
+                  className="border border-red-500 p-2 rounded w-1/4"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddSkill}
+                  className="bg-red-600 text-white px-4 rounded hover:bg-red-700"
+                >
+                  Add
+                </button>
+              </div>
+              <ul className="text-sm list-disc list-inside">
+                {formData.skills.map((skill, idx) => (
+                  <li key={idx}>
+                    {skill.name} (Level {skill.level})
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </fieldset>
 
-        {/* Terms */}
+        {/* Terms and Submit */}
         <div className="flex items-center my-4">
           <input
             type="checkbox"
@@ -283,16 +371,13 @@ const TrainerRegistrationForm: React.FC = () => {
           </label>
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
-          className="w-full bg-red-600 text-white font-semibold p-3 rounded-lg hover:bg-red-700 transition"
+          className="w-full bg-red-600 text-white font-semibold p-3 rounded-lg hover:bg-red-700"
         >
           Submit
         </button>
       </form>
     </div>
   );
-};
-
-export default TrainerRegistrationForm;
+}
