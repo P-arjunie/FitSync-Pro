@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct for named export
+import { connectToDatabase } from "../../lib/mongodb"; // ✅ Correct for named export
 
 import Trainer from "@/models/Trainer";
 
