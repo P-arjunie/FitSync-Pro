@@ -1,6 +1,7 @@
 // app/api/sessions/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import connectMongoDB from '@/lib/mongodb';
+import {connectToDatabase} from "../../../lib/mongodb";
+
 import Session from '@/models/Session';
 
 export async function GET(
@@ -8,7 +9,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
     const session = await Session.findById(params.id);
     
     if (!session) {
@@ -34,7 +35,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    await connectMongoDB();
+    await connectToDatabase();
     
     // Validate the incoming data
     if (!body.title || !body.trainerName || !body.start || !body.end || !body.location || !body.maxParticipants) {
@@ -117,7 +118,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
     const deletedSession = await Session.findByIdAndDelete(params.id);
     
     if (!deletedSession) {
