@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
-import connectDB from "../../lib/mongodb";
+import { connectToDatabase } from "../../lib/mongodb";
 import Product from "../../models/product";
 
 // Handle GET requests to fetch products
 export async function GET(request) {
-  await connectDB();
+  await connectToDatabase();
   try {
     // Fetch all products from the database
     const products = await Product.find({});
@@ -17,7 +18,7 @@ export async function GET(request) {
 
 // Handle POST requests to add a new product
 export async function POST(req) {
-  await connectDB();
+  await connectToDatabase();
 
   try {
     const product = await req.json();
