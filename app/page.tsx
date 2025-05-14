@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import './Components/HomePage.css';
 import Navbar from './Components/Navbar';
 import Footer1 from './Components/Footer_01';
@@ -6,9 +8,44 @@ import StripeProvider from "./Components/StripeProvider";
 import CheckoutForm from "./Components/CheckoutForm";
 
 const HomePage: React.FC = () => {
+
+    // State hooks
+    const [weight, setWeight] = useState('');
+    const [height, setHeight] = useState('');
+    const [bmi, setBmi] = useState<number | null>(null);
+    const [message, setMessage] = useState('');
+
+      // BMI Calculation function
+  const calculateBMI = () => {
+    if (!weight || !height) {
+      setMessage("Please enter both weight and height");
+      return;
+    }
+
+    const weightNum = parseFloat(weight);
+    const heightNum = parseFloat(height) / 100;
+
+    if (isNaN(weightNum) || isNaN(heightNum) || heightNum === 0) {
+      setMessage("Invalid input");
+      return;
+    }
+
+    const bmiValue = weightNum / (heightNum * heightNum);
+    setBmi(parseFloat(bmiValue.toFixed(2)));
+
+    if (bmiValue < 18.5) {
+      setMessage("Underweight");
+    } else if (bmiValue < 24.9) {
+      setMessage("Normal weight");
+    } else if (bmiValue < 29.9) {
+      setMessage("Overweight");
+    } else {
+      setMessage("Obese");
+    }
+  };
+
   return (
 
-    
     <div className = "pagecontainer">
       <Navbar />
       
@@ -17,11 +54,9 @@ const HomePage: React.FC = () => {
         {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-text">
-            <h2 className="hero-title2">MAKE YOUR BODY</h2>
-            <h2 className="hero-title2">STRONG WITH </h2>
-            <h1 className="hero-title">FITSYNC PRO</h1>
+            <h1 className="hero-title">MAKE YOUR BODY STRONG WITH FITSYNC PRO</h1>
             <p className="hero-description">
-            "At FitSync Pro, we provide personalized fitness programs to help you build strength, improve endurance, and reach your goals faster. Join us today and take your workout to the next level!"
+              Your all-in-one fitness platform. Book trainers, track workouts, and stay on top of your fitness goals all in one place. Start your journey to a healthier you with FitSync Pro today!
             </p>
             <div className="hero-button-container">
               <button className="button">Log In</button>
@@ -35,27 +70,23 @@ const HomePage: React.FC = () => {
 
         {/* Progression, Workout, Nutrition Section */}
         <section className="three-card-section">
-          <div className="card-item">
-            <img src="/progressionicon.png" alt="Progression" />
-            <h3 className="card-title">Progression</h3>
-            <p className="card-text">Track your progress and stay motivated to reach your fitness goals faster.</p>
-            <button className="card-button">Learn More</button>
+          <div className="progression-card">
+            <img src="/progressionicon.png" alt="Progression" className="icon-image" />
+            <p className="card-title">Progression</p>
+            <p className="card-text">Tracking your progress is key to reaching your fitness goals. Whether you're building strength, losing weight, or improving endurance, seeing measurable progress keeps you motivated and focused on your journey. Celebrate each milestone along the way!</p>
           </div>
-
-          <div className="card-item">
-            <img src="/workouticon.png" alt="Workout" />
-            <h3 className="card-title">Workout</h3>
-            <p className="card-text">Custom workouts designed to help you improve strength, endurance, and more.</p>
-            <button className="card-button">Get Started</button>
+          <div className="workout-card">
+            <img src="/workouticon.png" alt="Workout" className="icon-image" />
+            <p className="card-title">Workout</p>
+            <p className="card-text">Our expertly designed workouts are tailored to meet your specific fitness level and goals. Whether you're a beginner or an advanced athlete, we provide diverse routines that target all aspects of fitness, from strength training to cardiovascular endurance.</p>
           </div>
-
-          <div className="card-item">
-            <img src="/nutritionicon.png" alt="Nutrition" />
-            <h3 className="card-title">Nutrition</h3>
-            <p className="card-text">Personalized meal plans to fuel your body and maximize your performance.</p>
-            <button className="card-button">Explore Plans</button>
+          <div className="nutrition-card">
+            <img src="/nutritionicon.png" alt="Nutrition" className="icon-image" />
+            <p className="card-title">Nutrition</p>
+            <p className="card-text">Nutrition plays a crucial role in your fitness success. We offer personalized meal plans that help you fuel your body for maximum performance. Learn how to nourish your body with the right balance of protein, carbohydrates, and healthy fats to support muscle growth and recovery.</p>
+            <button className="read-more-button">Read More</button>
           </div>
-      </section>
+        </section>
 
         {/* Who We Are Section */}
         <section className="who-we-are">
@@ -64,8 +95,9 @@ const HomePage: React.FC = () => {
             <h1 className="red-titles">WHO WE ARE</h1>
             <h2 className="section-title">Take Your Health And Body To Next Level</h2>
             <p className="description-text">
-        FitSyncPro, an unknown printer, took a galley of type and scrambled it to make a type specimen book.
-        It has survived not only five centuries but also the leap into electronic typesetting.
+              At FitSync Pro, we combine modern technology with expert training to help you achieve your fitness goals faster.
+              With access to professional trainers, state-of-the-art equipment, and dedicated bodybuilding machines, you get 
+              everything you need for a powerful transformation. 
             </p>
           <div className="icon-section">
           <div className="icon-item">
@@ -154,24 +186,53 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* BMI Calculator Section */}
+
         <section className="bmi-calculator">
-          <h2 className="section-title">Let's Calculate Your BMI</h2>
-          <div className="bmi-form">
-            <input type="number" placeholder="Weight (kg)" className="input" />
-            <input type="number" placeholder="Height (cm)" className="input" />
-            <button className="calculate-button">Calculate</button>
+        <h2 className="bmi-heading">Let's Calculate Your BMI</h2>
+
+        <div className="bmi-form">
+          <input
+            type="number"
+            placeholder="Weight (kg)"
+            className="input"
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+          />
+          <input
+            type="number"
+            placeholder="Height (cm)"
+            className="input"
+            value={height}
+            onChange={(e) => setHeight(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <button
+            className="calculate-button"
+            onClick={calculateBMI}
+          > Calculate
+          </button>
+        </div>
+
+        {bmi !== null && (
+          <div className="bmi-result">
+          <p className="bmi-value">Your BMI is: {bmi}</p>
+          <p className="bmi-status">Status: {message}</p>
           </div>
+        )}
         </section>
 
-        {/* Stripe Checkout Section */}
-        <section className="checkout-section">
+
+        {/* Stripe Checkout Section
+       <section className="checkout-section">
           <StripeProvider>
             <h1>Checkout</h1>
-            <CheckoutForm userId={''}/>
+            <CheckoutForm/>
           </StripeProvider>
-        </section>
-      </main>
+        </section>   */}
 
+      </main>
       <Footer1 />
     </div>
   );

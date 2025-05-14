@@ -15,6 +15,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
 
+  // Fetch user data when the component loads
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -22,12 +23,13 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
         const data = await res.json();
         setUserData(data);
       } catch {
-        setUserData(null); // fallback to dummy if fetch fails
+        setUserData(null); // Fallback to dummy data if fetching user data fails
       }
     };
     fetchUserData();
   }, [userId]);
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
@@ -48,7 +50,19 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
       const res = await fetch("/api/payment_intents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paymentMethodId: paymentMethod.id }),
+        body: JSON.stringify({
+          paymentMethodId: paymentMethod.id,
+          userId,
+          firstName: userData?.firstName || "", // Use fetched data or fallback to dummy
+          lastName: userData?.lastName || "", // Use fetched data or fallback to dummy
+          email: userData?.email || "", // Use fetched data or fallback to dummy
+          billingAddress: {
+            street: userData?.billingAddress?.street || "", // Ensure these values are provided
+            city: userData?.billingAddress?.city || "",
+            country: userData?.billingAddress?.country || "",
+            zip: userData?.billingAddress?.zip || "",
+          },
+        }),
       });
 
       const data = await res.json();
@@ -70,6 +84,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
     }
   };
 
+  // Dummy data fallback
   const dummy = {
     firstName: "John",
     lastName: "Doe",
@@ -83,13 +98,18 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
     },
   };
 
+  // Combine dummy data and fetched data
   const info = {
-    ...dummy,
-    ...userData,
+    firstName: userData?.firstName || dummy.firstName,
+    lastName: userData?.lastName || dummy.lastName,
+    email: userData?.email || dummy.email,
+    company: userData?.company || dummy.company,
     billingAddress: {
-      ...dummy.billingAddress,
-      ...(userData?.billingAddress || {})
-    }
+      street: userData?.billingAddress?.street || dummy.billingAddress.street,
+      city: userData?.billingAddress?.city || dummy.billingAddress.city,
+      country: userData?.billingAddress?.country || dummy.billingAddress.country,
+      zip: userData?.billingAddress?.zip || dummy.billingAddress.zip,
+    },
   };
 
   return (
@@ -97,18 +117,86 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
       <form onSubmit={handleSubmit} className={styles.container}>
         <h2 className={styles.title}>Your basic information</h2>
         <div className={styles.grid}>
-          <input className={styles.input} type="text" value={info.firstName} readOnly />
-          <input className={styles.input} type="text" value={info.lastName} readOnly />
-          <input className={styles.input} type="text" value={info.email} readOnly />
-          <input className={styles.input} type="text" value={info.company} readOnly />
+          <input
+            className={styles.input}
+            type="text"
+            value={info.firstName}
+            onChange={(e) => setUserData({ ...userData, firstName: e.target.value })}
+            placeholder="First Name"
+          />
+          <input
+            className={styles.input}
+            type="text"
+            value={info.lastName}
+            onChange={(e) => setUserData({ ...userData, lastName: e.target.value })}
+            placeholder="Last Name"
+          />
+          <input
+            className={styles.input}
+            type="email"
+            value={info.email}
+            onChange={(e) => setUserData({ ...userData, email: e.target.value })}
+            placeholder="Email Address"
+          />
+          <input
+            className={styles.input}
+            type="text"
+            value={info.company}
+            onChange={(e) => setUserData({ ...userData, company: e.target.value })}
+            placeholder="Company"
+          />
         </div>
 
         <h2 className={styles.title}>Billing address</h2>
         <div className={styles.grid}>
-          <input className={styles.input} type="text" value={info.billingAddress.street} readOnly />
-          <input className={styles.input} type="text" value={info.billingAddress.city} readOnly />
-          <input className={styles.input} type="text" value={info.billingAddress.country} readOnly />
-          <input className={styles.input} type="text" value={info.billingAddress.zip} readOnly />
+          <input
+            className={styles.input}
+            type="text"
+            value={info.billingAddress.street}
+            onChange={(e) =>
+              setUserData({
+                ...userData,
+                billingAddress: { ...userData.billingAddress, street: e.target.value },
+              })
+            }
+            placeholder="Street Address"
+          />
+          <input
+            className={styles.input}
+            type="text"
+            value={info.billingAddress.city}
+            onChange={(e) =>
+              setUserData({
+                ...userData,
+                billingAddress: { ...userData.billingAddress, city: e.target.value },
+              })
+            }
+            placeholder="City"
+          />
+          <input
+            className={styles.input}
+            type="text"
+            value={info.billingAddress.country}
+            onChange={(e) =>
+              setUserData({
+                ...userData,
+                billingAddress: { ...userData.billingAddress, country: e.target.value },
+              })
+            }
+            placeholder="Country"
+          />
+          <input
+            className={styles.input}
+            type="text"
+            value={info.billingAddress.zip}
+            onChange={(e) =>
+              setUserData({
+                ...userData,
+                billingAddress: { ...userData.billingAddress, zip: e.target.value },
+              })
+            }
+            placeholder="Zip Code"
+          />
         </div>
 
         <h2 className={styles.title}>Your payment information</h2>
