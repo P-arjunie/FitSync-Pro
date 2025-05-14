@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // app/api/sessions/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import connectMongoDB from '@/lib/mongodb';
+import { connectToDatabase } from "../../lib/mongodb";
 import Session from '@/models/Session';
 
 // Cache to store sessions with timestamp
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Cache miss or expired, fetch from database
-    await connectMongoDB();
+    await connectToDatabase();
     const sessions = await Session.find({}).sort({ start: 1 });
     
     // Update cache
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for scheduling conflicts for the same trainer
-    await connectMongoDB();
+    await connectToDatabase();
     const conflictingSession = await Session.findOne({
       trainerName: body.trainerName,
       $or: [

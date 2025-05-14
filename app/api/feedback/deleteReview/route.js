@@ -1,5 +1,5 @@
 // app/api/feedback/deleteReview/route.js
-import dbConnect from '../../../lib/mongodb';
+import {connectToDatabase} from "../../../lib/mongodb";
 import Review from '../../../models/Review';
 import { NextResponse } from 'next/server';
 
@@ -13,7 +13,7 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Method not allowed' }, { status: 405 });
     }
     
-    await dbConnect();
+    await connectToDatabase();
     
     if (!reviewId) {
       return NextResponse.json({ message: 'Review ID is required' }, { status: 400 });
@@ -48,7 +48,7 @@ export async function DELETE(request) {
   const reviewId = url.searchParams.get('reviewId');
   
   try {
-    await dbConnect();
+    await connectToDatabase();
     
     if (!reviewId) {
       return NextResponse.json({ message: 'Review ID is required' }, { status: 400 });
