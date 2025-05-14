@@ -1,9 +1,9 @@
-import connectMongoDB from "@/lib/mongodb";
+import {connectToDatabase} from "../../../lib/mongodb";
 import Review from "@/models/Review";
 
 export async function GET() {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
     const reviews = await Review.find({});
     return new Response(JSON.stringify({ reviews }), { status: 200 });
   } catch (error) {
