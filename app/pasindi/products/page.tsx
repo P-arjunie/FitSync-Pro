@@ -17,7 +17,7 @@ interface Product {
   countInStock: number;
 }
 
-const Medicine = () => {
+const Products = () => {
   const [items, setItems] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -117,4 +117,4 @@ const Medicine = () => {
   );
 };
 
-export default Medicine;
+export default Products;
