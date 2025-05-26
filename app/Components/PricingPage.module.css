@@ -53,7 +53,7 @@
 .cardTitle {
   font-size: 1.8rem;
   font-weight: bold;
-  color: #333;
+  color: #ffffff;
 }
 
 .cardPrice {
@@ -89,34 +89,34 @@
 }
 
 .discountSection {
-  background-color: #ffde00;
+  background-color: #000000;
   padding: 30px;
   text-align: center;
   margin-top: 50px;
   border-radius: 10px;
+  align-items: center;
+  margin-left: 30%;
+  margin-right: 30%;
 }
 
 .discountTitle {
   font-size: 2rem;
   font-weight: bold;
-  color: #333;
+  color: #ffffff;
 }
 
 .discountText {
   font-size: 1.5rem;
   margin: 20px 0;
+  color: #ffffff;
 }
 
 .contactButton {
-  background-color: #003366;
-  color: #fff;
+  background-color: #e60000;
+  color: #ffffff;
   padding: 12px 20px;
-  font-size: 1rem;
+  font-size: 20px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-}
-
-.contactButton:hover {
-  background-color: #002244;
 }
