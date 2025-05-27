@@ -2,18 +2,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import mongoose from "mongoose";
-import Checkout from "../../models/Checkout"; // Import Checkout model
+import Checkout from "../../models/Checkout"; // Your Checkout schema
+import Order from "../../models/order"; // Needed to query orders
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
 });
 
-// Function to connect to MongoDB
 const connectToDB = async () => {
-  if (mongoose.connections[0].readyState) {
-    return; // Already connected
+  if (mongoose.connections[0].readyState === 0) {
+    await mongoose.connect(process.env.MONGODB_URI!);
   }
-  await mongoose.connect(process.env.MONGODB_URI!);
 };
 
 export async function POST(req: NextRequest) {
@@ -21,13 +20,47 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { paymentMethodId, userId } = body;
 
-    if (!paymentMethodId) {
-      return NextResponse.json({ error: "Payment method ID is required" }, { status: 400 });
+    if (!paymentMethodId || !userId) {
+      return NextResponse.json({ error: "Missing paymentMethodId or userId" }, { status: 400 });
     }
 
-    // Step 1: Create the payment intent
+    await connectToDB();
+
+    // Try to find user's most recent order
+    let latestOrder = null;
+
+// Only attempt to query DB if userId is a valid ObjectId
+if (mongoose.Types.ObjectId.isValid(userId)) {
+  latestOrder = await Order.findOne({ user: userId }).sort({ createdAt: -1 });
+}
+
+
+    // If no real order found, use dummy order fallback
+    let isDummyOrder = false;
+
+    if (!latestOrder) {
+      isDummyOrder = true;
+      latestOrder = {
+        user: userId,
+        orderItems: [
+          {
+            product: "dummy_product_id",
+            title: "Dummy Plan",
+            image: "/dummy.jpg",
+            price: 19.99,
+            quantity: 1,
+            category: "general"
+          }
+        ],
+        totalAmount: 19.99
+      };
+    }
+
+    const amount = Math.round(latestOrder.totalAmount * 100); // Convert to cents
+
+    // Step 1: Create Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: 1000, // $10.00
+      amount,
       currency: "usd",
       payment_method: paymentMethodId,
       confirmation_method: "manual",
@@ -35,8 +68,11 @@ export async function POST(req: NextRequest) {
       return_url: `${req.nextUrl.origin}/payment/complete`,
     });
 
-    // Step 2: Handle payment confirmation action (if needed)
-    if (paymentIntent.status === "requires_action" && paymentIntent.next_action?.type === "redirect_to_url") {
+    // Step 2: Handle 3D Secure or redirect if needed
+    if (
+      paymentIntent.status === "requires_action" &&
+      paymentIntent.next_action?.type === "redirect_to_url"
+    ) {
       return NextResponse.json({
         requiresAction: true,
         clientSecret: paymentIntent.client_secret,
@@ -44,38 +80,39 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Step 3: Save payment information in the database
+    // Step 3: Save payment in DB if succeeded
     if (paymentIntent.status === "succeeded") {
-      // Connect to the DB
-      await connectToDB();
-
-      // Create a new checkout entry
       const checkout = new Checkout({
-        firstName: "John", // Replace with actual user data
-        lastName: "Doe", // Replace with actual user data
-        email: "john@example.com", // Replace with actual user data
+        firstName: isDummyOrder
+          ? "Dummy"
+          : latestOrder?.orderItems?.[0]?.title || "N/A",
+        lastName: userId,
+        email: isDummyOrder ? "dummy@example.com" : "placeholder@example.com",
         company: "FitSyncPro",
-        amount: paymentIntent.amount / 100, // Convert cents to dollars
+        amount: paymentIntent.amount / 100,
         currency: paymentIntent.currency,
         paymentStatus: paymentIntent.status,
-        paymentMethodId: paymentMethodId,
+        paymentMethodId,
+        billingAddress: {
+          zip: isDummyOrder ? "00000" : "10100",
+          country: isDummyOrder ? "Nowhere" : "USA",
+          city: isDummyOrder ? "Nulltown" : "New York",
+          street: isDummyOrder ? "123 Dummy Lane" : "456 Real Street",
+        },
+        userId: userId || "dummy_user",
       });
 
-      // Save to the database
       await checkout.save();
 
       return NextResponse.json({ success: true });
     }
 
     return NextResponse.json(
-      { error: `Unexpected status: ${paymentIntent.status}` },
-      { status: 500 }
+      { error: `Unhandled status: ${paymentIntent.status}` },
+      { status: 400 }
     );
   } catch (error: any) {
     console.error("Stripe error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
