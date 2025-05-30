@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import connectMongoDB from '@/lib/mongodb';
+import connectToDatabase from '@/lib/mongodb';
 import Trainer from '@/models/Trainer';
 
 export async function POST(req) {
   try {
     const body = await req.json(); // Parse JSON from request
-    await connectMongoDB();
+    await connectToDatabase();
 
     const newTrainer = new Trainer(body);
     await newTrainer.save();
