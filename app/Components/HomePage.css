@@ -30,23 +30,33 @@
 .hero-text {
   max-width: 50%;
   color: #fff;
-  margin-right: 20px;
+  margin: 0;
+}
+
+@keyframes flowInText {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-title {
-  font-size: 5rem;
+  font-size: 3rem;
   margin-bottom: 20px;
   font-weight: bold;
-}
-
-.hero-title2 {
-  font-size: 4rem;
-  margin-bottom: 6px;
+  animation: flowInText 1s ease forwards;
 }
 
 .hero-description {
   font-size: 1.2rem;
   margin-bottom: 20px;
+  animation: flowInText 1s ease forwards;
+  animation-delay: 0.3s;
+  opacity: 0; /* ensure hidden before animation */
 }
 
 .hero-button-container {
@@ -54,123 +64,83 @@
   gap: 20px;
 }
 
-.button {
-  border: 2px solid #fff;
-  background-color: transparent;
-  color: #fff;
-  font-weight: bold;
-  padding: 10px 20px;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.button:hover {
-  background-color: #fff;
-  color: #000;
-}
-
-.button:focus {
-  outline: none;
-  box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.7); /* Optional: a glow effect */
-}
-
-.hero-image {
-  max-width: 35%; /* Image will take up the other half */
-  width: 100%;
-  height: auto;
-  animation: fadeInUp 1.5s ease-out;
-}
-
-.hero-image img {
-  width: 100%; /* Ensure image takes up full width of its container */
-  height: auto; /* Maintain aspect ratio */
-  object-fit: cover; /* Cover the container without stretching the image */
-}
-
-/* Keyframes for fade-in and slide-up effect */
-@keyframes fadeInUp {
+/*--------------------------------------------------------------*/
+@keyframes flowInText {
   0% {
     opacity: 0;
-    transform: translateY(20px); /* Starts 20px below */
+    transform: translateY(20px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0); /* Ends in the normal position */
+    transform: translateY(0);
   }
 }
 
-/* Progression, Workout, Nutrition Section */
-/* 3 Card Section */
-/* 3 Card Section */
-.three-card-section {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(250px, 1fr)
-  ); /* Make the grid responsive */
-  gap: 30px; /* Add spacing between cards */
-  padding: 50px;
-  background-color: #f9f9f9; /* Light background */
-  border-radius: 8px;
-  background-image: url("/whoweare.jpg");
-  background-size: cover;
-}
-
-.card-item {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card-item:hover {
-  transform: translateY(-10px); /* Hover effect to lift the cards */
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Darker shadow on hover */
-}
-
-.card-item img {
-  width: 60px;
-  height: 60px;
-  margin-bottom: 20px;
-}
-
-.card-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.card-text {
-  font-size: 1rem;
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.card-button {
+.button {
   padding: 10px 20px;
   background-color: #e60000;
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  font-size: 1rem;
+  border-radius: 10px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease,
+    transform 0.2s ease;
+
+  opacity: 0; /* initially hidden */
+  animation: flowInText 1s ease forwards;
+  animation-delay: 0.6s; /* starts after text */
 }
 
-.card-button:hover {
-  background-color: #c10000;
+.button:hover {
+  background-color: #e60000; /* Same color, can adjust if needed */
+  box-shadow: 0 0 15px #ffffff;
+  transform: scale(1.05);
 }
 
-/*
+@keyframes flowIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.hero-image {
+  width: 37%;
+  height: auto;
+  border: 3px solid red;
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+  animation: flowIn 1s ease forwards;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.hero-image:hover {
+  transform: scale(1.03);
+}
+
+.hero-image-style {
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+  animation: flowIn 1s ease forwards;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.hero-image-style:hover {
+  transform: scale(1.02);
+}
+
+/* Container for cards */
 .three-card-section {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0;
-  margin-top: 0;
   padding: 100px;
   height: 800px;
   background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
@@ -179,28 +149,35 @@
   background-position: center;
 }
 
-.card-title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
-
+/* Card styles */
 .progression-card,
 .workout-card,
 .nutrition-card {
   position: relative;
   background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)),
-    url("/gymprogress.jpg");
+    url("/cards.png");
   background-size: cover;
   background-position: center;
   padding: 20px;
   border-radius: 5px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   width: 30%;
+  height: 80%;
+  margin-top: 60px;
   text-align: center;
-  color: white;
+  color: rgb(0, 0, 0);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
 }
 
+/* Card title */
+.card-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* Card icon */
 .icon-image {
   width: 80px;
   height: 80px;
@@ -208,12 +185,15 @@
   display: block;
   margin-left: auto;
   margin-right: auto;
+  transition: transform 0.3s ease;
 }
 
+/* Card text */
 .card-text {
   font-size: 1rem;
 }
 
+/* Read more button */
 .read-more-button {
   padding: 8px 16px;
   background-color: #e60000;
@@ -224,7 +204,50 @@
   margin-top: 10px;
   border-radius: 5px;
 }
-*/
+
+/* Hover effect on card */
+.progression-card:hover,
+.workout-card:hover,
+.nutrition-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Hover effect on icon inside hovered card */
+.progression-card:hover .icon-image,
+.workout-card:hover .icon-image,
+.nutrition-card:hover .icon-image {
+  transform: scale(1.1);
+}
+/* Slide in from left */
+@keyframes slideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Common animate-in class */
+.animate-in {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+/* Initial state (before animating in) */
+.hidden-left {
+  opacity: 0;
+  transform: translateX(-100px);
+}
+
+/* Animation when in view */
+.animate-in {
+  opacity: 1;
+  transform: translateX(0);
+  transition: transform 0.8s ease-out, opacity 0.8s ease-out;
+}
+
 /* Who We Are Section */
 .who-we-are {
   background: #f8f8f8;
@@ -241,7 +264,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
 }
 
@@ -256,7 +279,7 @@
 }
 
 .bodybuilder-image {
-  width: 80%;
+  width: 75%;
   height: 730px;
   border-radius: 10px;
   margin-top: 20px;
@@ -265,14 +288,20 @@
 }
 
 .red-titles {
-  background-color: #ff0000;
+  background-image: url("/redtopicrbg.png");
+  background-size: cover; /* Makes the image fill the section */
+  background-repeat: no-repeat; /* Prevents tiling */
+  background-position: center; /* Centers the image */
+  width: 30%; /* Fills parent container */
+
   color: #ffffff;
   padding: 10px;
   display: inline-block;
+  text-align: center;
 }
 
 .section-title {
-  padding: 50px;
+  padding: 0px;
   font-size: 2.5rem;
   font-weight: bold;
   margin: 20px 0;
@@ -283,15 +312,31 @@
   margin-bottom: 20px;
 }
 
-.icon-section {
+.icon-box {
   display: flex;
-  justify-content: space-around;
-  margin-top: 30px;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff; /* light gray background */
+  padding: 20px 30px;
+  border-radius: 8px;
+  gap: 20px;
+  margin-top: 50px;
 }
 
 .icon-item {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   flex: 1;
+  max-width: 200px;
+  text-align: center;
+  position: relative;
+}
+
+.icon-divider {
+  width: 1px;
+  height: 80px;
+  background-color: #000;
 }
 
 .icon-image2 {
@@ -301,35 +346,113 @@
 }
 
 .icon-text {
-  font-size: 1.1rem;
-  font-weight: bold;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #000;
 }
 
 /* Featured Classes Section */
 .featured-classes {
-  padding: 50px 20px;
-  margin-bottom: 50px;
+  padding: 70px;
+  text-align: center;
+  background-image: url("/classesb.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.red-titles2 {
+  background-image: url("/redtopicrbg.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-top: 30px;
+  width: 20%;
+  color: #ffffff;
+  padding: 10px;
+  display: inline-block;
+  text-align: center;
+}
+
+.section-title2 {
+  margin-top: 30px;
+  padding: 0px;
+  font-size: 2.5rem;
+  font-weight: bold;
 }
 
 .class-items {
   padding: 50px;
   display: flex;
-  justify-content: space-around;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 40px;
+  row-gap: 60px;
 }
 
 .class-item {
-  width: 90%;
-  text-align: center;
+  position: relative;
+  width: 400px;
+  height: 300px;
+}
+
+.class-overlay {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  width: 100%;
+  height: 100%;
 }
 
 .class-image {
   width: 100%;
-  height: 250px;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 20px;
+  transition: transform 0.5s ease;
+}
+
+.overlay-content {
+  position: absolute;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  width: 100%;
+  padding: 20px;
+  text-align: center;
+  transform: translateY(100%);
+  transition: transform 0.4s ease-in-out;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.overlay-name {
+  font-size: 1.5rem;
+  font-weight: bold;
   margin-bottom: 10px;
+}
+
+.class-overlay:hover .class-image {
+  transform: scale(1.05);
+}
+
+.class-overlay:hover .overlay-content {
+  transform: translateY(0);
+}
+
+.class-item:hover .class-name {
+  opacity: 0;
 }
 
 .class-text {
   font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.class-name {
+  font-size: 1.5rem;
+  margin-top: 10px;
+  transition: opacity 0.3s ease;
 }
 
 .date-button {
@@ -346,64 +469,194 @@
 
 /* Fitness Service Section */
 .fitness-service {
-  padding: 50px 20px;
+  padding: 100px;
+  text-align: center; /* Aligns with .featured-classes */
+  color: #ffffff;
+  background-image: url("/fitnessserviceB.png"); /* path */
+  background-size: cover; /* Image covers the section */
+  background-repeat: no-repeat; /* No repeat */
+  background-position: center; /* Center the image */
+}
+
+.section-title3 {
+  margin-top: 30px;
+  padding: 0px;
+  font-size: 2.5rem;
+  font-weight: bold;
   margin-bottom: 50px;
 }
 
 .service-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around; /* Matches .class-items style */
   align-items: center;
+  flex-wrap: wrap; /* For better responsiveness */
+  gap: 40px; /* Space between items */
 }
 
 .service-item {
-  width: 60%;
-  text-align: center;
+  width: 50%; /* More balanced */
+  text-align: left; /* Keeps content readable */
 }
 
 .service-title {
-  font-size: 2rem;
+  font-size: 2.5rem;
   margin-bottom: 20px;
 }
 
 .service-description {
   font-size: 1.2rem;
   margin-bottom: 30px;
+  font-size: 1.7rem;
 }
 
 .service-image {
-  width: 35%;
+  width: 40%; /* Slightly more breathing room */
 }
 
 .service-image-style {
-  width: 100%;
+  width: 70%;
   height: auto;
+  border-radius: 20px; /* Optional: matches image style */
+  margin-left: 100px;
+
+  border: 3px solid red; /* 🔴 Red border */
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* ⚪ White/ash shadow */
 }
 
 /* BMI Calculator Section */
-.bmi-calculator {
-  text-align: center;
-  margin-bottom: 50px;
+.bmi-wrapper {
+  background-image: url("/BMI.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  padding: 60px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.bmi-box {
+  background: rgba(0, 0, 0, 0.1); /* semi-transparent */
+  border: 4px solid rgba(255, 255, 255, 0.3); /* subtle border */
+  border-radius: 20px;
+  padding: 40px;
+  margin-left: 100px;
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2); /* stronger shadow for glass pop */
+  max-width: 900px;
+  width: 100%;
+  height: 500px;
+
+  backdrop-filter: blur(20px); /* 👈 glass blur */
+  -webkit-backdrop-filter: blur(20px); /* Safari support */
+  background-clip: padding-box;
+}
+
+.bmi-left {
+  flex: 1;
+  min-width: 300px;
+}
+
+.bmi-heading {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #e60000;
+  margin-bottom: 10px;
+}
+
+.bmi-description {
+  font-size: 1rem;
+  color: #000000;
+  margin-bottom: 20px;
+}
+
+.unit-selector {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 25px;
+  align-items: center;
+}
+
+.unit-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  color: #000000;
+}
+
+.unit-option input[type="radio"] {
+  accent-color: #e60000;
 }
 
 .bmi-form {
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .input {
-  padding: 10px;
+  padding: 12px;
   font-size: 1rem;
-  margin: 10px;
-  width: 200px;
-  border-radius: 5px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
 }
 
 .calculate-button {
-  padding: 10px 20px;
-  background-color: #e60000;
-  color: white;
-  border: none;
-  cursor: pointer;
+  padding: 12px;
   font-size: 1rem;
+  border: none;
+  background-color: #111;
+  color: white;
+  border-radius: 10px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.calculate-button:hover {
+  background-color: #333;
+}
+
+.bmi-result {
+  margin-top: 20px;
+  font-size: 1.1rem;
+}
+
+.bmi-right {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 50px;
+  gap: 20px;
+}
+
+#bmi-meter {
+  width: 100%;
+  max-width: 300px;
+}
+
+.bmi-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+.bmi-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bmi-legend-color {
+  width: 20px;
+  height: 20px;
   border-radius: 5px;
 }

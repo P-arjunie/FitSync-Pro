@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -86,7 +87,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
         localStorage.setItem("userRole", data.user.role);
         localStorage.setItem("userEmail", data.user.email);
         localStorage.setItem("userName", data.user.name);
-  
+        localStorage.setItem("userId", data.user.id); // ✅ Now storing user ID
+
         // Redirect based on role
         if (data.user.role === "member") {
           window.location.href = "/lithira/MemberProfilePage";
