@@ -45,13 +45,13 @@ const Navbar: React.FC = () => {
       {/* Desktop Navigation */}
       <ul className="hidden md:flex space-x-10">
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/">Home</Link></li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/about">About</Link></li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/pages">Pages</Link></li>
+        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/About_page">About</Link></li>
+        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/Gallery_page">Gallery</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/class">Class</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/schedule">Schedule</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/contact">Blogs</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/pasindi/products">Shop</Link></li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/contact">Contact</Link></li>
+        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/Contact_Page">Contact</Link></li>
       </ul>
 
       {/* Icons and Join Class Button */}
@@ -72,7 +72,7 @@ const Navbar: React.FC = () => {
 
         {/* Join Class Button (visible on desktop only) */}
         <Link href="/join">
-          <button className="bg-red-600 px-2 py-1.5 text-sm mr - 10 hidden md:block">Join Class Now</button>
+          <button className="bg-red-600 px-2 py-1.5 text-sm mr - 10 hidden md:block">Join Now</button>
         </Link>
 
         {/* Mobile Menu Button (☰) */}
@@ -85,12 +85,12 @@ const Navbar: React.FC = () => {
       {isOpen && (
         <ul className="absolute top-16 left-0 bg-black w-full flex flex-col items-center space-y-4 py-4 md:hidden">
           <li><Link href="/">Home</Link></li>
-          <li><Link href="/about">About</Link></li>
-          <li><Link href="/pages">Pages</Link></li>
+          <li><Link href="/hasini/About_page">About</Link></li>
+          <li><Link href="/hasini/Gallery_page">Gallery</Link></li>
           <li><Link href="/class">Class</Link></li>
           <li><Link href="/schedule">Schedule</Link></li>
           <li><Link href="/pasindi/products">Shop</Link></li>
-          <li><Link href="/contact">Contact</Link></li>
+          <li><Link href="/hasini/Contact_Page">Contact</Link></li>
           {/* Join Class Button in Mobile View */}
           <li>
             <Link href="/join">

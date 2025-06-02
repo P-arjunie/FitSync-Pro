@@ -1,81 +1,144 @@
-import Image from "next/image";
-import Navbar from "../../Components/Navbar";
+'use client'
 
-export default function ChatInterface() {
+import { useEffect, useState } from 'react'
+import { UserCircleIcon } from '@heroicons/react/24/solid'
+
+type Message = {
+  id: number
+  sender: 'client' | 'therapist'
+  text: string
+  time: string
+}
+
+export default function ChatPage() {
+  const [selectedClient, setSelectedClient] = useState<number | null>(null)
+  const [chatMessages, setChatMessages] = useState<Message[]>([])
+  const [message, setMessage] = useState('')
+
+  const clients = [
+    { id: 1, name: 'Tharushi Madushani' },
+    { id: 2, name: 'Jane Perera' },
+    { id: 3, name: 'Amaya Silva' },
+  ]
+
+  useEffect(() => {
+    if (!selectedClient) return
+
+    const fetchMessages = async () => {
+      const res = await fetch(`/api/messages?clientId=${selectedClient}`)
+      const data = await res.json()
+      setChatMessages(data)
+    }
+
+    fetchMessages()
+  }, [selectedClient])
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || selectedClient === null) return
+
+    const now = new Date()
+    const time = now.toTimeString().slice(0, 5) // "HH:MM"
+
+    const res = await fetch('/api/messages', {
+      method: 'POST',
+      body: JSON.stringify({
+        clientId: selectedClient,
+        sender: 'therapist',
+        text: message,
+        time,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const newMsg = await res.json()
+    setChatMessages(prev => [...prev, newMsg])
+    setMessage('')
+  }
+
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <header className="flex justify-between items-center p-4 bg-gray-800">
-        <div className="flex flex-col text-sm">
-          <p>Location: 4/1, Sapumal Place, Colombo</p>
-          <p>Email: email@example.com</p>
-        </div>
-        <div className="flex flex-col text-sm">
-          <p>Opening Hours: Mon - Sat: 8.00 am - 7.00 pm</p>
-          <p>+94 71 278 1444</p>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <div className="flex flex-1">
-        {/* Left chat section */}
-        <div className="w-1/3 bg-gray-800 p-4">
-          {/* Search Client */}
-          <input
-            type="text"
-            placeholder="Search Client"
-            className="w-full p-2 rounded bg-gray-700 text-white mb-4"
-          />
-          {/* Chat messages */}
-          <div className="space-y-2">
-            <div className="bg-gray-700 p-2 rounded">
-              <p>Client 01</p>
-              <p>Hello coach! Can't wait for our 1st session</p>
-              <p className="text-xs text-gray-400">00:14</p>
-            </div>
-            <div className="bg-gray-700 p-2 rounded">
-              <p>Client 01</p>
-              <p>Ah! I'm so tired</p>
-              <p className="text-xs text-gray-400">00:07</p>
-            </div>
-            <div className="bg-gray-700 p-2 rounded">
-              <p>Client 01</p>
-              <p>Still awake!</p>
-              <p className="text-xs text-gray-400">00:05</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right section with background image */}
-        <div className="flex-1 relative">
-          <Image
-            src="/path/to/gym-image.jpg"
-            alt="Gym Background"
-            layout="fill"
-            objectFit="cover"
-            className="opacity-80"
-          />
-          <div className="absolute bottom-4 left-4">
-            <div className="bg-red-600 p-2 rounded">
-              <p>Hello coach! Can't wait for our 1st session</p>
-              <p className="text-xs text-white">00:14</p>
-            </div>
-            <div className="bg-black p-2 rounded mt-2">
-              <p>Neither can I!</p>
-              <p className="text-xs text-white">00:17</p>
-            </div>
-          </div>
-        </div>
+    <div className="flex h-screen bg-gray-100 text-black">
+      {/* Sidebar */}
+      <div className="w-72 bg-black text-white p-4 border-r border-gray-700 shadow-lg">
+        <h2 className="text-xl font-bold mb-6 text-red-600">Clients</h2>
+        <ul className="space-y-3">
+          {clients.map(client => (
+            <li
+              key={client.id}
+              onClick={() => setSelectedClient(client.id)}
+              className={`flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-red-600 transition ${
+                selectedClient === client.id ? 'bg-red-600' : ''
+              }`}
+            >
+              <UserCircleIcon className="h-8 w-8 text-white" />
+              <span className="text-white">{client.name}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* Message input */}
-      <div className="p-4 bg-gray-800">
-        <input
-          type="text"
-          placeholder="Message"
-          className="w-full p-2 rounded bg-gray-700 text-white"
-        />
+      {/* Chat Section */}
+      <div className="flex-1 flex flex-col bg-white p-6">
+        <div className="text-2xl font-bold mb-4 text-red-600">
+          {selectedClient
+            ? `Chat with ${clients.find(c => c.id === selectedClient)?.name}`
+            : 'Select a client'}
+        </div>
+
+        {selectedClient ? (
+          <>
+            {/* Chat Messages with background image */}
+            <div
+              className="flex-1 overflow-y-auto space-y-3 p-4 border border-gray-300 rounded bg-gray-50 shadow-inner"
+              style={{
+                backgroundImage: 'url("/MassageBg.jpg")',
+                backgroundSize: 'cover',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+              }}
+            >
+              {chatMessages.map(msg => (
+                <div
+                  key={msg.id}
+                  className={`flex ${
+                    msg.sender === 'therapist' ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  <div
+                    className={`max-w-xs md:max-w-sm px-4 py-2 rounded-2xl shadow-sm ${
+                      msg.sender === 'therapist'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-200 text-black'
+                    }`}
+                  >
+                    <p>{msg.text}</p>
+                    <p className="text-xs text-right opacity-70 mt-1">{msg.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Message Input */}
+            <div className="mt-4 flex gap-2">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
+                className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600 bg-white"
+              />
+              <button
+                onClick={handleSendMessage}
+                className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition"
+              >
+                Send
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className="text-gray-600 mt-10">Choose a client to begin chatting.</p>
+        )}
       </div>
     </div>
-  );
+  )
 }
