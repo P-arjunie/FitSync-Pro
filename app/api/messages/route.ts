@@ -42,3 +42,29 @@ export async function POST(req: Request) {
 
   return NextResponse.json(newMessage)
 }
+
+export async function PUT(req: Request) {
+  const body = await req.json()
+  const { clientId, messageId, newText } = body
+
+  const msgList = messages[clientId]
+  if (!msgList) return NextResponse.json({ error: "Client not found" }, { status: 404 })
+
+  const msg = msgList.find(m => m.id === messageId)
+  if (!msg) return NextResponse.json({ error: "Message not found" }, { status: 404 })
+
+  msg.text = newText
+  return NextResponse.json(msg)
+}
+
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const clientId = Number(searchParams.get("clientId"))
+  const messageId = Number(searchParams.get("messageId"))
+
+  if (!messages[clientId]) return NextResponse.json({ error: "Client not found" }, { status: 404 })
+
+  messages[clientId] = messages[clientId].filter(m => m.id !== messageId)
+
+  return NextResponse.json({ success: true })
+}
