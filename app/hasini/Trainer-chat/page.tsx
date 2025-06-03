@@ -20,6 +20,7 @@ export default function TrainerChatPage() {
     { id: 1, name: 'Tharushi Madushani' },
     { id: 2, name: 'Jane Perera' },
     { id: 3, name: 'Amaya Silva' },
+    { id: 4, name: 'John smith' },
   ]
 
   useEffect(() => {
