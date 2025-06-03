@@ -16,26 +16,29 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
+// Keep only this PUT function (your correct one)
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body = await req.json();
     await connectToDatabase();
 
-    if (!body.title || !body.trainerName || !body.start || !body.end || !body.platform || !body.meetingLink || !body.maxParticipants) {
+    // Validate required fields
+    if (!body.trainer || !body.sessionType || !body.duration || !body.date || !body.onlineLink) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const startTime = new Date(body.start);
-    const endTime = new Date(body.end);
-
-    if (endTime <= startTime) {
-      return NextResponse.json({ error: 'End time must be after start time' }, { status: 400 });
-    }
-
-    const updated = await VirtualSession.findByIdAndUpdate(params.id, {
-      ...body,
-      maxParticipants: Number(body.maxParticipants),
-    }, { new: true });
+    const updated = await VirtualSession.findByIdAndUpdate(
+      params.id,
+      {
+        trainer: body.trainer,
+        sessionType: body.sessionType,
+        duration: body.duration,
+        date: body.date,
+        comments: body.comments,
+        onlineLink: body.onlineLink,
+      },
+      { new: true }
+    );
 
     if (!updated) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });

@@ -20,11 +20,14 @@ export default function AddSession() {
     e.preventDefault();
   
     try {
-      const res = await fetch("/api/trainer-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch("/api/trainerV-session", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(form),
+});
+
   
       const data = await res.json();
       console.log("Server response:", data);

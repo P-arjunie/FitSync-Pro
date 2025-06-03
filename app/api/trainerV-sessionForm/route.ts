@@ -4,30 +4,27 @@ import VirtualSession from '@/models/VirtualSession';
 
 export async function POST(req: NextRequest) {
   try {
-    await connectToDatabase();
     const body = await req.json();
+    await connectToDatabase();
 
-    if (!body.title || !body.trainerName || !body.start || !body.end || !body.platform || !body.meetingLink || !body.maxParticipants) {
+    if (!body.trainer || !body.sessionType || !body.duration || !body.date || !body.onlineLink) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const startTime = new Date(body.start);
-    const endTime = new Date(body.end);
-
-    if (endTime <= startTime) {
-      return NextResponse.json({ error: 'End time must be after start time' }, { status: 400 });
-    }
-
-    // Optional: check for time conflicts like physical session
-
-    const newSession = await VirtualSession.create({
-      ...body,
-      maxParticipants: Number(body.maxParticipants),
+    const newSession = new VirtualSession({
+      trainer: body.trainer,
+      sessionType: body.sessionType,
+      duration: body.duration,
+      date: body.date,
+      comments: body.comments || '',
+      onlineLink: body.onlineLink,
     });
 
-    return NextResponse.json(newSession, { status: 201 });
+    await newSession.save();
+
+    return NextResponse.json({ message: 'Session created!', session: newSession }, { status: 201 });
   } catch (error) {
-    console.error('Error creating virtual session:', error);
+    console.error('Error creating session:', error);
     return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
   }
 }
