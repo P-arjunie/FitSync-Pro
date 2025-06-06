@@ -179,7 +179,7 @@ const OrderAnalyticsPage: React.FC = () => {
           <span className="inline-block bg-red-600 text-white text-sm font-bold py-1 px-3 border border-red-600">
             SALES ANALYTICS
           </span>
-          <h2 className="text-3xl font-bold mt-2 mb-6">Order Analytics Dashboard</h2>
+          <h2 className="text-3xl font-bold mt-2 mb-6"> Analytics Dashboard</h2>
         </div>
 
         {/* Error message */}
