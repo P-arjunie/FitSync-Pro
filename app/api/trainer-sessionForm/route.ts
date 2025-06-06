@@ -1,7 +1,7 @@
 // For app router (Next 13+)
 import { NextResponse } from 'next/server';
 
-let sessions: any[] = []; // In-memory store (will reset on server restart)
+const sessions: any[] = []; // In-memory store (will reset on server restart)
 
 export async function POST(req: Request) {
   const data = await req.json();
