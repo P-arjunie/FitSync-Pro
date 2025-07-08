@@ -1,15 +1,18 @@
-import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct for named export
+import { connectToDatabase } from "@/lib/mongodb"; // Import function to connect to MongoDB
+import PendingMember from "@/models/pendingMember"; // Import Mongoose model for storing pending member registrations
+import { NextResponse } from "next/server"; // Import Next.js response utility
 
-import PendingMember from "@/models/pendingMember";
-import { NextResponse } from "next/server";
-
+// Defines a POST handler for new member registrations
 export async function POST(req: Request) {
   try {
+    // Establish a connection to the MongoDB database
     await connectToDatabase();
 
+    // Parse the incoming JSON body from the request
     const body = await req.json();
-    console.log("📦 Incoming Member Registration Body:", body);
+    console.log("📦 Incoming Member Registration Body:", body); // Log the received data
 
+    // Destructure required fields from the request body
     const {
       firstName,
       lastName,
@@ -29,7 +32,7 @@ export async function POST(req: Request) {
       termsAccepted,
     } = body;
 
-    // Validate required fields
+    // Validate presence of all required fields including nested emergency contact and membership info
     if (
       !firstName || !lastName || !dob || !gender || !contactNumber || !email || !address ||
       !emergencyContact?.name || !emergencyContact?.phone || !emergencyContact?.relationship ||
@@ -40,12 +43,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
     }
 
-    // Ensure the emergency contact phone is provided
+    // Double-check if emergency contact phone number is provided
     if (!emergencyContact?.phone) {
       return NextResponse.json({ message: "Emergency contact phone is required" }, { status: 400 });
     }
 
-    // Create the pending member record
+    // Create a new pending member document in the database with status "pending"
     await PendingMember.create({
       firstName,
       lastName,
@@ -62,16 +65,18 @@ export async function POST(req: Request) {
       height,
       bmi,
       goalWeight,
-      termsAccepted, // Make sure this is correctly passed and validated
-      role: "member",
-      status: "pending",
+      termsAccepted, // Confirm that the terms checkbox was accepted
+      role: "member", // Default role is set to "member"
+      status: "pending", // Status indicates admin approval is still required
     });
 
+    // Respond with a success message and 201 Created status
     return NextResponse.json(
       { message: "Member registration submitted successfully!" },
       { status: 201 }
     );
   } catch (error) {
+    // Log unexpected errors and return a 500 Internal Server Error response
     console.error("Registration error:", error);
     return NextResponse.json(
       { message: "An unexpected error occurred." },

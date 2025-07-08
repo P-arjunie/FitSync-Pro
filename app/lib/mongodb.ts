@@ -1,5 +1,13 @@
-// lib/mongodb.ts
-import mongoose from 'mongoose';
+
+import mongoose from "mongoose";
+
+const MONGODB_URI = process.env.MONGODB_URI!;
+
+if (!MONGODB_URI) {
+  throw new Error("❌ MONGODB_URI not defined in environment variables");
+}
+
+let isConnected = false;
 
 export const connectToDatabase = async () => {
   if (mongoose.connections[0].readyState === 0) {

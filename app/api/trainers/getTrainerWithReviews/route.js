@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import connectMongoDB from "@/lib/mongodb";
+import {connectToDatabase} from "../../../lib/mongodb";
 import Trainer from "@/models/Trainer";
 import Review from "@/models/Review";
 
 export async function GET() {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
 
     // Fetch only approved trainers
     const trainers = await Trainer.find({ status: "approved" });

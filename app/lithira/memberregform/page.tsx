@@ -33,6 +33,7 @@ const MemberRegistrationForm: React.FC = () => {
   });
 
   useEffect(() => {
+    // Load stored profile image from localStorage on mount
     const storedImage = localStorage.getItem("memberProfileImage");
     if (storedImage) {
       setFormData((prev) => ({ ...prev, image: storedImage }));
@@ -68,20 +69,59 @@ const MemberRegistrationForm: React.FC = () => {
     }
   };
 
+  // Simple email regex for basic validation
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  // Simple phone number validation (digits only, length 7-15)
+  const isValidPhone = (phone: string) =>
+    /^\d{7,15}$/.test(phone.replace(/\D/g, ""));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Terms must be accepted
     if (!formData.termsAccepted) {
       alert("Please accept the terms and conditions.");
       return;
     }
 
+    // Image is required
     if (!formData.image) {
       alert("Profile image is required.");
       return;
     }
 
+    // Validate email format
+    if (!isValidEmail(formData.email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    // Validate contact number format
+    if (!isValidPhone(formData.contactNumber)) {
+      alert("Please enter a valid contact number (digits only).");
+      return;
+    }
+
+    // Validate emergency contact phone
+    if (!isValidPhone(formData.emergencyContact.phone)) {
+      alert("Please enter a valid emergency contact phone number (digits only).");
+      return;
+    }
+
+    // Validate currentWeight, height, bmi, goalWeight as positive numbers if filled
+    const numericFields = ["currentWeight", "height", "bmi", "goalWeight"] as const;
+    for (const field of numericFields) {
+      const val = formData[field];
+      if (val !== "" && (isNaN(Number(val)) || Number(val) <= 0)) {
+        alert(`Please enter a valid positive number for ${field}.`);
+        return;
+      }
+    }
+
     try {
+      // Submit form data to backend API
       const res = await fetch("/api/member/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,6 +148,7 @@ const MemberRegistrationForm: React.FC = () => {
         onSubmit={handleSubmit}
         className="w-[800px] bg-gray-100 p-6 rounded-lg shadow-xl relative"
       >
+        {/* Profile Image Preview */}
         <div className="absolute top-6 right-6 w-20 h-20 rounded-full overflow-hidden border-4 border-red-500 bg-white flex items-center justify-center">
           {formData.image ? (
             <img
@@ -162,6 +203,7 @@ const MemberRegistrationForm: React.FC = () => {
             ))}
           </div>
 
+          {/* Gender selection */}
           <div className="flex items-center gap-4 mt-4">
             <span className="font-semibold">Gender:</span>
             {["Male", "Female", "Other"].map((gender) => (
@@ -275,6 +317,7 @@ const MemberRegistrationForm: React.FC = () => {
           </div>
         </fieldset>
 
+        {/* Submit button */}
         <button
           type="submit"
           className="w-full bg-red-600 text-white font-semibold p-3 rounded-lg hover:bg-red-700 transition"
@@ -287,3 +330,4 @@ const MemberRegistrationForm: React.FC = () => {
 };
 
 export default MemberRegistrationForm;
+
