@@ -1,25 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { connectToDatabase } from "../../../lib/mongodb"
 import Product from "../../../models/product"
 
 // GET - Fetch a single product by ID
-export async function GET(request: any, { params }: any) {
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params  // ✅ Good
+
   await connectToDatabase()
 
   try {
-    const { id } = params
 
-    // Find the product by ID
     const product = await Product.findById(id)
 
-    // If product not found
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 })
     }
 
-    // Return the product
     return NextResponse.json(product, { status: 200 })
   } catch (error) {
     console.error("Error fetching product:", error)
@@ -28,22 +26,25 @@ export async function GET(request: any, { params }: any) {
 }
 
 // PUT - Update a product by ID
-export async function PUT(request: { json: () => any }, { params }: any) {
+export async function PUT(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   await connectToDatabase()
 
   try {
-    const { id } = params
+    const { id } = context.params
     const updates = await request.json()
 
-    // Find and update the product
-    const updatedProduct = await Product.findByIdAndUpdate(id, updates, { new: true, runValidators: true })
+    const updatedProduct = await Product.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    })
 
-    // If product not found
     if (!updatedProduct) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 })
     }
 
-    // Return the updated product
     return NextResponse.json(updatedProduct, { status: 200 })
   } catch (error) {
     console.error("Error updating product:", error)
@@ -52,21 +53,21 @@ export async function PUT(request: { json: () => any }, { params }: any) {
 }
 
 // DELETE - Delete a product by ID
-export async function DELETE(request: any, { params }: any) {
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   await connectToDatabase()
 
   try {
-    const { id } = params
+    const { id } = context.params
 
-    // Find and delete the product
     const deletedProduct = await Product.findByIdAndDelete(id)
 
-    // If product not found
     if (!deletedProduct) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 })
     }
 
-    // Return success message
     return NextResponse.json({ message: "Product deleted successfully" }, { status: 200 })
   } catch (error) {
     console.error("Error deleting product:", error)

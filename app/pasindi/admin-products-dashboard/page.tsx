@@ -7,7 +7,7 @@ import { Edit, Trash2, Plus, Search } from "lucide-react"
 import Navbar from "@/Components/Navbar"
 
 // Define TypeScript interfaces
-interface Product {
+interface Product { //product obj
   _id: string
   title: string
   category: string
@@ -27,7 +27,7 @@ const AdminProductsDashboard = () => {
   const router = useRouter()
 
   // Fetch products
-  useEffect(() => {
+  useEffect(() => {//when compo. load fetch products
     const fetchProducts = async () => {
       try {
         setIsLoading(true)
@@ -61,7 +61,7 @@ const AdminProductsDashboard = () => {
   const confirmDelete = async () => {
     if (!deleteId) return
 
-    try {
+    try { //delete if confirmed 
       const response = await fetch(`/api/products/${deleteId}`, {
         method: "DELETE",
       })
@@ -79,7 +79,7 @@ const AdminProductsDashboard = () => {
     }
   }
 
-  // Handle edit product
+  // Handle edit product back to edit page
   const handleEditClick = (id: string) => {
     router.push(`/pasindi/admin/products/edit/${id}`)
   }

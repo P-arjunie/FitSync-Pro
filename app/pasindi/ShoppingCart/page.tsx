@@ -1,79 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// /* eslint-disable @typescript-eslint/no-explicit-any */
-// import { create } from "zustand";
-// import { devtools, persist } from "zustand/middleware";
-
-// interface CartItem {
-//   _id: string;
-//   title: string;
-//   price: number;
-//   quantity: number;
-//   countInStock: number;
-//   image?: string;
-//   category?: string;
-//   description?: string;
-// }
-
-// interface ShoppingCartState {
-//   cartItems: CartItem[];
-//   addToCart: (newItem: CartItem) => void;
-//   removeFromCart: (itemId: string) => void;
-//   updateItemQuantity: (itemId: string, quantity: number) => void;
-//   resetCart: () => void;
-// }
-
-// const initialState: ShoppingCartState = {
-//   cartItems: [],
-//   addToCart: () => {},
-//   removeFromCart: () => {},
-//   updateItemQuantity: () => {},
-//   resetCart: () => {},
-// };
-
-// const shoppingCartStore = (set: any) => ({
-//   ...initialState,
-//   addToCart: (newItem: CartItem) =>
-//     set((state: ShoppingCartState) => {
-//       const itemIndex = state.cartItems.findIndex(
-//         (item) => item._id === newItem._id
-//       );
-//       if (itemIndex > -1) {
-//         const newQuantity = state.cartItems[itemIndex].quantity + newItem.quantity;
-//         const updatedItem = {
-//           ...state.cartItems[itemIndex],
-//           quantity: Math.min(newQuantity, newItem.countInStock),
-//         };
-//         return {
-//           cartItems: state.cartItems.map((item) =>
-//             item._id === newItem._id ? updatedItem : item
-//           ),
-//         };
-//       } else {
-//         return { cartItems: [...state.cartItems, newItem] };
-//       }
-//     }),
-//   removeFromCart: (itemId: string) =>
-//     set((state: ShoppingCartState) => ({
-//       cartItems: state.cartItems.filter((item) => item._id !== itemId),
-//     })),
-//   updateItemQuantity: (itemId: string, quantity: number) =>
-//     set((state: ShoppingCartState) => ({
-//       cartItems: state.cartItems.map((item) =>
-//         item._id === itemId ? { ...item, quantity } : item
-//       ),
-//     })),
-//   resetCart: () => set({ cartItems: [] }),
-// });
-
-// export const useShoppingCartStore = create<ShoppingCartState>()(
-//   devtools(
-//     persist(shoppingCartStore, { name: "shoppingCartStore" }),
-//     { name: "shoppingCartStore" }
-//   )
-// );
-// ShoppingCart/page.tsx
-
-
 "use client";
 
 import { create } from 'zustand';
@@ -97,7 +21,7 @@ interface CartItem {
 
 interface ShoppingCartState {
   items: CartItem[];
-  addToCart: (item: CartItem) => void;
+  addToCart: (item: CartItem) => void; //item to be added to cart
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -105,34 +29,38 @@ interface ShoppingCartState {
   getItemCount: () => number;
 }
 
-// Create Zustand store with persistence
+// Create Zustand store with persistence 
+//global store for cart state
 export const useShoppingCartStore = create<ShoppingCartState>()(
-  persist(
+  persist( //cart data is saved in local storag-won't reset on page eload
     (set, get) => ({
-      items: [],
+      items: [], //item array 
       
       addToCart: (item) => {
-        set((state) => {
-          const existingItem = state.items.find((i) => i._id === item._id);
-          if (existingItem) {
+        set((state) => { //state update with item
+          const existingItem = state.items.find((i) => i._id === item._id); //check if the item is already in cart
+          if (existingItem) { //if there update quantity 
             return {
               items: state.items.map((i) =>
                 i._id === item._id
-                  ? { ...i, quantity: Math.min(i.quantity + item.quantity, i.countInStock) }
+                  ? { ...i, quantity: Math.min(i.quantity + item.quantity, i.countInStock) } //ensure qunatity lower than stock
                   : i
               ),
             };
           }
+          // If item is not in cart add it
           return { items: [...state.items, item] };
         });
       },
-      
+
+      //remove from cart 
       removeFromCart: (itemId) => {
         set((state) => ({
-          items: state.items.filter((item) => item._id !== itemId),
+          items: state.items.filter((item) => item._id !== itemId), //filter out item from array 
         }));
       },
       
+      //update cart 
       updateQuantity: (itemId, quantity) => {
         if (quantity <= 0) {
           get().removeFromCart(itemId);
@@ -148,7 +76,7 @@ export const useShoppingCartStore = create<ShoppingCartState>()(
         }));
       },
       
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [] }), //empty array
       
       getCartTotal: () => {
         const { items } = get();
@@ -161,7 +89,7 @@ export const useShoppingCartStore = create<ShoppingCartState>()(
       },
     }),
     {
-      name: 'shopping-cart',
+      name: 'shopping-cart', //local storage key for cart data 
     }
   )
 );
@@ -176,7 +104,7 @@ export default function ShoppingCart() {
 
   return (
     <>
-      {/* Cart Button - can be placed in navbar */}
+      {/* Cart Button  */}
       <button
         onClick={() => setIsOpen(true)}
         className="relative p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow"
