@@ -16,10 +16,18 @@ export default function ChatPage() {
   const [message, setMessage] = useState('')
   const [editMessageId, setEditMessageId] = useState<number | null>(null)
 
+  const therapists = [
+    { id: 1, name: 'Dr. Nimal Silva' },
+    { id: 2, name: 'Ms. Kavindi Fernando' },
+    { id: 3, name: 'Mr. Roshan De Silva' },
+    { id: 4, name: 'Dr. Janaki Perera' },
+  ]
+
   const clients = [
-    { id: 1, name: 'Tharushi Madushani' },
-    { id: 2, name: 'Jane Perera' },
-    { id: 3, name: 'Amaya Silva' },
+    { id: 1, name: 'Chamodi Herath' },
+    { id: 2, name: 'Ravindu Madushanka' },
+    { id: 3, name: 'Dinithi Jayasekara' },
+    { id: 4, name: 'Pasindu Perera' },
   ]
 
   const fetchMessages = async () => {
@@ -83,22 +91,22 @@ export default function ChatPage() {
     <div className="flex h-screen bg-gray-100 text-black">
       {/* Sidebar */}
       <div className="w-72 bg-black text-white p-4 border-r border-gray-700 shadow-lg">
-        <h2 className="text-xl font-bold mb-6 text-red-600">Clients</h2>
+        <h2 className="text-xl font-bold mb-6 text-red-600">Therapists</h2>
         <ul className="space-y-3">
-          {clients.map(client => (
+          {therapists.map(therapist => (
             <li
-              key={client.id}
+              key={therapist.id}
               onClick={() => {
-                setSelectedClient(client.id)
+                setSelectedClient(therapist.id)
                 setMessage('')
                 setEditMessageId(null)
               }}
               className={`flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-red-600 transition ${
-                selectedClient === client.id ? 'bg-red-600' : ''
+                selectedClient === therapist.id ? 'bg-red-600' : ''
               }`}
             >
               <UserCircleIcon className="h-8 w-8 text-white" />
-              <span className="text-white">{client.name}</span>
+              <span className="text-white">{therapist.name}</span>
             </li>
           ))}
         </ul>
@@ -124,42 +132,50 @@ export default function ChatPage() {
               }}
             >
               <div className="absolute inset-0 bg-white bg-opacity-70 rounded-lg pointer-events-none" />
-
               <div className="relative z-10 space-y-2">
-                {chatMessages.map(msg => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${
-                      msg.sender === 'therapist'
-                        ? 'justify-end'
-                        : 'justify-start'
-                    }`}
-                  >
+                {chatMessages.map((msg, index) => {
+                  const overrideSender =
+                    index === 0
+                      ? 'therapist'
+                      : index === 1
+                      ? 'client'
+                      : msg.sender
+
+                  return (
                     <div
-                      className={`relative max-w-xs md:max-w-sm px-4 py-2 rounded-2xl shadow-sm ${
-                        msg.sender === 'therapist'
-                          ? 'bg-red-600 text-white'
-                          : 'bg-gray-200 text-black'
+                      key={msg.id}
+                      className={`flex ${
+                        overrideSender === 'therapist'
+                          ? 'justify-end'
+                          : 'justify-start'
                       }`}
                     >
-                      <p>{msg.text}</p>
-                      <p className="text-xs text-right opacity-70 mt-1">{msg.time}</p>
+                      <div
+                        className={`relative max-w-xs md:max-w-sm px-4 py-2 rounded-2xl shadow-sm ${
+                          overrideSender === 'therapist'
+                            ? 'bg-red-600 text-white'
+                            : 'bg-gray-200 text-black'
+                        }`}
+                      >
+                        <p>{msg.text}</p>
+                        <p className="text-xs text-right opacity-70 mt-1">{msg.time}</p>
 
-                      {msg.sender === 'therapist' && (
-                        <div className="absolute top-0 right-0 bottom-1 flex gap-2 mt-1 mr-2">
-                          <PencilIcon
-                            className="h-4 w-4 cursor-pointer text-white"
-                            onClick={() => handleEdit(msg)}
-                          />
-                          <TrashIcon
-                            className="h-4 w-4 cursor-pointer text-white"
-                            onClick={() => handleDelete(msg)}
-                          />
-                        </div>
-                      )}
+                        {overrideSender === 'therapist' && (
+                          <div className="absolute top-0 right-0 bottom-1 flex gap-2 mt-1 mr-2">
+                            <PencilIcon
+                              className="h-4 w-4 cursor-pointer text-white"
+                              onClick={() => handleEdit(msg)}
+                            />
+                            <TrashIcon
+                              className="h-4 w-4 cursor-pointer text-white"
+                              onClick={() => handleDelete(msg)}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
 
