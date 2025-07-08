@@ -1,8 +1,11 @@
 import Image from "next/image";
+import Navbar from "@/Components/Navbar";
+import Footer1 from '@/Components/Footer_01';
 
 const AboutVisionMission = () => {
   return (
     <div>
+      <Navbar />
       {/* About Section */}
       <section className="relative bg-gray-100 p-10">
         <div className="container mx-auto flex flex-col lg:flex-row items-center">
@@ -145,6 +148,7 @@ const AboutVisionMission = () => {
           </div>
         </div>
       </section>
+      <Footer1 />
     </div>
   );
 };

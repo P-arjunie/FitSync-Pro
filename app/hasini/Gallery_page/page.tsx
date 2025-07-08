@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import Navbar from "@/Components/Navbar";
+import Footer1 from '@/Components/Footer_01';
 
 const IMAGES_FIRST_PAGE = 11;
 const IMAGES_PER_PAGE = 9;
@@ -145,6 +146,7 @@ export default function GalleryPage() {
           </Dialog.Panel>
         </div>
       </Dialog>
+      <Footer1 />
     </div>
   );
 }
