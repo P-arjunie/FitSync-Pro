@@ -108,7 +108,7 @@ const MemberProfilePage = () => {
 
   return (
     <div className="p-6 max-w-3xl mx-auto bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-6 text-center">Member Profile</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">Welcome to FitSync Pro</h2>
 
       {formData?.image && (
         <div className="flex justify-center mb-4">

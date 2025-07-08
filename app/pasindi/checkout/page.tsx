@@ -1,4 +1,4 @@
-// app/checkout/page.tsx
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -7,6 +7,7 @@ import { useShoppingCartStore } from '../ShoppingCart/page';
 import Navbar from '@/Components/Navbar';
 import { CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/Components/ui/button';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -18,7 +19,6 @@ export default function CheckoutPage() {
     orderNumber: string;
     totalAmount: number;
     status: string;
-    // Add other fields if needed
   };
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [userId, setUserId] = useState("");
@@ -30,7 +30,7 @@ export default function CheckoutPage() {
     
     // Redirect if cart is empty
     if (items.length === 0 && !success) {
-      router.push('/cart');
+      router.push('/pasindi/cart');
     }
   }, [items.length, router, success]);
 
@@ -157,18 +157,17 @@ export default function CheckoutPage() {
             
             {/* Payment section - Simplified for this example */}
             <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Payment</h2>
-              <p className="text-gray-600 mb-6">
+              {/* <h2 className="text-xl font-semibold mb-4">Payment</h2> */}
+              {/* <p className="text-gray-600 mb-6">
                 For this demo, we&#39;ll simulate the payment process. Click the button below to place your order.
-              </p>
-              
-              <button
+              </p> */}
+              <Button
                 onClick={handleCheckout}
                 disabled={processing || items.length === 0}
                 className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {processing ? 'Processing...' : 'Place Order'}
-              </button>
+              </Button>
             </div>
           </div>
         )}

@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { StripeCardElement } from "@stripe/stripe-js";
@@ -89,13 +87,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
       setMessage(data.error);
     } else if (data.success) {
       setMessage("Payment succeeded!");
-    } else if (data.requiresAction) {
-      const { error: confirmError } = await stripe.confirmCardPayment(data.clientSecret);
-      if (confirmError) {
-        setMessage(confirmError.message || "Payment confirmation failed.");
-      } else {
-        setMessage("Payment succeeded!");
-      }
     }
 
     setLoading(false);

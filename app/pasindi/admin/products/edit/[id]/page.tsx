@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-import { useState, useEffect, type ChangeEvent, type FormEvent } from "react"
+import { useState, useEffect, type ChangeEvent, type FormEvent, use } from "react"
 import { useRouter } from "next/navigation"
 import { Upload, ArrowLeft } from "lucide-react"
 import Image from "next/image"
 import Navbar from "@/Components/Navbar"
+import router from "next/router"
+import { useParams } from "next/navigation"
 
-interface ProductData {
+interface ProductData { //product obj
   _id: string
   title: string
   description: string
@@ -18,15 +20,9 @@ interface ProductData {
   imageUrl: string
 }
 
-interface EditProductProps {
-  params: {
-    id: string
-  }
-}
-
-const EditProduct = ({ params }: EditProductProps) => {
-  const router = useRouter()
-  const { id } = params
+const EditProduct = () => {
+  const params = useParams()
+  const id = params.id as string // Extracting id from params
 
   const [title, setTitle] = useState<string>("")
   const [description, setDescription] = useState<string>("")
@@ -40,7 +36,7 @@ const EditProduct = ({ params }: EditProductProps) => {
   const [uploading, setUploading] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
-  // Fetch product data
+  // Fetch product data when component loads/ id change
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -52,7 +48,7 @@ const EditProduct = ({ params }: EditProductProps) => {
         }
 
         const product: ProductData = await response.json()
-
+        //update the states with fetched data 
         setTitle(product.title)
         setDescription(product.description)
         setCategory(product.category)
@@ -72,7 +68,7 @@ const EditProduct = ({ params }: EditProductProps) => {
       fetchProduct()
     }
   }, [id])
-
+  //image upload 
   const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setImage(event.target.files[0])
@@ -87,7 +83,7 @@ const EditProduct = ({ params }: EditProductProps) => {
     formData.append("image", image)
 
     try {
-      const res = await fetch("/api/upload", {
+      const res = await fetch("/api/upload", {//cloudinary 
         method: "POST",
         body: formData,
       })
@@ -120,7 +116,7 @@ const EditProduct = ({ params }: EditProductProps) => {
     }
 
     try {
-      const response = await fetch(`/api/products/${id}`, {
+      const response = await fetch(`/api/products/${id}`, { //update dta 
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -133,7 +129,7 @@ const EditProduct = ({ params }: EditProductProps) => {
         throw new Error(errorData.error || "Failed to update product")
       }
 
-      // Navigate back to admin dashboard
+      // navigate back to admin dashboard
       router.push("/admin/products")
     } catch (error) {
       console.error("Error updating product:", error)
@@ -141,7 +137,7 @@ const EditProduct = ({ params }: EditProductProps) => {
     }
   }
 
-  if (isLoading) {
+  if (isLoading) { //spinner loading
     return (
       <div className="min-h-screen bg-gray-100 flex justify-center items-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>

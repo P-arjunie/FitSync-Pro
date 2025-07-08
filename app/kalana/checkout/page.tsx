@@ -30,3 +30,9 @@ const CheckoutPage: React.FC = () => {
 };
 
 export default CheckoutPage;
+
+{/* Scenario	Result	Displayed Details
+Valid userId & has an order	Real Instance	Real order items & total
+Valid userId but no orders	Dummy Instance	Dummy item & $10 total
+Invalid or missing userId	Dummy Instance	Dummy item & $10 total
+DB error fetching orders	Dummy Instance	Dummy item & $10 total*/}

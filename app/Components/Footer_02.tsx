@@ -7,7 +7,7 @@ const Footer_02: React.FC = () => {
     <footer className={styles.footer}>
       <div className={styles.footerContainer}>
         
-        {/* Left: Text */}
+{/* Left: Text */}
         <div className={styles.footerText}>
           <h2 className={styles.brandTitle}>
             <span className={styles.brandHighlight}>F</span>ITSYNC PRO
@@ -21,7 +21,7 @@ const Footer_02: React.FC = () => {
           </p>
         </div>
 
-        {/* Center: Social Icons */}
+{/*Social Icons */}
         <div className={styles.socialIconsWrapper}>
           <div className={styles.socialIcons}>
             <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer">
@@ -39,7 +39,7 @@ const Footer_02: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Image */}
+{/* Right Image */}
         <div className={styles.imageWrapper}>
           <Image
             src="/Footer2.png"
