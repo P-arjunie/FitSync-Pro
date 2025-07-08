@@ -5,8 +5,6 @@ import './Components/HomePage.css';
 import Navbar from './Components/Navbar';
 import Footer1 from './Components/Footer_01';
 import GaugeChart from 'react-gauge-chart';
-import StripeProvider from "./Components/StripeProvider";
-{/*import CheckoutForm from "./Components/CheckoutForm"; */}
 
 const HomePage: React.FC = () => {
 
@@ -15,6 +13,16 @@ const [weight, setWeight] = useState('');
 const [height, setHeight] = useState('');
 const [bmi, setBmi] = useState<number | null>(null);
 const [message, setMessage] = useState('');
+
+useEffect(() => {
+  if ((weight && !height) || (!weight && height)) {
+    setMessage("Please enter both weight and height");
+    setBmi(null);
+  } else {
+    setMessage(""); 
+  }
+}, [weight, height]);
+
 
 // BMI Calculation function
 const calculateBMI = () => {
@@ -25,7 +33,7 @@ const calculateBMI = () => {
   }
 
   const weightNum = parseFloat(weight);
-  const heightMeters = parseFloat(height) / 100; // convert cm to meters
+  const heightMeters = parseFloat(height) / 100; 
 
   if (isNaN(weightNum) || isNaN(heightMeters) || heightMeters === 0) {
     setMessage("Invalid input");
@@ -50,14 +58,14 @@ const calculateBMI = () => {
   }
 };
 
-// Define gauge arcs
-const range = 40 - 15; // 25
+//gauge arcs
+const range = 40 - 15;
 const arcsLength = [
-  (18.5 - 15) / range,   // Underweight
-  (25 - 18.5) / range,   // Normal
-  (30 - 25) / range,     // Overweight
-  (35 - 30) / range,     // Obese
-  (40 - 35) / range      // Severely Obese
+  (20 - 15) / range,   
+  (25 - 20) / range,   
+  (30 - 25) / range,   
+  (35 - 30) / range,   
+  (40 - 35) / range    
 ];
 
 //Animations and transitions for cards 
@@ -312,6 +320,10 @@ useEffect(() => {
       <button className="calculate-button" onClick={calculateBMI}>
         Calculate
       </button>
+
+      {message && bmi === null && (
+      <p className="bmi-error">{message}</p>
+      )}
 
       {bmi !== null && (
         <div className="bmi-result">

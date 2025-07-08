@@ -1,9 +1,8 @@
-// app/api/payment_intents/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import mongoose from "mongoose";
-import Checkout from "../../models/Checkout"; // Your Checkout schema
-import Order from "../../models/order"; // Needed to query orders
+import Payment from "../../models/Payment"; // Adjust to correct path
+import Order from "../../models/order"; // Adjust to correct path
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
@@ -11,7 +10,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const connectToDB = async () => {
   if (mongoose.connections[0].readyState === 0) {
-    await mongoose.connect(process.env.MONGODB_URI!);
+    console.log("Connecting to DB...");
+    try {
+      await mongoose.connect(process.env.MONGODB_URI!);
+      console.log("Connected to DB");
+    } catch (error) {
+      console.error("Error connecting to DB:", error);
+      throw new Error("Failed to connect to the database");
+    }
   }
 };
 
@@ -20,97 +26,79 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { paymentMethodId, userId } = body;
 
+    console.log("Received userId:", userId); // Log the userId for debugging
+
     if (!paymentMethodId || !userId) {
       return NextResponse.json({ error: "Missing paymentMethodId or userId" }, { status: 400 });
     }
 
+    // Connect to DB
     await connectToDB();
 
-    // Try to find user's most recent order
-    let latestOrder = null;
+    // Ensure userId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.log("Invalid User ID format:", userId);
+      return NextResponse.json({ error: "Invalid User ID format" }, { status: 400 });
+    }
 
-// Only attempt to query DB if userId is a valid ObjectId
-if (mongoose.Types.ObjectId.isValid(userId)) {
-  latestOrder = await Order.findOne({ user: userId }).sort({ createdAt: -1 });
-}
+    const userObjectId = new mongoose.Types.ObjectId(userId); // Convert to ObjectId if valid
 
+    // Query the user's most recent order
+    let latestOrder = await Order.findOne({ user: userObjectId }).sort({ createdAt: -1 });
 
-    // If no real order found, use dummy order fallback
-    let isDummyOrder = false;
-
+    // Handle missing orders gracefully
     if (!latestOrder) {
-      isDummyOrder = true;
       latestOrder = {
-        user: userId,
+        user: userObjectId, // Assign the user as ObjectId if order doesn't exist
         orderItems: [
           {
-            product: "dummy_product_id",
-            title: "Dummy Plan",
-            image: "/dummy.jpg",
-            price: 19.99,
-            quantity: 1,
-            category: "general"
+            product: "dummy_product_id",  // Example of dummy data
+            title: "Dummy Plan",          // Dummy title
+            image: "/dummy.jpg",          // Dummy image
+            price: 19.99,                 // Dummy price
+            quantity: 1,                  // Dummy quantity
+            category: "general"           // Dummy category
           }
         ],
-        totalAmount: 19.99
+        totalAmount: 19.99               // Total price for the dummy order
       };
     }
 
-    const amount = Math.round(latestOrder.totalAmount * 100); // Convert to cents
+    const amount = Math.round(latestOrder.totalAmount * 100);  // Convert the amount to cents
 
-    // Step 1: Create Stripe PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "usd",
       payment_method: paymentMethodId,
-      confirmation_method: "manual",
       confirm: true,
       return_url: `${req.nextUrl.origin}/payment/complete`,
+      automatic_payment_methods: { enabled: true },
     });
 
-    // Step 2: Handle 3D Secure or redirect if needed
-    if (
-      paymentIntent.status === "requires_action" &&
-      paymentIntent.next_action?.type === "redirect_to_url"
-    ) {
-      return NextResponse.json({
-        requiresAction: true,
-        clientSecret: paymentIntent.client_secret,
-        nextAction: paymentIntent.next_action,
-      });
-    }
-
-    // Step 3: Save payment in DB if succeeded
     if (paymentIntent.status === "succeeded") {
-      const checkout = new Checkout({
-        firstName: isDummyOrder
-          ? "Dummy"
-          : latestOrder?.orderItems?.[0]?.title || "N/A",
-        lastName: userId,
-        email: isDummyOrder ? "dummy@example.com" : "placeholder@example.com",
+      const payment = new Payment({
+        firstName: latestOrder?.orderItems?.[0]?.title || "N/A",
+        lastName: userObjectId,
+        email: "placeholder@example.com",
         company: "FitSyncPro",
         amount: paymentIntent.amount / 100,
         currency: paymentIntent.currency,
         paymentStatus: paymentIntent.status,
         paymentMethodId,
         billingAddress: {
-          zip: isDummyOrder ? "00000" : "10100",
-          country: isDummyOrder ? "Nowhere" : "USA",
-          city: isDummyOrder ? "Nulltown" : "New York",
-          street: isDummyOrder ? "123 Dummy Lane" : "456 Real Street",
+          zip: "10100",
+          country: "USA",
+          city: "New York",
+          street: "456 Real Street"
         },
-        userId: userId || "dummy_user",
+        userId: userObjectId
       });
 
-      await checkout.save();
-
+      await payment.save();
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json(
-      { error: `Unhandled status: ${paymentIntent.status}` },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: `Unhandled status: ${paymentIntent.status}` }, { status: 400 });
   } catch (error: any) {
     console.error("Stripe error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

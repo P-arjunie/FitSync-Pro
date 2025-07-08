@@ -134,7 +134,7 @@ const TrainerProfilePage = () => {
 
   return (
     <div className="p-6 max-w-3xl mx-auto bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-6 text-center">Trainer Profile</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">Welcome to FitSync Pro</h2>
   
       {formData?.profileImage && (
         <div className="flex justify-center mb-4">
@@ -273,3 +273,4 @@ const TrainerProfilePage = () => {
   
 }
 export default TrainerProfilePage;
+
