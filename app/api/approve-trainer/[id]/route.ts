@@ -1,18 +1,23 @@
-import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb"; // ✅ Correct for named export
+import { NextResponse } from "next/server"; // Import Next.js response utility
+import { connectToDatabase } from "@/lib/mongodb"; // Import database connection function
 
-import Trainer from "@/models/Trainer";
-import ApprovedTrainer from "@/models/ApprovedTrainer";
+import Trainer from "@/models/Trainer"; // Import the model for pending trainers
+import ApprovedTrainer from "@/models/ApprovedTrainer"; // Import the model for approved trainers
 
+// POST handler to approve a trainer using their ID from the URL parameters
 export async function POST(_: Request, { params }: { params: { id: string } }) {
+  // Connect to the MongoDB database
   await connectToDatabase();
 
-  
+  // Find the pending trainer in the Trainer collection using the ID
   const trainer = await Trainer.findById(params.id);
+  
+  // If the trainer is not found, return a 404 response
   if (!trainer) {
     return NextResponse.json({ error: "Trainer not found" }, { status: 404 });
   }
 
+  // Destructure all relevant fields from the pending trainer document
   const {
     firstName,
     lastName,
@@ -38,6 +43,7 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
     skills,
   } = trainer;
 
+  // Create a new document in the ApprovedTrainer collection with the same data
   await ApprovedTrainer.create({
     firstName,
     lastName,
@@ -63,7 +69,10 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
     skills,
   });
 
+  // Delete the trainer from the pending Trainer collection
   await trainer.deleteOne();
 
+  // Return a success message indicating the trainer has been approved
   return NextResponse.json({ message: "Trainer approved" });
 }
+

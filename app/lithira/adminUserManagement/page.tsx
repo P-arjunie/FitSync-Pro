@@ -22,6 +22,7 @@ import {
 } from '@/Components/ui/dropdown-menu';
 
 export default function AdminUserManagement() {
+  // State hooks for managing members, trainers, search, editing, and form data
   const [members, setMembers] = useState<IMember[]>([]);
   const [trainers, setTrainers] = useState<IApprovedTrainer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,6 +30,7 @@ export default function AdminUserManagement() {
   const [editedData, setEditedData] = useState<any>({});
   const router = useRouter();
 
+  // Load members and trainers when component mounts
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -46,16 +48,19 @@ export default function AdminUserManagement() {
     fetchData();
   }, []);
 
+  // Start editing mode for selected user
   const startEditing = (user: any) => {
     setEditingId(String(user._id));
     setEditedData(user);
   };
 
+  // Save the edited user data to the backend
   const saveEdit = async (role: 'member' | 'trainer') => {
     try {
       await axios.put(`/api/admin/edit`, { role, data: editedData });
       setEditingId(null);
       if (role === 'member') {
+        // Update local state after saving
         setMembers(prev => prev.map(m => String(m._id) === String(editedData._id) ? editedData : m));
       } else {
         setTrainers(prev => prev.map(t => String(t._id) === String(editedData._id) ? editedData : t));
@@ -65,6 +70,7 @@ export default function AdminUserManagement() {
     }
   };
 
+  // Handle changes in editable input fields
   const handleInputChange = (field: string, value: any) => {
     setEditedData((prev: any) => ({
       ...prev,
@@ -72,11 +78,13 @@ export default function AdminUserManagement() {
     }));
   };
 
+  // Navigate to full detail view for a user
   const handleViewDetails = (id: string, role: 'member' | 'trainer') => {
     const basePath = role === 'member' ? '/lithira/memberdetails' : '/lithira/trainerdetails';
     router.push(`${basePath}?id=${id}`);
   };
 
+  // Suspend user
   const handleSuspend = async (id: string, role: 'member' | 'trainer') => {
     try {
       await axios.put(`/api/admin/suspend`, { id, role });
@@ -86,6 +94,7 @@ export default function AdminUserManagement() {
     }
   };
 
+  // Remove user
   const handleRemove = async (id: string, role: 'member' | 'trainer') => {
     try {
       await axios.delete(`/api/admin/remove`, { data: { id, role } });
@@ -97,6 +106,7 @@ export default function AdminUserManagement() {
     }
   };
 
+  // Filter users based on search term
   const filteredMembers = members.filter((member) =>
     `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -107,6 +117,7 @@ export default function AdminUserManagement() {
     trainer.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Render dropdown menu actions (Edit/Save/View/Suspend/Remove)
   const renderActions = (user: any, role: 'member' | 'trainer') => {
     const id = String(user._id);
     return (
@@ -130,6 +141,7 @@ export default function AdminUserManagement() {
     );
   };
 
+  // Render an editable input cell
   const editableCell = (field: string, value: any) => (
     <Input value={editedData[field] || ''} onChange={(e) => handleInputChange(field, e.target.value)} />
   );
@@ -137,6 +149,7 @@ export default function AdminUserManagement() {
   return (
     <TooltipProvider>
       <div className="p-6 space-y-6">
+        {/* Header and search input */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">User Management</h1>
           <Input
@@ -147,12 +160,14 @@ export default function AdminUserManagement() {
           />
         </div>
 
+        {/* Tab system for switching between members and trainers */}
         <Tabs defaultValue="members" className="w-full">
           <TabsList>
             <TabsTrigger value="members">Members</TabsTrigger>
             <TabsTrigger value="trainers">Trainers</TabsTrigger>
           </TabsList>
 
+          {/* Members table */}
           <TabsContent value="members">
             <div className="overflow-auto">
               <Table className="min-w-[1500px]">
@@ -171,6 +186,7 @@ export default function AdminUserManagement() {
                     <TableHead>Start Date</TableHead>
                     <TableHead>Emergency Contact</TableHead>
                     <TableHead>Action</TableHead>
+                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -178,6 +194,7 @@ export default function AdminUserManagement() {
                     const isEditing = editingId === String(member._id);
                     return (
                       <TableRow key={String(member._id)}>
+                        {/* Editable full name */}
                         <TableCell>
                           {isEditing ? (
                             `${editedData.firstName || ''} ${editedData.lastName || ''}`
@@ -210,6 +227,9 @@ export default function AdminUserManagement() {
               </Table>
             </div>
           </TabsContent>
+
+          {/* Trainers table (continued in your original code) */}
+
 
           <TabsContent value="trainers">
             <div className="overflow-auto">
