@@ -56,7 +56,7 @@
   margin-bottom: 20px;
   animation: flowInText 1s ease forwards;
   animation-delay: 0.3s;
-  opacity: 0; /* ensure hidden before animation */
+  opacity: 0;
 }
 
 .hero-button-container {
@@ -87,9 +87,9 @@
   transition: background-color 0.3s ease, box-shadow 0.3s ease,
     transform 0.2s ease;
 
-  opacity: 0; /* initially hidden */
+  opacity: 0;
   animation: flowInText 1s ease forwards;
-  animation-delay: 0.6s; /* starts after text */
+  animation-delay: 0.6s;
 }
 
 .button:hover {
@@ -137,7 +137,6 @@
   transform: scale(1.02);
 }
 
-/* Container for cards */
 .three-card-section {
   display: flex;
   justify-content: space-between;
@@ -170,14 +169,12 @@
   cursor: pointer;
 }
 
-/* Card title */
 .card-title {
   font-size: 2.5rem;
   font-weight: bold;
   margin-bottom: 15px;
 }
 
-/* Card icon */
 .icon-image {
   width: 80px;
   height: 80px;
@@ -188,12 +185,10 @@
   transition: transform 0.3s ease;
 }
 
-/* Card text */
 .card-text {
   font-size: 1rem;
 }
 
-/* Read more button */
 .read-more-button {
   padding: 8px 16px;
   background-color: #e60000;
@@ -213,13 +208,11 @@
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Hover effect on icon inside hovered card */
 .progression-card:hover .icon-image,
 .workout-card:hover .icon-image,
 .nutrition-card:hover .icon-image {
   transform: scale(1.1);
 }
-/* Slide in from left */
 @keyframes slideInLeft {
   0% {
     opacity: 0;
@@ -235,13 +228,12 @@
 .animate-in {
   animation: slideInLeft 0.8s ease-out forwards;
 }
-/* Initial state (before animating in) */
+
 .hidden-left {
   opacity: 0;
   transform: translateX(-100px);
 }
 
-/* Animation when in view */
 .animate-in {
   opacity: 1;
   transform: translateX(0);
@@ -289,10 +281,10 @@
 
 .red-titles {
   background-image: url("/redtopicrbg.png");
-  background-size: cover; /* Makes the image fill the section */
-  background-repeat: no-repeat; /* Prevents tiling */
-  background-position: center; /* Centers the image */
-  width: 30%; /* Fills parent container */
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 30%;
 
   color: #ffffff;
   padding: 10px;
@@ -316,7 +308,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffffff; /* light gray background */
+  background-color: #ffffff;
   padding: 20px 30px;
   border-radius: 8px;
   gap: 20px;
@@ -470,12 +462,12 @@
 /* Fitness Service Section */
 .fitness-service {
   padding: 100px;
-  text-align: center; /* Aligns with .featured-classes */
+  text-align: center;
   color: #ffffff;
-  background-image: url("/fitnessserviceB.png"); /* path */
-  background-size: cover; /* Image covers the section */
-  background-repeat: no-repeat; /* No repeat */
-  background-position: center; /* Center the image */
+  background-image: url("/fitnessserviceB.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 .section-title3 {
@@ -488,15 +480,15 @@
 
 .service-content {
   display: flex;
-  justify-content: space-around; /* Matches .class-items style */
+  justify-content: space-around;
   align-items: center;
-  flex-wrap: wrap; /* For better responsiveness */
-  gap: 40px; /* Space between items */
+  flex-wrap: wrap;
+  gap: 40px;
 }
 
 .service-item {
-  width: 50%; /* More balanced */
-  text-align: left; /* Keeps content readable */
+  width: 50%;
+  text-align: left;
 }
 
 .service-title {
@@ -511,17 +503,17 @@
 }
 
 .service-image {
-  width: 40%; /* Slightly more breathing room */
+  width: 40%;
 }
 
 .service-image-style {
   width: 70%;
   height: auto;
-  border-radius: 20px; /* Optional: matches image style */
+  border-radius: 20px;
   margin-left: 100px;
 
-  border: 3px solid red; /* 🔴 Red border */
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* ⚪ White/ash shadow */
+  border: 3px solid red;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
 }
 
 /* BMI Calculator Section */
@@ -536,21 +528,21 @@
 }
 
 .bmi-box {
-  background: rgba(0, 0, 0, 0.1); /* semi-transparent */
-  border: 4px solid rgba(255, 255, 255, 0.3); /* subtle border */
+  background: rgba(0, 0, 0, 0.1);
+  border: 4px solid rgba(255, 255, 255, 0.3);
   border-radius: 20px;
   padding: 40px;
   margin-left: 100px;
   display: flex;
   gap: 40px;
   flex-wrap: wrap;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2); /* stronger shadow for glass pop */
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
   max-width: 900px;
   width: 100%;
-  height: 500px;
+  height: 600px;
 
-  backdrop-filter: blur(20px); /* 👈 glass blur */
-  -webkit-backdrop-filter: blur(20px); /* Safari support */
+  backdrop-filter: blur(20px); /*glass blur */
+  -webkit-backdrop-filter: blur(20px);
   background-clip: padding-box;
 }
 

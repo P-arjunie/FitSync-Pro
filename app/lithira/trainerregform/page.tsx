@@ -26,7 +26,7 @@ interface TrainerFormData {
   emergencyName: string;
   emergencyPhone: string;
   relationship: string;
-  startDate: string;
+  
   termsAccepted: boolean;
   biography: string;
   skills: Skill[];
@@ -53,7 +53,7 @@ export default function TrainerRegistrationForm() {
     emergencyName: "",
     emergencyPhone: "",
     relationship: "",
-    startDate: "",
+    
     termsAccepted: false,
     biography: "",
     skills: [],
@@ -91,39 +91,101 @@ export default function TrainerRegistrationForm() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.termsAccepted) {
-      alert("Please accept the terms and conditions.");
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  // Basic field validation
+  const requiredFields = [
+    "firstName",
+    "lastName",
+    "email",
+    "phone",
+    "dob",
+    "gender",
+    "address",
+    "specialization",
+    "certifications",
+    "preferredTrainingHours",
+    "yearsOfExperience",
+    "availability",
+    "pricingPlan",
+    "emergencyName",
+    "emergencyPhone",
+    "relationship",
+    
+    "biography",
+  ];
+
+  for (const field of requiredFields) {
+    const value = formData[field as keyof TrainerFormData];
+    if (
+      typeof value === "string" &&
+      value.trim() === ""
+    ) {
+      alert(`Please fill out the "${field}" field.`);
       return;
     }
-
-    const payload = {
-      ...formData,
-      profileImage,
-      status: "pending",
-      submittedAt: new Date(),
-    };
-
-    try {
-      const res = await fetch("/api/pending-trainers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        alert("Trainer registration submitted for approval.");
-        router.push("/thank-you");
-      } else {
-        const err = await res.json();
-        alert("Submission failed: " + err.message);
-      }
-    } catch (err) {
-      console.error("Submission error:", err);
-      alert("Something went wrong. Please try again later.");
+    if (Array.isArray(value) && value.length === 0) {
+      alert(`Please enter at least one value for "${field}".`);
+      return;
     }
+  }
+
+  // Terms check
+  if (!formData.termsAccepted) {
+    alert("Please accept the terms and conditions.");
+    return;
+  }
+
+  // Email format check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formData.email)) {
+    alert("Please enter a valid email address.");
+    return;
+  }
+
+  // Phone number format (simple numeric check)
+  const phoneRegex = /^[0-9]{7,15}$/;
+  if (!phoneRegex.test(formData.phone) || !phoneRegex.test(formData.emergencyPhone)) {
+    alert("Please enter valid phone numbers (7–15 digits).");
+    return;
+  }
+
+  // Skill validation
+  for (const skill of formData.skills) {
+    if (!skill.name.trim() || skill.level < 1 || skill.level > 5) {
+      alert("Each skill must have a name and a level between 1 and 5.");
+      return;
+    }
+  }
+
+  const payload = {
+    ...formData,
+    profileImage,
+    status: "pending",
+    submittedAt: new Date(),
   };
+
+  try {
+    const res = await fetch("/api/pending-trainers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      alert("Trainer registration submitted for approval.");
+      router.push("/thank-you");
+    } else {
+      const err = await res.json();
+      alert("Submission failed: " + err.message);
+    }
+  } catch (err) {
+    console.error("Submission error:", err);
+    alert("Something went wrong. Please try again later.");
+  }
+};
+
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-200 to-gray-300">

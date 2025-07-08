@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+ 
 
-interface Review {
+interface Review { //define the expected structure of data objects used in your components or functions
   _id: string;
   trainer: string;
   sessionType: string;
