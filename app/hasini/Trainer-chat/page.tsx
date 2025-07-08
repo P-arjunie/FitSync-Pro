@@ -1,3 +1,4 @@
+// app/trainer-chat/page.tsx
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -10,7 +11,7 @@ type Message = {
   time: string
 }
 
-export default function ChatPage() {
+export default function TrainerChatPage() {
   const [selectedClient, setSelectedClient] = useState<number | null>(null)
   const [chatMessages, setChatMessages] = useState<Message[]>([])
   const [message, setMessage] = useState('')
@@ -19,6 +20,7 @@ export default function ChatPage() {
     { id: 1, name: 'Tharushi Madushani' },
     { id: 2, name: 'Jane Perera' },
     { id: 3, name: 'Amaya Silva' },
+    { id: 4, name: 'John smith' },
   ]
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function ChatPage() {
     if (!message.trim() || selectedClient === null) return
 
     const now = new Date()
-    const time = now.toTimeString().slice(0, 5) // "HH:MM"
+    const time = now.toTimeString().slice(0, 5)
 
     const res = await fetch('/api/messages', {
       method: 'POST',
@@ -59,7 +61,7 @@ export default function ChatPage() {
     <div className="flex h-screen bg-gray-100 text-black">
       {/* Sidebar */}
       <div className="w-72 bg-black text-white p-4 border-r border-gray-700 shadow-lg">
-        <h2 className="text-xl font-bold mb-6 text-red-600">Clients</h2>
+        <h2 className="text-xl font-bold mb-6 text-red-600">My Clients</h2>
         <ul className="space-y-3">
           {clients.map(client => (
             <li
@@ -86,9 +88,8 @@ export default function ChatPage() {
 
         {selectedClient ? (
           <>
-            {/* Chat Messages with background image */}
             <div
-              className="flex-1 overflow-y-auto space-y-3 p-4 border border-gray-300 rounded bg-gray-50 shadow-inner"
+              className="relative flex-1 overflow-y-auto space-y-3 p-4 border-4 border-white rounded-lg shadow-inner"
               style={{
                 backgroundImage: 'url("/MassageBg.jpg")',
                 backgroundSize: 'cover',
@@ -96,28 +97,36 @@ export default function ChatPage() {
                 backgroundPosition: 'center',
               }}
             >
-              {chatMessages.map(msg => (
-                <div
-                  key={msg.id}
-                  className={`flex ${
-                    msg.sender === 'therapist' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
+              <div className="absolute inset-0 bg-white bg-opacity-70 rounded-lg pointer-events-none" />
+
+              <div className="relative z-10">
+                {chatMessages.map(msg => (
                   <div
-                    className={`max-w-xs md:max-w-sm px-4 py-2 rounded-2xl shadow-sm ${
+                    key={msg.id}
+                    className={`flex ${
                       msg.sender === 'therapist'
-                        ? 'bg-red-600 text-white'
-                        : 'bg-gray-200 text-black'
+                        ? 'justify-end'
+                        : 'justify-start'
                     }`}
                   >
-                    <p>{msg.text}</p>
-                    <p className="text-xs text-right opacity-70 mt-1">{msg.time}</p>
+                    <div
+                      className={`max-w-xs md:max-w-sm px-4 py-2 rounded-2xl shadow-sm ${
+                        msg.sender === 'therapist'
+                          ? 'bg-red-600 text-white'
+                          : 'bg-gray-200 text-black'
+                      }`}
+                    >
+                      <p>{msg.text}</p>
+                      <p className="text-xs text-right opacity-70 mt-1">
+                        {msg.time}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
-            {/* Message Input */}
+            {/* Input */}
             <div className="mt-4 flex gap-2">
               <input
                 type="text"
@@ -136,7 +145,7 @@ export default function ChatPage() {
             </div>
           </>
         ) : (
-          <p className="text-gray-600 mt-10">Choose a client to begin chatting.</p>
+          <p className="text-gray-600 mt-10">Choose a client to start chatting.</p>
         )}
       </div>
     </div>

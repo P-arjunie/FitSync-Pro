@@ -1,3 +1,6 @@
+// app/api/contact/route.ts
+
+import { NextRequest } from 'next/server';
 import nodemailer from 'nodemailer';
 
 export async function POST(req) {
