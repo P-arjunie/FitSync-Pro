@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-
+//define the expected structure of data objects used in your components or functions
 interface Review {
   trainer: string;
   sessionType: string;

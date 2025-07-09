@@ -1,36 +1,67 @@
-import { NextResponse } from "next/server";
-import cloudinary from "@/lib/cloudinary";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { v2 as cloudinary } from 'cloudinary';
+import { Readable } from 'stream';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+  api_key: process.env.CLOUDINARY_API_KEY!,
+  api_secret: process.env.CLOUDINARY_API_SECRET!,
+});
+
+// Required for file upload (disable body parsing)
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 export async function POST(req: Request) {
   try {
-    console.log("📤 Received file upload request");
+    const formData = await req.formData();
+    const file = formData.get('file') as File;
 
-    const contentType = req.headers.get("content-type");
+    if (!file) {
+      return new Response(JSON.stringify({ error: 'No file uploaded' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
-    // ✅ Only allow JSON body with base64 image
-    if (!contentType || !contentType.includes("application/json")) {
-      return NextResponse.json(
-        { error: "Invalid content type" },
-        { status: 415 }
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    const stream = Readable.from(buffer);
+
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'products' },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        }
       );
-    }
 
-    const { image } = await req.json();
-
-    if (!image) {
-      return NextResponse.json({ error: "No image provided" }, { status: 400 });
-    }
-
-    const uploadResponse = await cloudinary.uploader.upload(image, {
-      folder: "fit-sync-pro",
+      stream.pipe(uploadStream);
     });
 
-    console.log("✅ Image uploaded:", uploadResponse.secure_url);
-    return NextResponse.json({ url: uploadResponse.secure_url }, { status: 200 });
-  } catch (err: any) {
-    console.error("❌ Upload error:", err);
-    return NextResponse.json({ error: err.message || "Upload failed" }, { status: 500 });
+    return new Response(
+      JSON.stringify({ url: (uploadResult as any).secure_url }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+  } catch (err) {
+    console.error('Cloudinary Upload Error:', err);
+
+    return new Response(
+      JSON.stringify({ error: 'Upload failed. Try again.' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }
-
-

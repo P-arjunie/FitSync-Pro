@@ -6,8 +6,6 @@ import './Components/HomePage.css';
 import Navbar from './Components/Navbar';
 import Footer1 from './Components/Footer_01';
 import GaugeChart from 'react-gauge-chart';
-import StripeProvider from "./Components/StripeProvider";
-{/*import CheckoutForm from "./Components/CheckoutForm"; */}
 
 interface UserInfo {
   role: string;
@@ -23,7 +21,7 @@ const HomePage: React.FC = () => {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // BMI State hooks
+  // BMI Calculator state
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
   const [bmi, setBmi] = useState<number | null>(null);
@@ -56,6 +54,16 @@ const HomePage: React.FC = () => {
     checkAuthStatus();
   }, []);
 
+  // BMI input validation effect
+  useEffect(() => {
+    if ((weight && !height) || (!weight && height)) {
+      setMessage("Please enter both weight and height");
+      setBmi(null);
+    } else {
+      setMessage(""); 
+    }
+  }, [weight, height]);
+
   // Navigation handlers
   const handleAuthNavigation = () => {
     router.push('/lithira/Authform');
@@ -87,7 +95,7 @@ const HomePage: React.FC = () => {
     }
 
     const weightNum = parseFloat(weight);
-    const heightMeters = parseFloat(height) / 100; // convert cm to meters
+    const heightMeters = parseFloat(height) / 100; 
 
     if (isNaN(weightNum) || isNaN(heightMeters) || heightMeters === 0) {
       setMessage("Invalid input");
@@ -95,32 +103,10 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    const bmiValue = weightNum / (heightMeters * heightMeters);
-    const roundedBMI = parseFloat(bmiValue.toFixed(2));
-    setBmi(roundedBMI);
-
-    if (bmiValue < 18.5) {
-      setMessage("Underweight");
-    } else if (bmiValue < 25) {
-      setMessage("Normal weight");
-    } else if (bmiValue < 30) {
-      setMessage("Overweight");
-    } else if (bmiValue < 35) {
-      setMessage("Obese");
-    } else {
-      setMessage("Severely Obese");
-    }
+    const calculatedBmi = weightNum / (heightMeters * heightMeters);
+    setBmi(calculatedBmi);
+    setMessage(""); // Clear any previous messages
   };
-
-  // Define gauge arcs
-  const range = 40 - 15; // 25
-  const arcsLength = [
-    (18.5 - 15) / range,   // Underweight
-    (25 - 18.5) / range,   // Normal
-    (30 - 25) / range,     // Overweight
-    (35 - 30) / range,     // Obese
-    (40 - 35) / range      // Severely Obese
-  ];
 
   //Animations and transitions for cards 
   useEffect(() => {
@@ -156,14 +142,19 @@ const HomePage: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  // In the HomePage component, update the renderHeroButtons function:
-const renderHeroButtons = () => {
-  if (isLoading) {
-    return (
-      <div className="hero-button-container">
-        <button className="button" disabled>Loading...</button>
-      </div>
-    );
+  const renderHeroButtons = () => {
+    if (isLoading) {
+      return (
+        <div className="hero-button-container">
+          <button className="button" disabled>Loading...</button>
+        </div>
+      );
+    }
+    // ... rest of the render logic
+  };
+
+  // ... rest of the component
+};
   }
 
   if (user) {
@@ -219,6 +210,56 @@ const renderHeroButtons = () => {
     );
   }
 };
+
+
+//gauge arcs
+const range = 40 - 15;
+const arcsLength = [
+  (20 - 15) / range,   
+  (25 - 20) / range,   
+  (30 - 25) / range,   
+  (35 - 30) / range,   
+  (40 - 35) / range    
+];
+
+//Animations and transitions for cards 
+useEffect(() => {
+  const cards = document.querySelectorAll(".progression-card, .workout-card, .nutrition-card");
+
+  const observer = new IntersectionObserver(
+    (entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const card = entry.target as HTMLElement;
+          card.classList.add("animate-in");
+
+          // Add animate-in to children inside the card
+          const icon = card.querySelector(".icon-image");
+          const title = card.querySelector(".card-title");
+          const text = card.querySelector(".card-text");
+          const btn = card.querySelector(".read-more-button");
+
+          if (icon) icon.classList.add("animate-in");
+          if (title) title.classList.add("animate-in");
+          if (text) text.classList.add("animate-in");
+          if (btn) btn.classList.add("animate-in");
+
+          obs.unobserve(card);
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+
+  cards.forEach(card => observer.observe(card));
+
+  return () => observer.disconnect();
+}, []);
+
+
+
+
+
   return (
     <div className="pagecontainer">
       <Navbar />
@@ -393,14 +434,94 @@ const renderHeroButtons = () => {
           </div>
         </section>
 
-        {/* BMI Section */}
-        <section className="bmi-wrapper">
-          <div className="bmi-box">
-            <div className="bmi-left">
-              <h2 className="bmi-heading">Let's Calculate Your BMI</h2>
-              <p className="bmi-description">
-                FitSyncPro combines strength and innovation to shape the ultimate fitness experience.
-              </p>
+
+    {/* BMI Section */}
+<section className="bmi-wrapper">
+  <div className="bmi-box">
+    <div className="bmi-left">
+      <h2 className="bmi-heading">Let's Calculate Your BMI</h2>
+      <p className="bmi-description">
+        FitSyncPro combines strength and innovation to shape the ultimate fitness experience.
+      </p>
+
+      <div className="unit-selector">
+        <label className="unit-option">
+          <input type="radio" name="unit" value="metric" defaultChecked />
+          <span>Metric Units</span>
+        </label>
+        <label className="unit-option">
+          <input type="radio" name="unit" value="imperial" />
+          <span>Imperial Units</span>
+        </label>
+      </div>
+
+      <div className="bmi-form">
+        <input
+          type="number"
+          placeholder="Weight / kg"
+          className="input"
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Height / cm"
+          className="input"
+          value={height}
+          onChange={(e) => setHeight(e.target.value)}
+        />
+      </div>
+
+      <button className="calculate-button" onClick={calculateBMI}>
+        Calculate
+      </button>
+
+      {message && bmi === null && (
+      <p className="bmi-error">{message}</p>
+      )}
+
+      {bmi !== null && (
+        <div className="bmi-result">
+          <p>Your BMI is: {bmi}</p>
+          <p>Status: {message}</p>
+        </div>
+      )}
+    </div>
+
+    <div className="bmi-right">
+      <GaugeChart
+        id="bmi-meter"
+        nrOfLevels={5}
+        arcsLength={arcsLength}
+        colors={['#00BFFF', '#32CD32', '#FFD700', '#FF4500', '#FF0000']}
+        arcPadding={0.02}
+        percent={bmi !== null ? Math.min((bmi - 15) / 25, 1) : 0}
+        arcWidth={0.3}
+        textColor="#000"
+        formatTextValue={() => (bmi ? `${bmi} BMI` : '--')}
+      />
+
+      <div className="bmi-legend">
+        <div className="bmi-legend-item">
+          <span className="bmi-legend-color" style={{ background: '#00BFFF' }}></span> Underweight
+        </div>
+        <div className="bmi-legend-item">
+          <span className="bmi-legend-color" style={{ background: '#32CD32' }}></span> Normal
+        </div>
+        <div className="bmi-legend-item">
+          <span className="bmi-legend-color" style={{ background: '#FFD700' }}></span> Overweight
+        </div>
+        <div className="bmi-legend-item">
+          <span className="bmi-legend-color" style={{ background: '#FF4500' }}></span> Obese
+        </div>
+        <div className="bmi-legend-item">
+          <span className="bmi-legend-color" style={{ background: '#FF0000' }}></span> Severely Obese
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 
               <div className="unit-selector">
                 <label className="unit-option">

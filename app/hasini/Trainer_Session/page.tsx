@@ -2,7 +2,9 @@
 import React, { useState } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
+// Main AddSession component
 export default function AddSession() {
+  // useState to handle form input values
   const [form, setForm] = useState({
     trainer: "",
     sessionType: "",
@@ -12,48 +14,50 @@ export default function AddSession() {
     onlineLink: "",
   });
 
+  // Update form state when user types into input/textarea
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-    try {
-      const res = await fetch("/api/trainerV-session", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(form),
-});
+    e.preventDefault(); // Prevent default form refresh
 
-  
-      const data = await res.json();
+    try {
+      // Send form data to API endpoint
+      const res = await fetch("/api/trainerV-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json(); // Parse response
       console.log("Server response:", data);
-  
-      alert("Session created!");
+
+      alert("Session created!"); // Notify user
     } catch (err) {
       console.error("Error submitting form:", err);
-      alert("Something went wrong!");
+      alert("Something went wrong!"); // Error notification
     }
   };
-  
 
   return (
+    // Page layout and background styling
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <form
         onSubmit={handleSubmit}
         className="relative bg-black text-white bg-opacity-80 p-8 rounded-lg w-full max-w-md shadow-xl"
         style={{
-          backgroundImage: `url('/trainer session.jpg')`,
+          backgroundImage: `url('/trainer session.jpg')`, // Background image
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
+        {/* Form container with semi-transparent background */}
         <div className="bg-black bg-opacity-70 p-6 rounded-lg">
           <h2 className="text-3xl font-bold text-center mb-6">ADD SESSION</h2>
 
+          {/* Trainer input */}
           <label className="block mb-2">Trainer:</label>
           <input
             type="text"
@@ -63,6 +67,7 @@ export default function AddSession() {
             className="w-full p-2 mb-4 rounded text-black"
           />
 
+          {/* Session Type input */}
           <label className="block mb-2">Session Type:</label>
           <input
             type="text"
@@ -72,6 +77,7 @@ export default function AddSession() {
             className="w-full p-2 mb-4 rounded text-black"
           />
 
+          {/* Duration input */}
           <label className="block mb-2">Time Duration:</label>
           <input
             type="text"
@@ -81,6 +87,7 @@ export default function AddSession() {
             className="w-full p-2 mb-4 rounded text-black"
           />
 
+          {/* Date input */}
           <label className="block mb-2">Date:</label>
           <input
             type="date"
@@ -90,6 +97,7 @@ export default function AddSession() {
             className="w-full p-2 mb-4 rounded text-black"
           />
 
+          {/* Comments input */}
           <label className="block mb-2">Comments:</label>
           <textarea
             name="comments"
@@ -98,6 +106,7 @@ export default function AddSession() {
             className="w-full p-2 mb-4 rounded text-black"
           ></textarea>
 
+          {/* Online session link input */}
           <label className="block mb-2">Online Session:</label>
           <input
             type="text"
@@ -108,6 +117,7 @@ export default function AddSession() {
             className="w-full p-2 mb-6 rounded text-black"
           />
 
+          {/* Form buttons: CREATE, UPDATE, DELETE (only CREATE is functional now) */}
           <div className="flex justify-between">
             <button
               type="submit"
@@ -131,6 +141,7 @@ export default function AddSession() {
         </div>
       </form>
 
+      {/* Floating headset support button */}
       <div className="fixed bottom-4 right-4">
         <button className="bg-red-500 p-3 rounded-full shadow-lg hover:bg-red-600">
           <i className="fas fa-headset text-white text-xl"></i>

@@ -68,7 +68,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     justifyContent: 'space-between',
     flexWrap: 'wrap', // Ensure 'flexWrap' is typed correctly
-    gap: '20px', // Ensure 'gap' is typed correctly
+    gap: '20px',
   },
   info: {
     flex: 1,

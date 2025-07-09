@@ -18,7 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useToast } from "../components/ui/use-toast"
 import { cn } from "@/lib/utils"
 
-const formSchema = z.object({
+//validation with zod - min length field + valid format
+const formSchema = z.object({ 
   title: z.string().min(2, {
     message: "Session title must be at least 2 characters.",
   }),
@@ -50,7 +51,7 @@ export default function SessionForm() {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: { //default values for form
       title: "",
       trainerName: "",
       location: "",
