@@ -81,12 +81,10 @@ const Navbar: React.FC = () => {
           </div>
         )}
 
+
+        {/* Join Class Button (visible on desktop only) */}
         
-        <Link href="/join">
-          <button className="bg-red-600 px-2 py-1.5 text-sm mr-10 hidden md:block">
-            Join Now
-          </button>
-        </Link>
+
 
         
         <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
