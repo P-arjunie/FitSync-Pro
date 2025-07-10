@@ -4,7 +4,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  role: "member" | "trainer";
+  role: "member" | "trainer"|"admin";
   profileImage?: string;
 }
 
@@ -13,7 +13,7 @@ const UserSchema = new Schema<IUser>(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["member", "trainer"], required: true },
+    role: { type: String, enum: ["member", "trainer","admin"], required: true },
     profileImage: { type: String },
   },
   { timestamps: true }
@@ -23,3 +23,4 @@ const UserSchema = new Schema<IUser>(
 const User = models.User || mongoose.model<IUser>("User", UserSchema);
 
 export default User;
+
