@@ -2,56 +2,50 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import VirtualSession from '@/models/VirtualSession';
 
-// POST: Create a new virtual session
 export async function POST(req: NextRequest) {
   try {
-    // Parse the request body as JSON
     const body = await req.json();
+    console.log("🔥 Incoming request body:", body); // log 1
 
-    // Connect to the MongoDB database
     await connectToDatabase();
+    console.log("✅ Connected to MongoDB"); // log 2
 
-    // Validate required fields
-    if (!body.trainer || !body.sessionType || !body.duration || !body.date || !body.onlineLink) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const requiredFields = [
+      'title',
+      'trainer',
+      'date',
+      'startTime',
+      'endTime',
+      'onlineLink',
+      'maxParticipants'
+    ];
+
+    for (const field of requiredFields) {
+      if (!body[field]) {
+        console.log(`❌ Missing field: ${field}`); // log 3
+        return NextResponse.json({ error: `Missing field: ${field}` }, { status: 400 });
+      }
     }
 
-    // Create a new VirtualSession instance
     const newSession = new VirtualSession({
+      title: body.title,
       trainer: body.trainer,
-      sessionType: body.sessionType,
-      duration: body.duration,
       date: body.date,
-      comments: body.comments || '', // Optional comments field
+      startTime: body.startTime,
+      endTime: body.endTime,
+      maxParticipants: body.maxParticipants,
+      description: body.description || '',
       onlineLink: body.onlineLink,
     });
 
-    // Save the session to the database
+    console.log("📦 Prepared to save:", newSession); // log 4
+
     await newSession.save();
 
-    // Respond with success and the created session
+    console.log("✅ Session saved!"); // log 5
     return NextResponse.json({ message: 'Session created!', session: newSession }, { status: 201 });
   } catch (error) {
-    // Log and respond with an error if anything goes wrong
-    console.error('Error creating session:', error);
+    console.error('❌ Error creating session:', error); // log 6
     return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
-  }
-}
-
-// GET: Fetch all virtual sessions
-export async function GET() {
-  try {
-    // Connect to the MongoDB database
-    await connectToDatabase();
-
-    // Retrieve all sessions from the database
-    const sessions = await VirtualSession.find();
-
-    // Respond with the list of sessions
-    return NextResponse.json(sessions, { status: 200 });
-  } catch (error) {
-    // Log and respond with an error if fetching fails
-    console.error('Error fetching sessions:', error);
-    return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
   }
 }

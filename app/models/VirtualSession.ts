@@ -1,25 +1,34 @@
 import mongoose, { Schema } from 'mongoose';
 
 const virtualSessionSchema = new Schema({
+  title: {
+    type: String,
+    required: [true, 'Session title is required'],
+    minlength: [2, 'Title must be at least 2 characters'],
+  },
   trainer: {
     type: String,
     required: [true, 'Trainer name is required'],
     minlength: [2, 'Trainer name must be at least 2 characters'],
   },
-  sessionType: {
-    type: String,
-    required: [true, 'Session type is required'],
-    minlength: [2, 'Session type must be at least 2 characters'],
-  },
-  duration: {
-    type: String,
-    required: [true, 'Duration is required'],
-  },
   date: {
     type: Date,
     required: [true, 'Date is required'],
   },
-  comments: {
+  startTime: {
+    type: String,
+    required: [true, 'Start time is required'],
+  },
+  endTime: {
+    type: String,
+    required: [true, 'End time is required'],
+  },
+  maxParticipants: {
+    type: Number,
+    required: [true, 'Maximum participants is required'],
+    min: [1, 'There must be at least 1 participant'],
+  },
+  description: {
     type: String,
     required: false,
   },
@@ -37,7 +46,7 @@ const virtualSessionSchema = new Schema({
   timestamps: true,
 });
 
-// Check if model already exists to prevent overwriting during hot reloads
-const VirtualSession = mongoose.models.VirtualSession || mongoose.model('VirtualSession', virtualSessionSchema);
+const VirtualSession =
+  mongoose.models.VirtualSession || mongoose.model('VirtualSession', virtualSessionSchema);
 
 export default VirtualSession;
