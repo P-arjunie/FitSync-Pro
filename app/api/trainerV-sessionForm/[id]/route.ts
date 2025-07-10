@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import VirtualSession from '@/models/VirtualSession';
 
+// GET: Fetch a single virtual session by its ID
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     await connectToDatabase();
     const session = await VirtualSession.findById(params.id);
+
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
+
     return NextResponse.json(session, { status: 200 });
   } catch (error) {
     console.error('Error fetching session:', error);
@@ -16,25 +19,38 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-// Keep only this PUT function (your correct one)
+// PUT: Update a virtual session by its ID
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body = await req.json();
     await connectToDatabase();
 
-    // Validate required fields
-    if (!body.trainer || !body.sessionType || !body.duration || !body.date || !body.onlineLink) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const requiredFields = [
+      'title',
+      'trainer',
+      'date',
+      'startTime',
+      'endTime',
+      'onlineLink',
+      'maxParticipants'
+    ];
+
+    for (const field of requiredFields) {
+      if (!body[field]) {
+        return NextResponse.json({ error: `Missing field: ${field}` }, { status: 400 });
+      }
     }
 
     const updated = await VirtualSession.findByIdAndUpdate(
       params.id,
       {
+        title: body.title,
         trainer: body.trainer,
-        sessionType: body.sessionType,
-        duration: body.duration,
         date: body.date,
-        comments: body.comments,
+        startTime: body.startTime,
+        endTime: body.endTime,
+        maxParticipants: body.maxParticipants,
+        description: body.description || '',
         onlineLink: body.onlineLink,
       },
       { new: true }
@@ -46,11 +62,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json(updated, { status: 200 });
   } catch (error) {
-    console.error('Error updating virtual session:', error);
+    console.error('Error updating session:', error);
     return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
   }
 }
 
+// DELETE: Remove a virtual session by its ID
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     await connectToDatabase();

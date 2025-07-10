@@ -2,24 +2,45 @@
 
 import React, { useState, useEffect } from 'react';
 
-const ReviewPage = () => {
-  const [trainer, setTrainer] = useState('');
-  const [trainers, setTrainers] = useState([]);
-  const [sessionType, setSessionType] = useState('');
-  const [date, setDate] = useState('');
-  const [comments, setComments] = useState('');
-  const [rating, setRating] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+//Defines TypeScript types for the data structures  Define types for our data
+type Trainer = {
+  name: string;
+};
 
-  useEffect(() => {
+type ApiResponse = {
+  trainers?: Trainer[];
+  message?: string;
+};
+
+type ReviewData = {
+  trainer: string;
+  sessionType: string;
+  date: string;
+  comments: string;
+  rating: number;
+};
+
+const ReviewPage = () => {
+  const [trainer, setTrainer] = useState<string>('');
+  const [trainers, setTrainers] = useState<string[]>([]);
+  const [sessionType, setSessionType] = useState<string>('');
+  const [date, setDate] = useState<string>('');
+  const [comments, setComments] = useState<string>('');
+  const [rating, setRating] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<boolean>(false);
+
+  useEffect(() => {             //handle side effects in function components. A "side effect" is anything that interacts with the outside world
     const fetchTrainers = async () => {
       try {
-        const response = await fetch('/api/trainers/getnames');
-        const data = await response.json();
-        if (response.ok) setTrainers(data.trainers.map((t) => t.name));
-        else console.error(data.message);
+        const response = await fetch('/api/trainers/getnames');//Sends a request to get trainer names from the server
+        const data: ApiResponse = await response.json();
+        if (response.ok && data.trainers) {//Checks if the request was successful and data exists
+          setTrainers(data.trainers.map((t) => t.name)); //Takes the trainer data, extracts just the names, and saves them
+        } else {
+          console.error(data.message || 'Failed to fetch trainers');
+        }
       } catch (err) {
         console.error('Failed to fetch trainers', err);
       }
@@ -27,28 +48,55 @@ const ReviewPage = () => {
     fetchTrainers();
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setLoading(true);  //Sets a `loading` flag to `true`.You can use this to **disable buttons** or show a loading spinner while the request is being sent.
+
     setError('');
     setSuccess(false);
 
+  // === DATE VALIDATION ===
+  const selectedDate = new Date(date);
+  const today = new Date();
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+  if (selectedDate > today) {
+    setError('Date cannot be in the future.');
+    setLoading(false);
+    return;
+  }
+
+  if (selectedDate < sixMonthsAgo) {
+    setError('Reviews older than 6 months are not allowed.');
+    setLoading(false);
+    return;
+  }
     try {
+      const reviewData: ReviewData = {
+        trainer,
+        sessionType,
+        date,
+        comments,
+        rating
+      };
+
       const response = await fetch('/api/feedback/submitReview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trainer, sessionType, date, comments, rating }),
+        body: JSON.stringify(reviewData),//Converts the `reviewData` object into a **JSON string** to send in the request.
       });
-      const data = await response.json();
+      
+      const data: ApiResponse = await response.json();
 
       if (response.ok) {
         setSuccess(true);
-        setTrainer('');
+        setTrainer('');//lears the form inputs** after a successful submission.
         setSessionType('');
         setDate('');
         setComments('');
         setRating(0);
-        setTimeout(() => setSuccess(false), 5000);
+        setTimeout(() => setSuccess(false), 5000);//again set to false 
       } else {
         setError(data.message || 'Something went wrong');
       }
@@ -59,7 +107,7 @@ const ReviewPage = () => {
     }
   };
 
-  const starRatingLabels = ["Click to rate your experience", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+  const starRatingLabels = ["Click to rate your experience", "Poor", "Fair", "Good", "Very Good", "Excellent"];//This line defines an array named starRatingLabels, which holds text descriptions for each star rating a user might select in a review form.
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white relative overflow-hidden">
@@ -122,7 +170,7 @@ const ReviewPage = () => {
                     </div>
                   </div>
                 </div>
-
+                
                 <div>
                   <label htmlFor="sessionType" className="block text-gray-300 font-semibold mb-2 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -190,7 +238,7 @@ const ReviewPage = () => {
                     required
                   />
                 </div>
-
+                
                 <div>
                   <label className="block text-gray-300 font-semibold mb-2 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
