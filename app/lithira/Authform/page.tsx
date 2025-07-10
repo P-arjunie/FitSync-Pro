@@ -81,6 +81,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       return;
     }
 
+    // Check for admin credentials
+    if (loginData.email === "admin@123.com" && loginData.password === "123456") {
+      alert("Admin login successful!");
+      localStorage.setItem("userRole", "admin");
+      localStorage.setItem("userEmail", "admin@123.com");
+      localStorage.setItem("userName", "Admin");
+      localStorage.setItem("userId", "admin_001");
+      router.push("/");
+      return;
+    }
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -96,16 +107,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
         localStorage.setItem("userEmail", data.user.email);
         localStorage.setItem("userName", data.user.name);
         localStorage.setItem("userId", data.user.id);
-
-        if (data.user.role === "member") {
-          window.location.href = "/lithira/MemberProfilePage";
-        } else if (data.user.role === "trainer") {
-          window.location.href = "/lithira/TrainerProfilePage";
-        } else {
-          alert("Unknown user role.");
-        }
+        router.push("/");
       } else {
-        alert(data.error);
+        alert(data.error || "Login failed");
       }
     } catch (error) {
       alert("Login failed");
@@ -253,9 +257,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
             className="bg-red-600 text-white px-3 py-2 rounded-lg mb-4"
             required
           >
-            <option value="" disabled>
-              Select Role
-            </option>
+            <option value="" disabled>Select Role</option>
             <option value="member">Member</option>
             <option value="trainer">Trainer</option>
           </select>
@@ -300,9 +302,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
                 <input
                   type={showPassword[field] ? "text" : "password"}
                   name={field}
-                  placeholder={
-                    field === "password" ? "Enter Password" : "Confirm Password"
-                  }
+                  placeholder={field === "password" ? "Enter Password" : "Confirm Password"}
                   className="bg-transparent w-full outline-none"
                   value={signUpData[field as keyof SignUpData] as string}
                   onChange={handleSignUpChange}
@@ -394,4 +394,3 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 };
 
 export default AuthForm;
-

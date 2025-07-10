@@ -128,7 +128,7 @@ export default function Contact() {
         hasMessage: !!form.message
       });
 
-      const response = await fetch('/api/contact', {
+      const response = await fetch('/api/Contact', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
