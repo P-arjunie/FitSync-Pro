@@ -13,6 +13,10 @@ const sessionSchema = new Schema({
     required: [true, 'Trainer name is required'],
     minlength: [2, 'Trainer name must be at least 2 characters'],
   },
+  trainerId: {
+    type: String,
+    required: [true, 'Trainer ID is required'],
+  },
   start: {
     type: Date,
     required: [true, 'Start time is required'],
@@ -30,6 +34,10 @@ const sessionSchema = new Schema({
     type: Number,
     required: [true, 'Maximum participants is required'],
     min: [1, 'Maximum participants must be at least 1'],
+  },
+  currentParticipants: {
+    type: Number,
+    default: 0
   },
   description: {
     type: String,

@@ -11,9 +11,15 @@ interface OrderItem {
 
 interface CheckoutFormProps {
   userId: string;
+  orderItems?: OrderItem[];
+  totalAmount?: number;
 }
 
-const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
+const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
+  orderItems: orderItemsProp,
+  totalAmount: totalAmountProp
+ }) => {
+  
   const stripe = useStripe();
   const elements = useElements();
 
@@ -23,11 +29,40 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
   const [totalAmount, setTotalAmount] = useState<number>(0);
 
   useEffect(() => {
+    if (!userId) {
+      // Try to get from localStorage if not passed as prop
+      const storedId = localStorage.getItem("userId");
+      if (!storedId) return;
+      // If found, reload the page with userId as a prop (or set up state if you want to support dynamic userId)
+      // For now, just return to avoid running the rest of the effect without a userId
+      return;
+    }
+
+    if (orderItemsProp && totalAmountProp !== undefined) {
+    // If passed via props, use them directly
+    setOrderItems(orderItemsProp);
+    setTotalAmount(totalAmountProp);
+    return;
+  }
+
+    // Else: fallback to fetching latest order (as before)
     const fetchOrders = async () => {
       try {
         const res = await fetch("/api/orders", {
-          headers: { userId },
+          headers: { 
+            userId,
+            "Content-Type": "application/json"
+          },
         });
+        
+        if (!res.ok) {
+          console.error("API Error:", res.status, res.statusText);
+          // Fallback to dummy data if API fails
+          setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
+          setTotalAmount(10);
+          return;
+        }
+        
         const data = await res.json();
 
         if (data && Array.isArray(data) && data.length > 0) {
@@ -39,6 +74,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
           setTotalAmount(10);
         }
       } catch (err) {
+        console.error("Error fetching orders:", err);
         setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
         setTotalAmount(10);
       }
