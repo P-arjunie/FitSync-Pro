@@ -1,10 +1,12 @@
 /* eslint-disable prefer-const */
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import OrderAnalyticsDashboard from "../../Components/analytics/OrderAnalyticsDashboard";
+import jsPDF from "jspdf";
+import * as XLSX from "xlsx";
 
-interface OrderAnalyticsData {  //define the expected structure of data objects used in your components or functions
+interface OrderAnalyticsData {
   labels: string[];
   orderCounts: number[];
   revenueCounts: number[];
@@ -22,8 +24,14 @@ interface OrderAnalyticsData {  //define the expected structure of data objects 
   }>;
 }
 
+interface FilterState {
+  status: string;
+  category: string;
+  startDate: string;
+  endDate: string;
+}
+
 const OrderAnalyticsPage: React.FC = () => {
-  // State for analytics data
   const [analyticsData, setAnalyticsData] = useState<OrderAnalyticsData>({
     labels: [],
     orderCounts: [],
@@ -38,40 +46,77 @@ const OrderAnalyticsPage: React.FC = () => {
     topProducts: []
   });
   
-  // State for filters
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  const [filters, setFilters] = useState<FilterState>({
+    status: "all",
+    category: "all",
+    startDate: "",
+    endDate: ""
+  });
+  
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [reportFormat, setReportFormat] = useState<string>("pdf");
+  const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
 
-  // Function to fetch analytics data
-  const fetchAnalyticsData = async () => {
+  // Memoized date range helpers
+  const dateRangeHelpers = useMemo(() => ({
+    getCurrentMonth: () => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return {
+        startDate: firstDay.toISOString().split('T')[0],
+        endDate: lastDay.toISOString().split('T')[0]
+      };
+    },
+    getPreviousMonth: () => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+      return {
+        startDate: firstDay.toISOString().split('T')[0],
+        endDate: lastDay.toISOString().split('T')[0]
+      };
+    },
+    getLastMonths: (months: number) => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth() - months, 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return {
+        startDate: firstDay.toISOString().split('T')[0],
+        endDate: lastDay.toISOString().split('T')[0]
+      };
+    },
+    getCurrentYear: () => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), 0, 1);
+      const lastDay = new Date(today.getFullYear(), 11, 31);
+      return {
+        startDate: firstDay.toISOString().split('T')[0],
+        endDate: lastDay.toISOString().split('T')[0]
+      };
+    }
+  }), []);
+
+  // Optimized API call with useCallback
+  const fetchAnalyticsData = useCallback(async () => {
+    if (!filters.startDate || !filters.endDate) return;
+    
     setIsLoading(true);
     setError(null);
     
     try {
-      // Build query string with filters
-      let queryParams = new URLSearchParams();
-      if (selectedStatus !== "all") {
-        queryParams.append("status", selectedStatus);
-      }
-      if (selectedCategory !== "all") {
-        queryParams.append("category", selectedCategory);
-      }
-      if (startDate) {
-        queryParams.append("startDate", startDate);
-      }
-      if (endDate) {
-        queryParams.append("endDate", endDate);
-      }
+      const queryParams = new URLSearchParams();
+      if (filters.status !== "all") queryParams.append("status", filters.status);
+      if (filters.category !== "all") queryParams.append("category", filters.category);
+      queryParams.append("startDate", filters.startDate);
+      queryParams.append("endDate", filters.endDate);
       
       const response = await fetch(`/api/analytics/orders?${queryParams.toString()}`);
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch order analytics data");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch analytics data`);
       }
       
       const result = await response.json();
@@ -80,11 +125,37 @@ const OrderAnalyticsPage: React.FC = () => {
         throw new Error(result.error || "Failed to fetch order analytics data");
       }
       
-      setAnalyticsData(result.data);
+      // Enhanced data validation with better error handling
+      const data: OrderAnalyticsData = {
+        labels: Array.isArray(result.data?.labels) ? result.data.labels : [],
+        orderCounts: Array.isArray(result.data?.orderCounts) ? 
+          result.data.orderCounts.map((count: any) => Number(count) || 0) : [],
+        revenueCounts: Array.isArray(result.data?.revenueCounts) ? 
+          result.data.revenueCounts.map((revenue: any) => Number(revenue) || 0) : [],
+        statuses: Array.isArray(result.data?.statuses) ? result.data.statuses : [],
+        categories: Array.isArray(result.data?.categories) ? result.data.categories : [],
+        totalRevenue: Number(result.data?.totalRevenue) || 0,
+        totalOrders: Number(result.data?.totalOrders) || 0,
+        averageOrderValue: Number(result.data?.averageOrderValue) || 0,
+        statusBreakdown: result.data?.statusBreakdown && typeof result.data.statusBreakdown === "object" ? 
+          result.data.statusBreakdown : {},
+        categoryBreakdown: result.data?.categoryBreakdown && typeof result.data.categoryBreakdown === "object" ? 
+          result.data.categoryBreakdown : {},
+        topProducts: Array.isArray(result.data?.topProducts) ? 
+          result.data.topProducts.map((prod: any) => ({
+            title: String(prod?.title || ""),
+            count: Number(prod?.count) || 0,
+            revenue: Number(prod?.revenue) || 0,
+          })) : [],
+      };
+      
+      setAnalyticsData(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error occurred");
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError(errorMessage);
       console.error("Error fetching order analytics data:", err);
-      // Set empty data to prevent UI errors
+      
+      // Reset to empty state on error
       setAnalyticsData({
         labels: [],
         orderCounts: [],
@@ -101,98 +172,305 @@ const OrderAnalyticsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters]);
 
-  // Fetch data on initial load
+  // Initialize with current month on mount
   useEffect(() => {
-    // Set default date range on initial load
-    setDefaultMonthRange();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const currentMonth = dateRangeHelpers.getCurrentMonth();
+    setFilters(prev => ({
+      ...prev,
+      startDate: currentMonth.startDate,
+      endDate: currentMonth.endDate
+    }));
+  }, [dateRangeHelpers]);
 
   // Fetch data when filters change
   useEffect(() => {
-    if (startDate && endDate) {
-      fetchAnalyticsData();
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
+
+  // Filter update handlers
+  const updateFilter = useCallback((key: keyof FilterState, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const setDateRange = useCallback((startDate: string, endDate: string) => {
+    setFilters(prev => ({ ...prev, startDate, endDate }));
+  }, []);
+
+  // Date range button handlers
+  const dateRangeButtons = useMemo(() => [
+    {
+      label: "THIS MONTH",
+      onClick: () => {
+        const range = dateRangeHelpers.getCurrentMonth();
+        setDateRange(range.startDate, range.endDate);
+      },
+      className: "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+    },
+    {
+      label: "LAST MONTH",
+      onClick: () => {
+        const range = dateRangeHelpers.getPreviousMonth();
+        setDateRange(range.startDate, range.endDate);
+      },
+      className: "bg-gray-700 hover:bg-gray-600 focus:ring-gray-500"
+    },
+    {
+      label: "3 MONTHS",
+      onClick: () => {
+        const range = dateRangeHelpers.getLastMonths(3);
+        setDateRange(range.startDate, range.endDate);
+      },
+      className: "bg-gray-700 hover:bg-gray-600 focus:ring-gray-500"
+    },
+    {
+      label: "6 MONTHS",
+      onClick: () => {
+        const range = dateRangeHelpers.getLastMonths(6);
+        setDateRange(range.startDate, range.endDate);
+      },
+      className: "bg-gray-700 hover:bg-gray-600 focus:ring-gray-500"
+    },
+    {
+      label: "THIS YEAR",
+      onClick: () => {
+        const range = dateRangeHelpers.getCurrentYear();
+        setDateRange(range.startDate, range.endDate);
+      },
+      className: "bg-gray-700 hover:bg-gray-600 focus:ring-gray-500"
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStatus, selectedCategory, startDate, endDate]);
+  ], [dateRangeHelpers, setDateRange]);
 
-  // Calculate current month range for default date filter
-  const setDefaultMonthRange = () => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
-    setStartDate(firstDay.toISOString().split('T')[0]);
-    setEndDate(lastDay.toISOString().split('T')[0]);
-  };
+  // Report generation functions
+  const generatePDFReport = useCallback(() => {
+    setIsGeneratingReport(true);
+    try {
+      const doc = new jsPDF();
+      const margin = 20;
+      let currentY = margin;
 
-  // Set previous month range
-  const setPreviousMonthRange = () => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
-    
-    setStartDate(firstDay.toISOString().split('T')[0]);
-    setEndDate(lastDay.toISOString().split('T')[0]);
-  };
+      // Title and metadata
+      doc.setFontSize(18);
+      doc.text("Order Analytics Report", margin, currentY);
+      currentY += 15;
+      
+      doc.setFontSize(12);
+      doc.text(`Date Range: ${filters.startDate} to ${filters.endDate}`, margin, currentY);
+      currentY += 10;
+      doc.text(`Status Filter: ${filters.status === "all" ? "All Statuses" : filters.status}`, margin, currentY);
+      currentY += 10;
+      doc.text(`Category Filter: ${filters.category === "all" ? "All Categories" : filters.category}`, margin, currentY);
+      currentY += 20;
 
-  // Set last 3 months range
-  const setLastThreeMonthsRange = () => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth() - 3, 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
-    setStartDate(firstDay.toISOString().split('T')[0]);
-    setEndDate(lastDay.toISOString().split('T')[0]);
-  };
+      // Summary section
+      doc.setFontSize(14);
+      doc.text("Summary", margin, currentY);
+      currentY += 15;
+      
+      doc.setFontSize(12);
+      const summaryData = [
+        `Total Revenue: $${analyticsData.totalRevenue.toFixed(2)}`,
+        `Total Orders: ${analyticsData.totalOrders}`,
+        `Average Order Value: $${analyticsData.averageOrderValue.toFixed(2)}`
+      ];
+      
+      summaryData.forEach(item => {
+        doc.text(item, margin, currentY);
+        currentY += 10;
+      });
+      currentY += 10;
 
-  // Set last 6 months range
-  const setLastSixMonthsRange = () => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth() - 6, 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
-    setStartDate(firstDay.toISOString().split('T')[0]);
-    setEndDate(lastDay.toISOString().split('T')[0]);
-  };
+      // Status breakdown
+      if (Object.keys(analyticsData.statusBreakdown).length > 0) {
+        doc.setFontSize(14);
+        doc.text("Status Breakdown", margin, currentY);
+        currentY += 15;
+        
+        doc.setFontSize(12);
+        Object.entries(analyticsData.statusBreakdown).forEach(([status, count]) => {
+          doc.text(`${status}: ${count}`, margin, currentY);
+          currentY += 10;
+        });
+        currentY += 10;
+      }
 
-  // Set current year range
-  const setCurrentYearRange = () => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), 0, 1);
-    const lastDay = new Date(today.getFullYear(), 11, 31);
+      // Category breakdown
+      if (Object.keys(analyticsData.categoryBreakdown).length > 0) {
+        doc.setFontSize(14);
+        doc.text("Category Breakdown", margin, currentY);
+        currentY += 15;
+        
+        doc.setFontSize(12);
+        Object.entries(analyticsData.categoryBreakdown).forEach(([category, count]) => {
+          if (currentY > 270) { // Check if we need a new page
+            doc.addPage();
+            currentY = margin;
+          }
+          doc.text(`${category}: ${count}`, margin, currentY);
+          currentY += 10;
+        });
+        currentY += 10;
+      }
+
+      // Top products
+      if (analyticsData.topProducts.length > 0) {
+        if (currentY > 200) { // Check if we need a new page
+          doc.addPage();
+          currentY = margin;
+        }
+        
+        doc.setFontSize(14);
+        doc.text("Top Products", margin, currentY);
+        currentY += 15;
+        
+        doc.setFontSize(12);
+        analyticsData.topProducts.forEach((product, index) => {
+          if (currentY > 270) { // Check if we need a new page
+            doc.addPage();
+            currentY = margin;
+          }
+          doc.text(`${index + 1}. ${product.title}: ${product.count} orders, $${product.revenue.toFixed(2)}`, margin, currentY);
+          currentY += 10;
+        });
+      }
+
+      doc.save(`order_analytics_${filters.startDate}_to_${filters.endDate}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF report:", error);
+      setError("Failed to generate PDF report");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }, [analyticsData, filters]);
+
+  const generateExcelReport = useCallback(() => {
+    setIsGeneratingReport(true);
+    try {
+      const workbook = XLSX.utils.book_new();
+      
+      // Summary sheet
+      const summaryData = [
+        ["Order Analytics Report", ""],
+        ["Date Range", `${filters.startDate} to ${filters.endDate}`],
+        ["Status Filter", filters.status === "all" ? "All Statuses" : filters.status],
+        ["Category Filter", filters.category === "all" ? "All Categories" : filters.category],
+        [""],
+        ["Summary"],
+        ["Total Revenue", analyticsData.totalRevenue],
+        ["Total Orders", analyticsData.totalOrders],
+        ["Average Order Value", analyticsData.averageOrderValue],
+      ];
+
+      // Status breakdown sheet
+      const statusData = [["Status", "Count"], ...Object.entries(analyticsData.statusBreakdown)];
+      
+      // Category breakdown sheet
+      const categoryData = [["Category", "Count"], ...Object.entries(analyticsData.categoryBreakdown)];
+      
+      // Top products sheet
+      const productData = [
+        ["Title", "Order Count", "Revenue"],
+        ...analyticsData.topProducts.map(product => [product.title, product.count, product.revenue])
+      ];
+
+      // Create sheets
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(summaryData), "Summary");
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(statusData), "Status Breakdown");
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(categoryData), "Category Breakdown");
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(productData), "Top Products");
+
+      XLSX.writeFile(workbook, `order_analytics_${filters.startDate}_to_${filters.endDate}.xlsx`);
+    } catch (error) {
+      console.error("Error generating Excel report:", error);
+      setError("Failed to generate Excel report");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }, [analyticsData, filters]);
+
+  const generateCSVReport = useCallback(() => {
+    setIsGeneratingReport(true);
+    try {
+      const csvData = [
+        ["Order Analytics Report"],
+        ["Date Range", `${filters.startDate} to ${filters.endDate}`],
+        ["Status Filter", filters.status === "all" ? "All Statuses" : filters.status],
+        ["Category Filter", filters.category === "all" ? "All Categories" : filters.category],
+        [""],
+        ["Summary"],
+        ["Total Revenue", analyticsData.totalRevenue],
+        ["Total Orders", analyticsData.totalOrders],
+        ["Average Order Value", analyticsData.averageOrderValue],
+        [""],
+        ["Status Breakdown"],
+        ["Status", "Count"],
+        ...Object.entries(analyticsData.statusBreakdown),
+        [""],
+        ["Category Breakdown"],
+        ["Category", "Count"],
+        ...Object.entries(analyticsData.categoryBreakdown),
+        [""],
+        ["Top Products"],
+        ["Title", "Order Count", "Revenue"],
+        ...analyticsData.topProducts.map(product => [product.title, product.count, product.revenue]),
+      ];
+
+      const csvContent = csvData.map(row => 
+        row.map(cell => typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell).join(",")
+      ).join("\n");
+      
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `order_analytics_${filters.startDate}_to_${filters.endDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error generating CSV report:", error);
+      setError("Failed to generate CSV report");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }, [analyticsData, filters]);
+
+  const generateReport = useCallback(() => {
+    const reportGenerators = {
+      pdf: generatePDFReport,
+      excel: generateExcelReport,
+      csv: generateCSVReport
+    };
     
-    setStartDate(firstDay.toISOString().split('T')[0]);
-    setEndDate(lastDay.toISOString().split('T')[0]);
-  };
+    const generator = reportGenerators[reportFormat as keyof typeof reportGenerators];
+    if (generator) {
+      generator();
+    }
+  }, [reportFormat, generatePDFReport, generateExcelReport, generateCSVReport]);
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white relative overflow-hidden">
-      {/* Skewed background */}
       <div className="absolute top-0 right-0 w-1/2 h-full bg-red-600 transform -skew-x-12 z-0"></div>
       
       <div className="relative z-10 flex-1 p-8 flex flex-col">
-        {/* Header */}
         <div className="mb-6">
           <span className="inline-block bg-red-600 text-white text-sm font-bold py-1 px-3 border border-red-600">
             SALES ANALYTICS
           </span>
-          <h2 className="text-3xl font-bold mt-2 mb-6"> Analytics Dashboard</h2>
+          <h2 className="text-3xl font-bold mt-2 mb-6">Analytics Dashboard</h2>
         </div>
 
-        {/* Error message */}
         {error && (
           <div className="bg-red-900 border-l-4 border-red-500 text-red-100 p-4 mb-6 flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
-            {error}
+            <span>{error}</span>
           </div>
         )}
 
-        {/* Filters */}
         <div className="bg-gray-900 p-6 mb-6 shadow-lg border-l-2 border-red-600">
           <h3 className="text-xl font-bold mb-4 flex items-center">
             <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -201,7 +479,6 @@ const OrderAnalyticsPage: React.FC = () => {
             Filters
           </h3>
           
-          {/* Filter Controls Row 1 */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
               <label className="block text-gray-300 font-semibold mb-2 flex items-center">
@@ -212,16 +489,19 @@ const OrderAnalyticsPage: React.FC = () => {
               </label>
               <div className="relative">
                 <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  value={filters.status}
+                  onChange={(e) => updateFilter('status', e.target.value)}
                   className="w-full p-3 bg-gray-800 border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
                 >
                   <option value="all">All Statuses</option>
-                  {analyticsData.statuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </option>
-                  ))}
+                  {analyticsData.statuses
+  .filter((status): status is string => typeof status === 'string')
+  .map((status) => (
+    <option key={status} value={status}>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </option>
+))}
+
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                   <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -240,8 +520,8 @@ const OrderAnalyticsPage: React.FC = () => {
               </label>
               <div className="relative">
                 <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  value={filters.category}
+                  onChange={(e) => updateFilter('category', e.target.value)}
                   className="w-full p-3 bg-gray-800 border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
                 >
                   <option value="all">All Categories</option>
@@ -266,14 +546,12 @@ const OrderAnalyticsPage: React.FC = () => {
                 </svg>
                 Start Date
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
-                />
-              </div>
+              <input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => updateFilter('startDate', e.target.value)}
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
+              />
             </div>
             
             <div>
@@ -283,64 +561,74 @@ const OrderAnalyticsPage: React.FC = () => {
                 </svg>
                 End Date
               </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
-                />
-              </div>
+              <input
+                type="date"
+                value={filters.endDate}
+                onChange={(e) => updateFilter('endDate', e.target.value)}
+                className="w-full p-3 bg-gray-800 border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
+              />
             </div>
           </div>
 
-          {/* Quick Date Range Buttons */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <button
-              onClick={setDefaultMonthRange}
-              className="bg-red-600 text-white py-2 px-4 font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition duration-200 flex items-center justify-center text-sm"
-            >
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+            {dateRangeButtons.map((button, index) => (
+              <button
+                key={index}
+                onClick={button.onClick}
+                className={`${button.className} text-white py-2 px-4 font-bold focus:outline-none focus:ring-2 transition duration-200 flex items-center justify-center text-sm`}
+              >
+                {button.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Report Generation Section */}
+          <div className="mt-4">
+            <h3 className="text-xl font-bold mb-4 flex items-center">
+              <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1.447.894L12 15.382l-2.553 1.512A1 1 0 018 16V4z" clipRule="evenodd" />
               </svg>
-              THIS MONTH
-            </button>
-            <button
-              onClick={setPreviousMonthRange}
-              className="bg-gray-700 text-white py-2 px-4 font-bold hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200 flex items-center justify-center text-sm"
-            >
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              LAST MONTH
-            </button>
-            <button
-              onClick={setLastThreeMonthsRange}
-              className="bg-gray-700 text-white py-2 px-4 font-bold hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200 flex items-center justify-center text-sm"
-            >
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-              </svg>
-              3 MONTHS
-            </button>
-            <button
-              onClick={setLastSixMonthsRange}
-              className="bg-gray-700 text-white py-2 px-4 font-bold hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200 flex items-center justify-center text-sm"
-            >
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-              </svg>
-              6 MONTHS
-            </button>
-            <button
-              onClick={setCurrentYearRange}
-              className="bg-gray-700 text-white py-2 px-4 font-bold hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200 flex items-center justify-center text-sm"
-            >
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-              </svg>
-              THIS YEAR
-            </button>
+              Generate Report
+            </h3>
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <div className="flex-1">
+                <label className="block text-gray-300 font-semibold mb-2">Report Format</label>
+                <select
+                  value={reportFormat}
+                  onChange={(e) => setReportFormat(e.target.value)}
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
+                >
+                  <option value="pdf">PDF Document</option>
+                  <option value="excel">Excel Spreadsheet</option>
+                  <option value="csv">CSV File</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-gray-300 font-semibold mb-2">Actions</label>
+                <button
+                  onClick={generateReport}
+                  disabled={isLoading || isGeneratingReport}
+                  className="w-full bg-red-600 text-white py-3 px-4 font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGeneratingReport ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                      Generate Report
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       
@@ -364,7 +652,7 @@ const OrderAnalyticsPage: React.FC = () => {
             statusBreakdown={analyticsData.statusBreakdown}
             categoryBreakdown={analyticsData.categoryBreakdown}
             topProducts={analyticsData.topProducts}
-            selectedStatus={selectedStatus}
+            selectedStatus={filters.status}
           />
         )}
       </div>
