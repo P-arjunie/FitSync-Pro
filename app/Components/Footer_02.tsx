@@ -10,7 +10,7 @@ const Footer_02: React.FC = () => {
 {/* Left: Text */}
         <div className={styles.footerText}>
           <h2 className={styles.brandTitle}>
-            <span className={styles.brandHighlight}>F</span>FITSYNC PRO
+            <span className={styles.brandHighlight}>F</span>ITSYNC PRO
           </h2>
           <p className={styles.subTitle}>ULTIMATE GYM CENTER</p>
           <p className={styles.legal}>Privacy Policy | © 2025 FitSyncPro</p>
