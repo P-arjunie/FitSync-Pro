@@ -66,7 +66,7 @@ const Navbar: React.FC = () => {
       <div className="flex items-center space-x-4">
         
         <button onClick={handleCartClick} className="text-white px-2 py-2">
-          <Image src="/cart.png" alt="Cart Icon" width={24} height={24} />
+          {/* <Image src="/cart.png" alt="Cart Icon" width={24} height={24} /> */}
         </button>
 
        

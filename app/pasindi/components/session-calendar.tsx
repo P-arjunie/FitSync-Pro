@@ -2,7 +2,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { AwaitedReactNode, JSXElementConstructor, ReactElement, ReactNode, useEffect, useState } from "react"
+import {
+  type AwaitedReactNode,
+  type JSXElementConstructor,
+  type ReactElement,
+  type ReactNode,
+  useEffect,
+  useState,
+} from "react"
 import { Calendar, momentLocalizer, Views } from "react-big-calendar"
 import moment from "moment"
 import "react-big-calendar/lib/css/react-big-calendar.css"
@@ -26,7 +33,7 @@ type Session = {
   location: string
   maxParticipants: number
   description?: string
-  currentParticipants?: number; // Added for the new button
+  currentParticipants?: number
 }
 
 export default function SessionCalendar() {
@@ -38,40 +45,40 @@ export default function SessionCalendar() {
   const { toast } = useToast()
 
   // Add state for participants
-  const [participants, setParticipants] = useState([]);
-  const [showParticipants, setShowParticipants] = useState(false);
+  const [participants, setParticipants] = useState([])
+  const [showParticipants, setShowParticipants] = useState(false)
 
   // Add function to fetch participants
   const fetchParticipants = async (sessionId: string) => {
     try {
-      const response = await fetch(`/api/sessions/${sessionId}/participants`);
+      const response = await fetch(`/api/sessions/${sessionId}/participants`)
       if (response.ok) {
-        const data = await response.json();
-        setParticipants(data);
+        const data = await response.json()
+        setParticipants(data)
       }
     } catch (error) {
-      console.error("Error fetching participants:", error);
+      console.error("Error fetching participants:", error)
     }
-  };
+  }
 
   // Load sessions from API only once when component mounts
   useEffect(() => {
-    let isMounted = true;
-    const trainerId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-    console.log("Fetching sessions for trainerId:", trainerId);
+    let isMounted = true
+    const trainerId = typeof window !== "undefined" ? localStorage.getItem("userId") : null
+    console.log("Fetching sessions for trainerId:", trainerId)
 
     const fetchSessions = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`/api/sessions?trainerId=${trainerId}`);
-        
+        const response = await fetch(`/api/sessions?trainerId=${trainerId}`)
+
         if (!response.ok) {
           throw new Error("Failed to fetch sessions")
         }
-        
+
         const data = await response.json()
-        console.log("Fetched sessions:", data);
-        
+        console.log("Fetched sessions:", data)
+
         // Only update state if component is still mounted
         if (isMounted) {
           // Convert string dates to Date objects and ensure they're valid
@@ -80,9 +87,9 @@ export default function SessionCalendar() {
             start: new Date(session.start),
             end: new Date(session.end),
             // Ensure the title is properly set for display
-            title: session.title || "Unnamed Session"
+            title: session.title || "Unnamed Session",
           }))
-          
+
           setSessions(formattedSessions)
         }
       } catch (error) {
@@ -102,10 +109,10 @@ export default function SessionCalendar() {
     }
 
     fetchSessions()
-    
+
     // Cleanup function to prevent state updates after unmount
     return () => {
-      isMounted = false;
+      isMounted = false
     }
   }, []) // Empty dependency array ensures this runs only once
 
@@ -124,29 +131,33 @@ export default function SessionCalendar() {
   const eventStyleGetter = (event: Session) => {
     return {
       style: {
-        backgroundColor: "#0ea5e9",
-        borderRadius: "4px",
+        backgroundColor: "#dc2626", // red-600
+        borderRadius: "6px",
         color: "white",
-        border: "none",
+        border: "1px solid #b91c1c", // red-700
         display: "block",
         overflow: "hidden",
-        padding: "2px 5px",
+        padding: "4px 8px",
+        fontSize: "12px",
+        fontWeight: "500",
       },
     }
   }
 
   return (
-    <div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Session Calendar</CardTitle>
-          <CardDescription>View all scheduled gym sessions. Click on a session to see details.</CardDescription>
+    <div className="space-y-6">
+      <Card className="border-gray-200 shadow-sm">
+        <CardHeader className="bg-gray-50 border-b border-gray-200">
+          <CardTitle className="text-black text-xl">Session Calendar</CardTitle>
+          <CardDescription className="text-gray-600">
+            View all scheduled gym sessions. Click on a session to see details.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="h-[600px]">
+        <CardContent className="p-6 bg-white">
+          <div className="h-[600px] calendar-container">
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-600"></div>
               </div>
             ) : (
               <Calendar
@@ -160,7 +171,7 @@ export default function SessionCalendar() {
                 views={{
                   month: true,
                   week: true,
-                  day: true
+                  day: true,
                 }}
                 view={currentView as any}
                 onView={handleViewChange}
@@ -168,16 +179,25 @@ export default function SessionCalendar() {
                 toolbar={true}
                 popup={true}
                 selectable={true}
-                // Add these props for better day/month view handling
                 dayLayoutAlgorithm={"no-overlap"}
                 showMultiDayTimes={true}
-                // Format the events in month view
                 components={{
-                  event: (props: { title: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<AwaitedReactNode> | null | undefined }) => (
-                    <div className="text-xs truncate" title={String(props.title)}>
+                  event: (props: {
+                    title:
+                      | string
+                      | number
+                      | bigint
+                      | boolean
+                      | ReactElement<any, string | JSXElementConstructor<any>>
+                      | Iterable<ReactNode>
+                      | Promise<AwaitedReactNode>
+                      | null
+                      | undefined
+                  }) => (
+                    <div className="text-xs truncate font-medium" title={String(props.title)}>
                       {props.title}
                     </div>
-                  )
+                  ),
                 }}
               />
             )}
@@ -188,52 +208,51 @@ export default function SessionCalendar() {
       {/* Session Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         {selectedSession && (
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md bg-white border-gray-200">
             <DialogHeader>
-              <DialogTitle>{selectedSession.title}</DialogTitle>
+              <DialogTitle className="text-black text-xl">{selectedSession.title}</DialogTitle>
               <DialogDescription>
-                <Badge variant="outline" className="mt-2">
+                <Badge variant="outline" className="mt-2 border-red-200 text-red-700 bg-red-50">
                   {selectedSession.trainerName}
                 </Badge>
               </DialogDescription>
             </DialogHeader>
-
             <div className="space-y-4 py-4">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-gray-500" />
+                <span className="text-gray-700">
                   {moment(selectedSession.start).format("MMM D, YYYY • h:mm A")} -{" "}
                   {moment(selectedSession.end).format("h:mm A")}
                 </span>
               </div>
-
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span>{selectedSession.location}</span>
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-gray-500" />
+                <span className="text-gray-700">{selectedSession.location}</span>
               </div>
-
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span>Max {selectedSession.maxParticipants} participants</span>
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-gray-500" />
+                <span className="text-gray-700">Max {selectedSession.maxParticipants} participants</span>
               </div>
-
               {selectedSession.description && (
                 <div className="pt-2">
-                  <h4 className="text-sm font-medium mb-1">Description</h4>
-                  <p className="text-sm text-muted-foreground">{selectedSession.description}</p>
+                  <h4 className="text-sm font-semibold mb-2 text-black">Description</h4>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md border border-gray-200">
+                    {selectedSession.description}
+                  </p>
                 </div>
               )}
-              
-              <Separator />
-              
+
+              <Separator className="bg-gray-200" />
+
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Participants</span>
-                <Button 
-                  variant="outline" 
+                <span className="text-sm font-semibold text-black">Participants</span>
+                <Button
+                  variant="outline"
                   size="sm"
+                  className="border-red-200 text-red-700 hover:bg-red-50 hover:border-red-300 bg-transparent"
                   onClick={() => {
-                    fetchParticipants(selectedSession._id);
-                    setShowParticipants(true);
+                    fetchParticipants(selectedSession._id)
+                    setShowParticipants(true)
                   }}
                 >
                   View Participants ({selectedSession.currentParticipants || 0})
@@ -246,27 +265,87 @@ export default function SessionCalendar() {
 
       {/* Participants Dialog */}
       <Dialog open={showParticipants} onOpenChange={setShowParticipants}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white border-gray-200">
           <DialogHeader>
-            <DialogTitle>Session Participants</DialogTitle>
+            <DialogTitle className="text-black">Session Participants</DialogTitle>
           </DialogHeader>
-          
-          <div className="space-y-2">
+
+          <div className="space-y-3">
             {participants.length === 0 ? (
-              <p className="text-gray-500">No participants yet.</p>
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No participants yet.</p>
+              </div>
             ) : (
               participants.map((participant: any) => (
-                <div key={participant._id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <span>{participant.userName}</span>
-                  <span className="text-xs text-gray-500">
-                    {new Date(participant.joinedAt).toLocaleDateString()}
-                  </span>
+                <div
+                  key={participant._id}
+                  className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg"
+                >
+                  <span className="font-medium text-black">{participant.userName}</span>
+                  <span className="text-xs text-gray-500">{new Date(participant.joinedAt).toLocaleDateString()}</span>
                 </div>
               ))
             )}
           </div>
         </DialogContent>
       </Dialog>
+
+      <style jsx global>{`
+        .rbc-calendar {
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+        }
+        .rbc-header {
+          background: #f9fafb;
+          border-bottom: 1px solid #e5e7eb;
+          color: #111827;
+          font-weight: 600;
+          padding: 12px 8px;
+        }
+        .rbc-toolbar {
+          background: #f9fafb;
+          border-bottom: 1px solid #e5e7eb;
+          padding: 16px;
+          margin-bottom: 0;
+        }
+        .rbc-toolbar button {
+          background: white;
+          border: 1px solid #d1d5db;
+          color: #374151;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-weight: 500;
+        }
+        .rbc-toolbar button:hover {
+          background: #f3f4f6;
+          border-color: #9ca3af;
+        }
+        .rbc-toolbar button.rbc-active {
+          background: #dc2626;
+          border-color: #b91c1c;
+          color: white;
+        }
+        .rbc-month-view, .rbc-time-view {
+          border: none;
+        }
+        .rbc-today {
+          background-color: #fef2f2;
+        }
+        .rbc-off-range-bg {
+          background: #f9fafb;
+        }
+        .rbc-time-slot {
+          border-top: 1px solid #f3f4f6;
+        }
+        .rbc-timeslot-group {
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .rbc-day-slot .rbc-time-slot {
+          border-top: 1px solid #f3f4f6;
+        }
+      `}</style>
     </div>
   )
 }
