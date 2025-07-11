@@ -1,3 +1,7 @@
+// app/Components/CheckoutForm.tsx
+// This file contains the CheckoutForm component for handling Stripe payments in a Next.js application.
+// It fetches the user's latest order, displays it, and allows payment processing using Stripe's
+
 import { useEffect, useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { StripeCardElement } from "@stripe/stripe-js";
@@ -65,16 +69,14 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
         
         const data = await res.json();
 
-        if (data && Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data) && data.length > 0) {
           const latest = data[data.length - 1];
           setOrderItems(latest.orderItems);
           setTotalAmount(latest.totalAmount);
         } else {
-          setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
-          setTotalAmount(10);
+          throw new Error("No orders found");
         }
       } catch (err) {
-        console.error("Error fetching orders:", err);
         setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
         setTotalAmount(10);
       }
@@ -119,10 +121,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
 
     const data = await res.json();
 
-    if (data.error) {
-      setMessage(data.error);
-    } else if (data.success) {
-      setMessage("Payment succeeded!");
+    if (data.success) {
+      setMessage("✅ Payment succeeded!");
+    } else {
+      setMessage(`❌ Payment failed: ${data.error || "Unknown error"}`);
     }
 
     setLoading(false);
@@ -133,7 +135,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
       <form onSubmit={handleSubmit} className={styles.container}>
         <h2 className={styles.title}>Checkout Summary</h2>
 
-        {orderItems.length > 0 ? (
+        {orderItems.length > 0 && (
           <div className={styles.grid}>
             {orderItems.map((item, idx) => (
               <div key={idx} className={styles.card}>
@@ -146,8 +148,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
               <p><strong>Total: ${totalAmount}</strong></p>
             </div>
           </div>
-        ) : (
-          <p>No recent order found.</p>
         )}
 
         <CardElement
