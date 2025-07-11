@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 export default function AddSession() {
@@ -14,14 +14,54 @@ export default function AddSession() {
     onlineLink: "",
   });
 
+  // Auto-fill trainer name from localStorage
+  useEffect(() => {
+    const trainerName = localStorage.getItem("userName");
+    if (trainerName) {
+      setForm(prev => ({ ...prev, trainer: trainerName }));
+    }
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitted", form);
-    // Add API POST request here
+    
+    try {
+      console.log("Submitting session data:", form);
+
+      const response = await fetch("/api/trainerV-sessionForm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Virtual session created successfully!");
+        // Reset form
+        setForm({
+          title: "",
+          trainer: form.trainer, // Keep trainer name
+          date: "",
+          startTime: "",
+          endTime: "",
+          maxParticipants: 10,
+          description: "",
+          onlineLink: "",
+        });
+      } else {
+        alert(data.error || "Failed to create session");
+      }
+    } catch (error) {
+      console.error("Error creating session:", error);
+      alert("Failed to create session");
+    }
   };
 
   const minDate = new Date().toISOString().split("T")[0];
@@ -32,7 +72,7 @@ export default function AddSession() {
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-lg shadow-md w-full max-w-3xl"
       >
-        <h2 className="text-2xl font-bold mb-6">Schedule a New Session</h2>
+        <h2 className="text-2xl font-bold mb-6">Schedule a New Virtual Session</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Session Title */}
@@ -45,6 +85,7 @@ export default function AddSession() {
               value={form.title}
               onChange={handleChange}
               className="w-full border p-2 rounded"
+              required
             />
           </div>
 
@@ -58,6 +99,8 @@ export default function AddSession() {
               value={form.trainer}
               onChange={handleChange}
               className="w-full border p-2 rounded"
+              required
+              readOnly
             />
           </div>
 
@@ -72,6 +115,7 @@ export default function AddSession() {
                 value={form.date}
                 onChange={handleChange}
                 className="w-full border p-2 rounded text-gray-700"
+                required
               />
             </div>
 
@@ -84,6 +128,7 @@ export default function AddSession() {
                 onChange={handleChange}
                 className="w-full border p-2 rounded text-gray-700 placeholder-gray-400"
                 placeholder="Select start time"
+                required
               />
             </div>
 
@@ -96,20 +141,22 @@ export default function AddSession() {
                 onChange={handleChange}
                 className="w-full border p-2 rounded text-gray-700 placeholder-gray-400"
                 placeholder="Select end time"
+                required
               />
             </div>
           </div>
 
           {/* Zoom Link */}
           <div>
-            <label className="block font-medium mb-1">Zoom Link</label>
+            <label className="block font-medium mb-1">Online Session Link</label>
             <input
-              type="text"
+              type="url"
               name="onlineLink"
-              placeholder="Paste your Zoom/Google Meet link"
+              placeholder="https://zoom.us/j/... or https://meet.google.com/..."
               value={form.onlineLink}
               onChange={handleChange}
               className="w-full border p-2 rounded"
+              required
             />
           </div>
 
@@ -123,6 +170,7 @@ export default function AddSession() {
               onChange={handleChange}
               className="w-full border p-2 rounded"
               min={1}
+              required
             />
           </div>
 
@@ -144,7 +192,7 @@ export default function AddSession() {
             type="submit"
             className="bg-black text-white px-6 py-2 rounded hover:bg-gray-800"
           >
-            Schedule Session
+            Schedule Virtual Session
           </button>
         </div>
       </form>

@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "../../Components/ui/badge"
 import { Clock, MapPin, Users } from "lucide-react"
 import { useToast } from "../components/ui/use-toast"
+import { Separator } from "../../Components/ui/separator"
+import { Button } from "../../Components/ui/button"
 
 // Setup the localizer for the calendar
 const localizer = momentLocalizer(moment)
@@ -24,6 +26,7 @@ type Session = {
   location: string
   maxParticipants: number
   description?: string
+  currentParticipants?: number; // Added for the new button
 }
 
 export default function SessionCalendar() {
@@ -34,21 +37,40 @@ export default function SessionCalendar() {
   const [currentView, setCurrentView] = useState("week")
   const { toast } = useToast()
 
+  // Add state for participants
+  const [participants, setParticipants] = useState([]);
+  const [showParticipants, setShowParticipants] = useState(false);
+
+  // Add function to fetch participants
+  const fetchParticipants = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}/participants`);
+      if (response.ok) {
+        const data = await response.json();
+        setParticipants(data);
+      }
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+    }
+  };
+
   // Load sessions from API only once when component mounts
   useEffect(() => {
-    // Flag to prevent unnecessary fetches
     let isMounted = true;
-    
+    const trainerId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+    console.log("Fetching sessions for trainerId:", trainerId);
+
     const fetchSessions = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch("/api/sessions")
+        const response = await fetch(`/api/sessions?trainerId=${trainerId}`);
         
         if (!response.ok) {
           throw new Error("Failed to fetch sessions")
         }
         
         const data = await response.json()
+        console.log("Fetched sessions:", data);
         
         // Only update state if component is still mounted
         if (isMounted) {
@@ -201,9 +223,49 @@ export default function SessionCalendar() {
                   <p className="text-sm text-muted-foreground">{selectedSession.description}</p>
                 </div>
               )}
+              
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Participants</span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    fetchParticipants(selectedSession._id);
+                    setShowParticipants(true);
+                  }}
+                >
+                  View Participants ({selectedSession.currentParticipants || 0})
+                </Button>
+              </div>
             </div>
           </DialogContent>
         )}
+      </Dialog>
+
+      {/* Participants Dialog */}
+      <Dialog open={showParticipants} onOpenChange={setShowParticipants}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Session Participants</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-2">
+            {participants.length === 0 ? (
+              <p className="text-gray-500">No participants yet.</p>
+            ) : (
+              participants.map((participant: any) => (
+                <div key={participant._id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <span>{participant.userName}</span>
+                  <span className="text-xs text-gray-500">
+                    {new Date(participant.joinedAt).toLocaleDateString()}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
       </Dialog>
     </div>
   )

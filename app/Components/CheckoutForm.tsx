@@ -1,3 +1,7 @@
+// app/Components/CheckoutForm.tsx
+// This file contains the CheckoutForm component for handling Stripe payments in a Next.js application.
+// It fetches the user's latest order, displays it, and allows payment processing using Stripe's
+
 import { useEffect, useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { StripeCardElement } from "@stripe/stripe-js";
@@ -11,9 +15,15 @@ interface OrderItem {
 
 interface CheckoutFormProps {
   userId: string;
+  orderItems?: OrderItem[];
+  totalAmount?: number;
 }
 
-const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
+const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
+  orderItems: orderItemsProp,
+  totalAmount: totalAmountProp
+ }) => {
+  
   const stripe = useStripe();
   const elements = useElements();
 
@@ -23,20 +33,48 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
   const [totalAmount, setTotalAmount] = useState<number>(0);
 
   useEffect(() => {
+    if (!userId) {
+      // Try to get from localStorage if not passed as prop
+      const storedId = localStorage.getItem("userId");
+      if (!storedId) return;
+      // If found, reload the page with userId as a prop (or set up state if you want to support dynamic userId)
+      // For now, just return to avoid running the rest of the effect without a userId
+      return;
+    }
+
+    if (orderItemsProp && totalAmountProp !== undefined) {
+    // If passed via props, use them directly
+    setOrderItems(orderItemsProp);
+    setTotalAmount(totalAmountProp);
+    return;
+  }
+
+    // Else: fallback to fetching latest order (as before)
     const fetchOrders = async () => {
       try {
         const res = await fetch("/api/orders", {
-          headers: { userId },
+          headers: { 
+            userId,
+            "Content-Type": "application/json"
+          },
         });
+        
+        if (!res.ok) {
+          console.error("API Error:", res.status, res.statusText);
+          // Fallback to dummy data if API fails
+          setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
+          setTotalAmount(10);
+          return;
+        }
+        
         const data = await res.json();
 
-        if (data && Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data) && data.length > 0) {
           const latest = data[data.length - 1];
           setOrderItems(latest.orderItems);
           setTotalAmount(latest.totalAmount);
         } else {
-          setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
-          setTotalAmount(10);
+          throw new Error("No orders found");
         }
       } catch (err) {
         setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
@@ -83,10 +121,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
 
     const data = await res.json();
 
-    if (data.error) {
-      setMessage(data.error);
-    } else if (data.success) {
-      setMessage("Payment succeeded!");
+    if (data.success) {
+      setMessage("✅ Payment succeeded!");
+    } else {
+      setMessage(`❌ Payment failed: ${data.error || "Unknown error"}`);
     }
 
     setLoading(false);
@@ -97,7 +135,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
       <form onSubmit={handleSubmit} className={styles.container}>
         <h2 className={styles.title}>Checkout Summary</h2>
 
-        {orderItems.length > 0 ? (
+        {orderItems.length > 0 && (
           <div className={styles.grid}>
             {orderItems.map((item, idx) => (
               <div key={idx} className={styles.card}>
@@ -110,8 +148,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
               <p><strong>Total: ${totalAmount}</strong></p>
             </div>
           </div>
-        ) : (
-          <p>No recent order found.</p>
         )}
 
         <CardElement
