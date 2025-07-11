@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import mongoose from "mongoose";
 import Payment from "../../models/Payment"; // Adjust to correct path
-import Order from "../../models/order"; // Adjust to correct path
+import Order from "../../models/order"; // Adjust to correct pathnp
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
