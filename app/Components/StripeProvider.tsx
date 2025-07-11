@@ -8,14 +8,25 @@ let stripePromise: Promise<Stripe | null>;
 
 const getStripe = () => {
   if (!stripePromise) {
-    stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+    const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    if (!publishableKey) {
+      console.error("Stripe publishable key is not configured");
+      return Promise.resolve(null);
+    }
+    stripePromise = loadStripe(publishableKey);
   }
   return stripePromise;
 };
 
 const StripeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const stripePromise = getStripe();
+  
+  if (!stripePromise) {
+    return <div>Stripe is not configured. Please check your environment variables.</div>;
+  }
+
   return (
-    <Elements stripe={getStripe()} options={{ locale: "en" }}>
+    <Elements stripe={stripePromise} options={{ locale: "en" }}>
       {children}
     </Elements>
   );
