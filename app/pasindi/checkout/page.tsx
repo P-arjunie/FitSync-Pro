@@ -62,6 +62,10 @@ export default function CheckoutPage() {
         setSuccess(true);
         setOrderDetails(data.order);
         clearCart(); // Clear cart after successful order
+        
+        // Redirect to payment page
+       window.location.href = `/kalana/checkout?orderId=${data.order._id}`;
+
       } else {
         setError(data.error || 'Something went wrong processing your order');
       }
@@ -72,6 +76,9 @@ export default function CheckoutPage() {
       setProcessing(false);
     }
   };
+
+  // Only render after client-side hydration
+  if (typeof window === "undefined" || !userId) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">

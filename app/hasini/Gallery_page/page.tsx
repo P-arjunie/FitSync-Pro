@@ -11,7 +11,7 @@ const IMAGES_PER_PAGE = 9;
 
 export default function GalleryPage() {
   const [images, setImages] = useState<string[]>([
-   '/gallery01.jpg',
+    '/gallery01.jpg',
     '/gallery02.jpg',
     '/galley03.jpg',
     '/galley04.jpg',
@@ -45,23 +45,23 @@ export default function GalleryPage() {
     const file = e.target.files?.[0];
     if (file) {
       const previewUrl = URL.createObjectURL(file);
-      setImages(prev => [...prev, previewUrl]);
-      const newLength = images.length + 1;
-      const newTotalPages = Math.ceil((newLength - IMAGES_FIRST_PAGE) / IMAGES_PER_PAGE) + 1;
-      setPage(newTotalPages);
+      const newImages = [previewUrl, ...images]; // Add new image at the beginning
+      setImages(newImages);
+      setPage(1); // Reset to page 1 to show the new image
     }
   };
 
   return (
     <div className="min-h-screen relative bg-white">
-      <Navbar /> {/* Outside blur area */}
+      <Navbar />
 
-      {/* Gallery content with blur background */}
       <div className="p-4 gallery-bg relative z-10">
         <div className="absolute inset-0 bg-white/30 backdrop-blur-sm z-0" />
 
         <div className="relative z-10">
-          <h1 className="text-3xl font-bold text-center text-black mb-6 drop-shadow-lg">FitSyncPro Gallery</h1>
+          <h1 className="text-3xl font-bold text-center text-black mb-6 drop-shadow-lg">
+            FitSyncPro Gallery
+          </h1>
 
           {/* Upload Button */}
           <div className="flex justify-center mb-6">
@@ -146,6 +146,7 @@ export default function GalleryPage() {
           </Dialog.Panel>
         </div>
       </Dialog>
+
       <Footer1 />
     </div>
   );

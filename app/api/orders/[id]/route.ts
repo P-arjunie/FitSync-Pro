@@ -6,10 +6,10 @@ import Order from "../../../models/order";
 import { headers } from "next/headers";
 
 // GET - Fetch a single order by ID
-export async function GET(request: any, { params }: any) {
+export async function GET(request: any, context: { params: { id: string } }) {
   await connectToDatabase();
   try {
-    const { id } = params;
+    const { id } = await context.params;
     const headersList = await headers();
     const userId = headersList.get("userId");
 
@@ -38,7 +38,7 @@ export async function GET(request: any, { params }: any) {
 export async function PUT(request: { json: () => any }, { params }: any) {
   await connectToDatabase();
   try {
-    const { id } = params;
+    const { id } = await params;
     const updates = await request.json();
     const headersList = await headers();
     const userId = headersList.get("userId");
@@ -78,7 +78,7 @@ export async function PUT(request: { json: () => any }, { params }: any) {
 export async function DELETE(request: any, { params }: any) {
   await connectToDatabase();
   try {
-    const { id } = params;
+    const { id } = await params;
     const headersList = await headers();
     const userId = headersList.get("userId");
 

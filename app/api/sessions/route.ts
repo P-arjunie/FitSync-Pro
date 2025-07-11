@@ -32,8 +32,17 @@ export async function GET(request: NextRequest) {
     
     // Cache miss or expired, fetch from database
     await connectToDatabase();
-    const sessions = await Session.find({}).sort({ start: 1 });
-    
+
+    // --- ADDED: filter by trainerId if present ---
+    const { searchParams } = new URL(request.url);
+    const trainerId = searchParams.get("trainerId");
+    const query: any = {};
+    if (trainerId) {
+      query.trainerId = trainerId;
+    }
+    const sessions = await Session.find(query).sort({ start: 1 });
+    // --- END ADDED ---
+
     // Update cache
     sessionsCache = {
       data: sessions,
@@ -62,6 +71,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log("Received body in POST /api/sessions:", body); // <-- Add this line
     
     // Validate the incoming data
     if (!body.title || !body.trainerName || !body.start || !body.end || !body.location || !body.maxParticipants) {

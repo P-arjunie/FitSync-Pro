@@ -30,6 +30,14 @@ export async function POST(req: Request) {
       );
     }
 
+    // ❗️Block login if account is suspended
+    if (user.status === "suspended") {
+      return NextResponse.json(
+        { error: "Your account is suspended. Please contact the admin." },
+        { status: 403 }
+      );
+    }
+
     // Compare the provided password with the hashed password in the database
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -63,4 +71,3 @@ export async function POST(req: Request) {
     );
   }
 }
-
