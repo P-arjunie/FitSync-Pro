@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-//define the expected structure of data objects used in your components or functions
+
 interface Review {
   trainer: string;
   sessionType: string;
@@ -30,13 +30,30 @@ const TrainerReviewsPage = () => {
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Hardcoded profile images
+  const profileImages = [
+    'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+    'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+    'https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+    'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
+  ];
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch('/api/trainers/getTrainerWithReviews');
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
         const data = await res.json();
-        setTrainers(data.data);
+        
+        // Add hardcoded images to trainers
+        const trainersWithImages = data.data.map((trainer: Trainer, index: number) => ({
+          ...trainer,
+          profileImage: profileImages[index % profileImages.length] || "/placeholder.jpg"
+        }));
+        
+        setTrainers(trainersWithImages);
       } catch (err: any) {
         console.error("Error fetching trainers:", err);
         setError("Could not load trainer data.");
@@ -60,9 +77,13 @@ const TrainerReviewsPage = () => {
           <div key={trainer._id} className="rounded-xl bg-white text-black shadow-lg p-5 transition duration-300 hover:shadow-2xl">
             <div className="relative mb-4">
               <img
-                src={trainer.profileImage || "/placeholder.jpg"}
+                src={trainer.profileImage}
                 alt={trainer.fullName}
                 className="rounded-xl w-full h-56 object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/placeholder.jpg";
+                }}
               />
             </div>
             <h3 className="text-xl font-bold text-gray-900">{trainer.fullName}</h3>
@@ -105,9 +126,13 @@ const TrainerReviewsPage = () => {
             {/* Left: Trainer Info */}
             <div>
               <img
-                src={selectedTrainer.profileImage || "/placeholder.jpg"}
+                src={selectedTrainer.profileImage}
                 alt={selectedTrainer.fullName}
                 className="w-full h-64 object-cover rounded-xl mb-4"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/placeholder.jpg";
+                }}
               />
               <h3 className="text-2xl font-bold">{selectedTrainer.fullName}</h3>
               <p className="text-gray-600">{selectedTrainer.email}</p>
