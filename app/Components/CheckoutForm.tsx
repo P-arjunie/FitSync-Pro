@@ -1,11 +1,11 @@
-// app/Components/CheckoutForm.tsx
+// app/Components/checkoutform.tsx
 // This file contains the CheckoutForm component for handling Stripe payments in a Next.js application.
 // It fetches the user's latest order, displays it, and allows payment processing using Stripe's
 
 import { useEffect, useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { StripeCardElement } from "@stripe/stripe-js";
-import styles from "./CheckoutForm.module.css";
+import styles from "./checkoutform.module.css";
 
 interface OrderItem {
   title: string;
@@ -77,8 +77,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
           throw new Error("No orders found");
         }
       } catch (err) {
-        setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
-        setTotalAmount(10);
+        setOrderItems([{ title: "Dummy Plan", price: 100, quantity: 20 }]);
+        setTotalAmount(2000);
       }
     };
 

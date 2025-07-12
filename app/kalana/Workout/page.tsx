@@ -3,8 +3,8 @@
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/Components/Navbar';
-import Footer1 from '@/Components/Footer_01';
+import Navbar from '@/Components/navbar';
+import Footer1 from '@/Components/footer_01';
 
 const WorkoutClassPage = () => {
   const router = useRouter();

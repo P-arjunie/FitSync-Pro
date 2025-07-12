@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* @tailwind base; */
+
 body {
   margin: 0;
   padding: 0;
@@ -19,14 +21,18 @@ html {
   height: 100%;
 }
 /* globals.css */
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+html {
+  scroll-behavior: smooth;
+}
 
 .gallery-bg {
-  background-image: url('https://img.freepik.com/free-photo/black-white-marble-textured-background_53876-100058.jpg?t=st=1739687985~exp=1739691585~hmac=4dc8f93362a1179a310d146af89d4a714f933bc781857e6bc4ae6f53f19f3bda&w=996');
+  background-image: url("https://img.freepik.com/free-photo/black-white-marble-textured-background_53876-100058.jpg?t=st=1739687985~exp=1739691585~hmac=4dc8f93362a1179a310d146af89d4a714f933bc781857e6bc4ae6f53f19f3bda&w=996");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -34,10 +40,12 @@ html, body {
 }
 
 .gallery-bg::before {
-  content: '';
+  content: "";
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background-color: rgba(255, 255, 255, 0.4); /* Light overlay */
   z-index: 0;
 }
@@ -45,8 +53,6 @@ html, body {
 .break-inside-avoid {
   break-inside: avoid;
 }
-
-
 
 @layer base {
   :root {
@@ -104,13 +110,9 @@ html, body {
   }
 }
 
-
-
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
+  :root {
+    --background: 0 0% 100%;
+    /* your custom base styles */
   }
 }

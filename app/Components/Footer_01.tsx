@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 
-const Footer1: React.FC = () => {
+const footer1: React.FC = () => {
   return (
     <footer style={styles.footer}>
       <div style={styles.footerContent}>
@@ -35,7 +35,7 @@ const Footer1: React.FC = () => {
           <h3 style={styles.redBar}>Contact Us</h3>
           <p>No 4/1, Sapumal Palace Colombo</p>
           <p>+94 71 278 1444</p>
-          <p>email@email.com</p>
+          <p>fitsyncpro.gym@gmail.com</p>
         </div>
 
         <div style={styles.socialIcons}>
@@ -103,4 +103,4 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
 };
 
-export default Footer1;
+export default footer1;

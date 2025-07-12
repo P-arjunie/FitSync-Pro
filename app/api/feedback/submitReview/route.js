@@ -4,7 +4,8 @@ import Review from "../../../models/Review.js";
 export async function POST(req) {
   try {
     const { trainer, sessionType, date, comments, rating } = await req.json();
-
+  
+   
     if (!trainer || !sessionType || !date || !comments || !rating) {
       return NextResponse.json({ message: "All fields are required." }, { status: 400 });
     }
@@ -22,7 +23,7 @@ export async function POST(req) {
       createdAt: new Date(),
     });
 
-    await newReview.save();
+    await newReview.save();//Stores in MongoDB
 
     return NextResponse.json({ message: "Review submitted successfully!" }, { status: 200 });
   } catch (error) {
