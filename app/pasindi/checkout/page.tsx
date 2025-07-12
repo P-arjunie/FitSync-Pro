@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useShoppingCartStore } from '../ShoppingCart/page';
-import Navbar from '@/Components/Navbar';
+
 import { CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/Components/ui/button';
@@ -82,8 +82,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       <div className="max-w-4xl mx-auto px-4 py-12">
         {success ? (
           <div className="bg-white shadow-md rounded-lg p-8 text-center">

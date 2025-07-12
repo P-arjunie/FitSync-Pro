@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import Head from 'next/head';
-import Navbar from "@/Components/Navbar";
-import Footer1 from '@/Components/Footer_01';
+import Navbar from "@/Components/navbar";
+import Footer1 from '@/Components/footer_01';
 
 // Interface for form data
 interface FormData {

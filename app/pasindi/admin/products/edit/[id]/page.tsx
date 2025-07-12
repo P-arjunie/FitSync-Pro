@@ -5,7 +5,7 @@ import { useState, useEffect, type ChangeEvent, type FormEvent, use } from "reac
 import { useRouter } from "next/navigation"
 import { Upload, ArrowLeft } from "lucide-react"
 import Image from "next/image"
-import Navbar from "@/Components/Navbar"
+
 import router from "next/router"
 import { useParams } from "next/navigation"
 
@@ -147,8 +147,6 @@ const EditProduct = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar />
-
       <div className="container mx-auto px-4 py-8">
         <button
           onClick={() => router.push("/admin/products")}
