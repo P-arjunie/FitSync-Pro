@@ -49,11 +49,15 @@ export default function SessionForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
+  // Get trainer name from localStorage
+  const trainerName = typeof window !== "undefined" ? localStorage.getItem("userName") || "" : "";
+  const trainerId = typeof window !== "undefined" ? localStorage.getItem("userId") || "" : "";
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { //default values for form
       title: "",
-      trainerName: "",
+      trainerName: trainerName, // Auto-fill trainer name
       location: "",
       maxParticipants: "10",
       description: "",
@@ -73,7 +77,9 @@ export default function SessionForm() {
         ...values,
         start,
         end,
+        trainerId, // <-- Make sure this is present
       }
+      console.log("Submitting sessionData:", sessionData); // <-- Add this log
 
       // Send data to API
       const response = await fetch("/api/sessions", {
@@ -84,21 +90,35 @@ export default function SessionForm() {
         body: JSON.stringify(sessionData),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to create session")
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Session scheduled",
+          description: "Your session has been successfully scheduled.",
+        })
+
+        form.reset()
+        router.refresh()
+
+        // Switch to calendar tab
+        const calendarTab = document.querySelector('[value="calendar"]') as HTMLElement
+        if (calendarTab) calendarTab.click()
+      } else if (response.status === 409) {
+        // Scheduling conflict
+        toast({
+          title: "Scheduling Conflict",
+          description: data.error || "The trainer is already booked during this time.",
+          variant: "destructive",
+        });
+      } else {
+        // Other errors
+        toast({
+          title: "Error",
+          description: data.error || "There was a problem scheduling your session.",
+          variant: "destructive",
+        });
       }
-
-      toast({
-        title: "Session scheduled",
-        description: "Your session has been successfully scheduled.",
-      })
-
-      form.reset()
-      router.refresh()
-
-      // Switch to calendar tab
-      const calendarTab = document.querySelector('[value="calendar"]') as HTMLElement
-      if (calendarTab) calendarTab.click()
     } catch (error) {
       console.error("Error creating session:", error)
       toast({
@@ -140,7 +160,7 @@ export default function SessionForm() {
                   <FormItem>
                     <FormLabel>Trainer Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Your name" {...field} />
+                      <Input {...field} readOnly />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

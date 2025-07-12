@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react'
 import { UserCircleIcon } from '@heroicons/react/24/solid'
 
+// Define the structure of a message
 type Message = {
   id: number
   sender: 'client' | 'therapist'
@@ -12,10 +13,11 @@ type Message = {
 }
 
 export default function TrainerChatPage() {
-  const [selectedClient, setSelectedClient] = useState<number | null>(null)
-  const [chatMessages, setChatMessages] = useState<Message[]>([])
-  const [message, setMessage] = useState('')
+  const [selectedClient, setSelectedClient] = useState<number | null>(null) // Track selected client ID
+  const [chatMessages, setChatMessages] = useState<Message[]>([]) // Messages in the chat
+  const [message, setMessage] = useState('') // Message input
 
+  // Dummy clients list (replace with DB-fetch in production)
   const clients = [
     { id: 1, name: 'Tharushi Madushani' },
     { id: 2, name: 'Jane Perera' },
@@ -23,6 +25,7 @@ export default function TrainerChatPage() {
     { id: 4, name: 'John smith' },
   ]
 
+  // Fetch chat messages when a client is selected
   useEffect(() => {
     if (!selectedClient) return
 
@@ -33,14 +36,16 @@ export default function TrainerChatPage() {
     }
 
     fetchMessages()
-  }, [selectedClient])
+  }, [selectedClient]) // Re-run when selectedClient changes
 
+  // Send a new message
   const handleSendMessage = async () => {
     if (!message.trim() || selectedClient === null) return
 
     const now = new Date()
-    const time = now.toTimeString().slice(0, 5)
+    const time = now.toTimeString().slice(0, 5) // Format time as HH:MM
 
+    // Send message to backend
     const res = await fetch('/api/messages', {
       method: 'POST',
       body: JSON.stringify({
@@ -53,13 +58,15 @@ export default function TrainerChatPage() {
     })
 
     const newMsg = await res.json()
+
+    // Add new message to UI
     setChatMessages(prev => [...prev, newMsg])
-    setMessage('')
+    setMessage('') // Clear input
   }
 
   return (
     <div className="flex h-screen bg-gray-100 text-black">
-      {/* Sidebar */}
+      {/* Sidebar with client list */}
       <div className="w-72 bg-black text-white p-4 border-r border-gray-700 shadow-lg">
         <h2 className="text-xl font-bold mb-6 text-red-600">My Clients</h2>
         <ul className="space-y-3">
@@ -78,7 +85,7 @@ export default function TrainerChatPage() {
         </ul>
       </div>
 
-      {/* Chat Section */}
+      {/* Chat window */}
       <div className="flex-1 flex flex-col bg-white p-6">
         <div className="text-2xl font-bold mb-4 text-red-600">
           {selectedClient
@@ -88,6 +95,7 @@ export default function TrainerChatPage() {
 
         {selectedClient ? (
           <>
+            {/* Chat messages area with background image and white overlay */}
             <div
               className="relative flex-1 overflow-y-auto space-y-3 p-4 border-4 border-white rounded-lg shadow-inner"
               style={{
@@ -97,9 +105,11 @@ export default function TrainerChatPage() {
                 backgroundPosition: 'center',
               }}
             >
+              {/* White overlay to soften background */}
               <div className="absolute inset-0 bg-white bg-opacity-70 rounded-lg pointer-events-none" />
 
               <div className="relative z-10">
+                {/* Display each message */}
                 {chatMessages.map(msg => (
                   <div
                     key={msg.id}
@@ -126,7 +136,7 @@ export default function TrainerChatPage() {
               </div>
             </div>
 
-            {/* Input */}
+            {/* Input field and send button */}
             <div className="mt-4 flex gap-2">
               <input
                 type="text"
@@ -145,6 +155,7 @@ export default function TrainerChatPage() {
             </div>
           </>
         ) : (
+          // Message when no client is selected
           <p className="text-gray-600 mt-10">Choose a client to start chatting.</p>
         )}
       </div>

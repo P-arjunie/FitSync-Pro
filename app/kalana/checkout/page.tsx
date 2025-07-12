@@ -1,35 +1,59 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import StripeProvider from "../../Components/StripeProvider";
 import CheckoutForm from "../../Components/CheckoutForm";
 
 const CheckoutPage: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
+  const [orderItems, setOrderItems] = useState([]);
+  const [totalAmount, setTotalAmount] = useState<number | null>(null);
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("orderId");
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const id = localStorage.getItem("userId");
+    setUserId(id || "test_user_123");
+  }, []);
+
+  useEffect(() => {
+    const fetchOrder = async () => {
+      if (!orderId) return;
+
+      console.log("Fetching order with orderId:", orderId);
       try {
-        const res = await fetch("/api/user-data");
+        const res = await fetch(`/api/orders/${orderId}`);
         const data = await res.json();
-        setUserId(data?.userId || "test_user_123");
+
+        console.log("Fetched order details:", data);
+        if (res.ok) {
+          setOrderItems(data.orderItems);
+          setTotalAmount(data.totalAmount);
+        }
       } catch (err) {
-        setUserId("test_user_123"); // fallback dummy
+        console.error("Error fetching order by ID:", err);
       }
     };
-    fetchUser();
-  }, []);
+
+    fetchOrder();
+  }, [orderId]);
 
   if (!userId) return <p>Loading user...</p>;
 
   return (
     <StripeProvider>
-      <CheckoutForm userId={userId} />
+      <CheckoutForm
+        userId={userId}
+        orderItems={orderItems}
+        totalAmount={totalAmount === null ? undefined : totalAmount}
+      />
     </StripeProvider>
   );
 };
 
 export default CheckoutPage;
+
 
 {/* Scenario	Result	Displayed Details
 Valid userId & has an order	Real Instance	Real order items & total

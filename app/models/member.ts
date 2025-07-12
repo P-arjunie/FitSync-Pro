@@ -24,7 +24,11 @@ export interface IMember extends Document {
   height: number;
   bmi: number;
   goalWeight: number;
-  status: string;
+  status: {
+      type: String,
+      enum:["pending","approved",'suspended'],
+      default: "approved",
+    },
   role: string;
 }
 
@@ -56,7 +60,7 @@ const memberSchema: Schema = new Schema(
     goalWeight: Number,
     status: {
       type: String,
-      enum:["pending","approved"],
+      enum:["pending","approved",'suspended'],
       default: "approved",
     },
     role: {
