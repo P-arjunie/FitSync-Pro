@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import './Components/HomePage.css';
-import Navbar from './Components/navbar';
-import Footer1 from './Components/footer_01';
+import Navbar from './Components/Navbar';
+import Footer1 from './Components/Footer_01';
 import GaugeChart from 'react-gauge-chart';
 import StripeProvider from "./Components/stripeprovider";
 {/*import CheckoutForm from "./Components/CheckoutForm"; */}

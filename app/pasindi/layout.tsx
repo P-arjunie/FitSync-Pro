@@ -1,6 +1,6 @@
 import React from 'react';
-import Navbar from '../Components/navbar';
-import Footer1 from '../Components/footer_01';
+import Navbar from '../Components/Navbar';
+import Footer1 from '../Components/Footer_01';
 
 export default function PasindiLayout({
   children,
