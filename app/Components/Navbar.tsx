@@ -57,9 +57,6 @@ const Navbar: React.FC = () => {
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/schedule">Schedule</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/Blogs">Blogs</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/pasindi/products">Shop</Link></li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/Contact_Page">Contact</Link>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/sathya/trainerDetails">Trainers</Link></li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/sathya/feedback">Feedback</Link></li></li>
       </ul>
 
       {/* Right Icons */}
@@ -100,15 +97,13 @@ const Navbar: React.FC = () => {
       {isOpen && (
         <ul className="absolute top-16 left-0 bg-black w-full flex flex-col items-center space-y-4 py-4 md:hidden">
           <li><Link href="/">Home</Link></li>
-      <li><Link href="/hasini/About_page">About</Link></li>
-      <li><Link href="/hasini/Gallery_page">Gallery</Link></li>
-      <li><Link href="/class">Class</Link></li>
-      <li><Link href="/schedule">Schedule</Link></li>
-      <li><Link href="/pasindi/products">Shop</Link></li>
-      <li><Link href="/hasini/Contact_Page">Contact</Link></li>
-      <li><Link href="/sathya/trainerDetails">Trainers</Link></li>
-      <li><Link href="/sathya/feedback">Feedback</Link></li>
-      <li>
+          <li><Link href="/hasini/About_page">About</Link></li>
+          <li><Link href="/hasini/Gallery_page">Gallery</Link></li>
+          <li><Link href="/class">Class</Link></li>
+          <li><Link href="/schedule">Schedule</Link></li>
+          <li><Link href="/pasindi/products">Shop</Link></li>
+          <li><Link href="/hasini/Contact_Page">Contact</Link></li>
+          <li>
             <Link href="/join">
               <button className="bg-red-600 px-4 py-2 text-sm">Join Now</button>
             </Link>
