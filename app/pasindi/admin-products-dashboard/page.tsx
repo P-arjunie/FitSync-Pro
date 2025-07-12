@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Edit, Trash2, Plus, Search } from "lucide-react"
-import Navbar from "@/Components/Navbar"
+
 
 // Define TypeScript interfaces
 interface Product { //product obj
@@ -91,8 +91,6 @@ const AdminProductsDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar />
-
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6">
           {/* Header */}

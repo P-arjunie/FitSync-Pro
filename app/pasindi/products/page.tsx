@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ItemDetails from "../components/ProductDetails";
-import Navbar from "@/Components/Navbar";
+
 import { Search, Filter } from 'lucide-react';
 
 // Define TypeScript interfaces
@@ -87,8 +87,6 @@ const Products = () => {
   console.log("User ID:", userId);
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
