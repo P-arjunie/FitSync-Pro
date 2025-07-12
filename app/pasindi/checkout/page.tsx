@@ -117,6 +117,11 @@ export default function CheckoutPage() {
               >
                 Proceed to Payment
               </button>
+              <Link href="/pasindi/my-orders">
+                <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                  View All Orders
+                </button>
+              </Link>
               <Link href="/products">
                 <button className="px-8 py-4 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                   Continue Shopping
