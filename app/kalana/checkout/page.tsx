@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import StripeProvider from "../../Components/StripeProvider";
+import StripeProvider from "../../Components/stripeprovider";
 import CheckoutForm from "../../Components/CheckoutForm";
 
 const CheckoutPage: React.FC = () => {
