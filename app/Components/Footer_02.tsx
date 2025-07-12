@@ -1,8 +1,8 @@
 import React from 'react';
 import Image from 'next/image';
-import styles from './Footer2.module.css';
+import styles from './footer2.module.css';
 
-const Footer_02: React.FC = () => {
+const footer_02: React.FC = () => {
   return (
     <footer className={styles.footer}>
       <div className={styles.footerContainer}>
@@ -53,4 +53,4 @@ const Footer_02: React.FC = () => {
   );
 };
 
-export default Footer_02;
+export default footer_02;
