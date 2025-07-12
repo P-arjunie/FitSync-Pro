@@ -1,13 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-import { useState, useEffect, type ChangeEvent, type FormEvent, use } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, type ChangeEvent, type FormEvent } from "react"
+import { useRouter, useParams } from "next/navigation"
 import { Upload, ArrowLeft } from "lucide-react"
 import Image from "next/image"
-
-import router from "next/router"
-import { useParams } from "next/navigation"
 
 interface ProductData { //product obj
   _id: string
@@ -21,6 +18,7 @@ interface ProductData { //product obj
 }
 
 const EditProduct = () => {
+  const router = useRouter()
   const params = useParams()
   const id = params.id as string // Extracting id from params
 

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../Components/ui/ca
 import { Badge } from "../../Components/ui/badge"
 import { Separator } from "../../Components/ui/separator"
 import { Button } from "../../Components/ui/button"
+import { CreditCard, ArrowRight } from "lucide-react"
 import moment from "moment"
 
 interface OrderItem {
@@ -75,6 +76,10 @@ export default function MyOrdersPage() {
     }
   }
 
+  const handlePayment = (orderId: string) => {
+    window.location.href = `/kalana/checkout?orderId=${orderId}`;
+  }
+
   return (
     <div className="min-h-screen bg-white py-8">
       <Card className="max-w-3xl mx-auto bg-white border-gray-200 shadow-lg">
@@ -121,6 +126,23 @@ export default function MyOrdersPage() {
                         <div className="font-semibold text-gray-900">Total:</div>
                         <div className="font-bold text-lg text-red-600">${order.totalAmount.toFixed(2)}</div>
                       </div>
+                      
+                      {/* Payment Button for Pending Orders */}
+                      {order.status === "pending" && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <Button 
+                            onClick={() => handlePayment(order._id)}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                          >
+                            <CreditCard className="w-5 h-5 mr-2" />
+                            Pay Now
+                            <ArrowRight className="w-5 h-5 ml-2" />
+                          </Button>
+                          <p className="text-xs text-gray-500 text-center mt-2">
+                            Complete your payment to process this order
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

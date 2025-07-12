@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ItemDetails from "../components/ProductDetails";
 
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Dumbbell, Zap, Heart } from 'lucide-react';
 
 // Define TypeScript interfaces
 interface Product {
@@ -26,7 +26,7 @@ const Products = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [sortBy, setSortBy] = useState<string>("name");
-  const itemsPerPage = 40;
+  const itemsPerPage = 20;
   const router = useRouter();
 
   useEffect(() => {
@@ -85,33 +85,71 @@ const Products = () => {
 
   const userId = localStorage.getItem("userId");
   console.log("User ID:", userId);
+  
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">Our Products</h1>
-          <p className="text-gray-600">Browse through our amazing collection</p>
+        {/* Hero Header */}
+        {/* Hero Header with Background Image */}
+        <div className="relative mb-12 rounded-3xl overflow-hidden">
+          {/* Background Image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{
+              backgroundImage: `url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')`
+            }}
+          ></div>
+          
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/60"></div>
+          
+          {/* Content */}
+          <div className="relative py-20 px-8 text-center text-white">
+            <div className="flex justify-center items-center gap-3 mb-6">
+              <Dumbbell className="text-red-500" size={50} />
+              <h1 className="text-6xl font-bold">
+                GYM <span className="text-red-500">STORE</span>
+              </h1>
+              {/* <Heart className="text-red-500" size={50} /> */}
+            </div>
+            <p className="text-2xl mb-4 font-semibold">Premium Equipment & Supplements</p>
+            <p className="text-lg text-gray-200 mb-8 max-w-2xl mx-auto">
+              Transform your fitness journey with our professional-grade products
+            </p>
+            
+            {/* Call to Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                Shop Now
+              </button>
+              
+            </div>
+          </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-10">
+          <div className="flex items-center gap-2 mb-6">
+            <Filter className="text-gray-800" size={24} />
+            <h2 className="text-2xl font-bold text-gray-800">Find Your Perfect Gear</h2>
+          </div>
+          
+          <form onSubmit={handleSearchSubmit} className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
                 type="search"
-                placeholder="Search for products..."
+                placeholder="Search equipment, supplements, accessories..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-800 placeholder-gray-400 text-lg"
               />
             </div>
             
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-800 font-medium text-lg min-w-[200px]"
             >
               <option value="">All Categories</option>
               {categories.map((category) => (
@@ -124,7 +162,7 @@ const Products = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-800 font-medium text-lg min-w-[200px]"
             >
               <option value="name">Sort by Name</option>
               <option value="price-low">Price: Low to High</option>
@@ -133,68 +171,126 @@ const Products = () => {
             
             <button
               type="submit"
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-300 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
+              <Zap className="inline mr-2" size={20} />
               Search
             </button>
           </form>
         </div>
 
-        {/* Results count */}
-        <div className="mb-6 text-gray-600">
-          Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, sortedItems.length)} of {sortedItems.length} results
+        {/* Results count with stats */}
+        <div className="mb-8 p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="text-gray-800">
+              <span className="text-lg font-semibold">
+                Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, sortedItems.length)} of {sortedItems.length} products
+              </span>
+            </div>
+            <div className="flex gap-6 text-sm text-gray-600">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-red-600 rounded-full"></div>
+                <span>Premium Quality</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-gray-800 rounded-full"></div>
+                <span>Fast Shipping</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {currentItems.map((item) => (
-            <div key={item._id} className="w-full">
-              <ItemDetails item={item} />
+            <div key={item._id} className="w-full transform hover:scale-105 transition-transform duration-300">
+              <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 border border-gray-100 overflow-hidden">
+                <ItemDetails item={item} />
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Pagination */}
+        {/* Enhanced Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-4 mt-8">
+          <div className="flex justify-center items-center gap-4 mt-12 p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
-              className={`px-4 py-2 rounded-lg text-white ${
-                currentPage === 1 ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
-              } transition-colors`}
+              className={`px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                currentPage === 1 
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+                  : "bg-gray-800 text-white hover:bg-black shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              }`}
             >
               Previous
             </button>
             
             <div className="flex gap-2">
-              {[...Array(totalPages)].map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentPage(index + 1)}
-                  className={`w-10 h-10 rounded-lg ${
-                    currentPage === index + 1
-                      ? "bg-red-600 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  } transition-colors`}
-                >
-                  {index + 1}
-                </button>
-              ))}
+              {[...Array(Math.min(totalPages, 5))].map((_, index) => {
+                const pageNumber = index + 1;
+                return (
+                  <button
+                    key={pageNumber}
+                    onClick={() => setCurrentPage(pageNumber)}
+                    className={`w-12 h-12 rounded-xl font-bold text-lg transition-all duration-300 ${
+                      currentPage === pageNumber
+                        ? "bg-red-600 text-white shadow-lg transform scale-110"
+                        : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              })}
+              {totalPages > 5 && (
+                <>
+                  <span className="px-3 py-3 text-gray-500">...</span>
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    className={`w-12 h-12 rounded-xl font-bold text-lg transition-all duration-300 ${
+                      currentPage === totalPages
+                        ? "bg-red-600 text-white shadow-lg transform scale-110"
+                        : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
             </div>
             
             <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className={`px-4 py-2 rounded-lg text-white ${
-                currentPage === totalPages ? "bg-gray-400 cursor-not-allowed" : "bg-red-600 hover:bg-red-700"
-              } transition-colors`}
+              className={`px-6 py-3 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                currentPage === totalPages 
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+                  : "bg-gray-800 text-white hover:bg-black shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              }`}
             >
               Next
             </button>
-            
           </div>
         )}
+
+        {/* Footer Stats */}
+        <div className="mt-16 p-8 bg-gradient-to-r from-gray-800 to-black rounded-2xl text-white">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="text-3xl font-bold text-red-500 mb-2">{items.length}+</div>
+              <div className="text-gray-300">Products Available</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-red-500 mb-2">24/7</div>
+              <div className="text-gray-300">Customer Support</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-red-500 mb-2">100%</div>
+              <div className="text-gray-300">Quality Guarantee</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
