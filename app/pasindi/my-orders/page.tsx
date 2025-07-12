@@ -82,11 +82,11 @@ export default function MyOrdersPage() {
 
   return (
     <div className="min-h-screen bg-white py-8">
-      <Card className="max-w-3xl mx-auto bg-white border-gray-200 shadow-lg">
+      <Card className="max-w-7xl mx-auto bg-white border-gray-200 shadow-lg">
         <CardHeader className="bg-gray-900 text-white border-b-2 border-red-500">
           <CardTitle className="text-xl font-bold text-white">My Orders</CardTitle>
         </CardHeader>
-        <CardContent className="p-6 bg-white">
+        <CardContent className="p-8 bg-white">
           {isLoading ? (
             <div className="flex items-center justify-center h-40">
               <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-red-500"></div>
@@ -106,39 +106,39 @@ export default function MyOrdersPage() {
                     </div>
                     <Badge className={statusColor(order.status) + " text-xs px-3 py-1 border"}>{order.status}</Badge>
                   </CardHeader>
-                  <CardContent className="py-4">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex flex-wrap gap-4">
+                  <CardContent className="py-6">
+                    <div className="flex flex-col gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {order.orderItems.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-2 border rounded px-2 py-1 bg-gray-50">
-                            <img src={item.image} alt={item.title} className="w-10 h-10 object-cover rounded" />
-                            <div>
-                              <div className="font-medium text-gray-800 text-sm">{item.title}</div>
-                              <div className="text-xs text-gray-500">Qty: {item.quantity}</div>
-                              <div className="text-xs text-gray-400">{item.category}</div>
+                          <div key={idx} className="flex items-center gap-3 border rounded-lg px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <img src={item.image} alt={item.title} className="w-16 h-16 object-cover rounded-lg" />
+                            <div className="flex-1">
+                              <div className="font-semibold text-gray-800 text-base">{item.title}</div>
+                              <div className="text-sm text-gray-600">Qty: {item.quantity}</div>
+                              <div className="text-sm text-gray-500">{item.category}</div>
                             </div>
-                            <div className="ml-2 font-semibold text-gray-700 text-sm">${item.price}</div>
+                            <div className="font-bold text-lg text-red-600">${item.price}</div>
                           </div>
                         ))}
                       </div>
-                      <Separator className="my-2" />
-                      <div className="flex justify-between items-center">
-                        <div className="font-semibold text-gray-900">Total:</div>
-                        <div className="font-bold text-lg text-red-600">${order.totalAmount.toFixed(2)}</div>
+                      <Separator className="my-4" />
+                      <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+                        <div className="font-bold text-xl text-gray-900">Total Amount:</div>
+                        <div className="font-bold text-2xl text-red-600">${order.totalAmount.toFixed(2)}</div>
                       </div>
                       
                       {/* Payment Button for Pending Orders */}
                       {order.status === "pending" && (
-                        <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="mt-6 pt-6 border-t border-gray-200">
                           <Button 
                             onClick={() => handlePayment(order._id)}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-lg"
                           >
-                            <CreditCard className="w-5 h-5 mr-2" />
+                            <CreditCard className="w-6 h-6 mr-3" />
                             Pay Now
-                            <ArrowRight className="w-5 h-5 ml-2" />
+                            <ArrowRight className="w-6 h-6 ml-3" />
                           </Button>
-                          <p className="text-xs text-gray-500 text-center mt-2">
+                          <p className="text-sm text-gray-500 text-center mt-3">
                             Complete your payment to process this order
                           </p>
                         </div>
