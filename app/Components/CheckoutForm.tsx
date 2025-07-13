@@ -1,3 +1,4 @@
+// app/Components/CheckoutForm.tsx
 import { useEffect, useState } from 'react';
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { StripeCardElement } from '@stripe/stripe-js';
@@ -15,6 +16,7 @@ interface CheckoutFormProps {
   totalAmount?: number;
   enrollmentData?: { _id: string; className: string; totalAmount: number };
   orderId?: string;
+  enrollmentId?: string;
 }
 
 const CheckoutForm: React.FC<CheckoutFormProps> = ({
@@ -23,6 +25,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   totalAmount: totalAmountProp,
   enrollmentData,
   orderId,
+  enrollmentId,
 }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -32,7 +35,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [totalAmount, setTotalAmount] = useState(0);
 
-  /* ---------- Load summary ---------- */
+  // Load summary
   useEffect(() => {
     if (orderItemsProp && totalAmountProp !== undefined) {
       setOrderItems(orderItemsProp);
@@ -48,12 +51,12 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       return;
     }
 
-    // Fallback: dummy data if nothing else
+    // Fallback
     setOrderItems([{ title: 'Dummy Plan', price: 10, quantity: 1 }]);
     setTotalAmount(10);
   }, [orderItemsProp, totalAmountProp, enrollmentData]);
 
-  /* ---------- Submit ---------- */
+  // Submit payment
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
@@ -68,42 +71,56 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       return;
     }
 
-    const { paymentMethod, error } = await stripe.createPaymentMethod({
-      type: 'card',
-      card
-    });
-    if (error || !paymentMethod) {
-      setMessage(error?.message || 'Payment method creation failed.');
+    try {
+      const { paymentMethod, error } = await stripe.createPaymentMethod({
+        type: 'card',
+        card
+      });
+
+      if (error || !paymentMethod) {
+        setMessage(error?.message || 'Payment method creation failed.');
+        setLoading(false);
+        return;
+      }
+
+      const paymentFor = enrollmentData ? 'enrollment' : 'order';
+
+      const body: any = {
+        paymentMethodId: paymentMethod.id,
+        userId,
+        paymentFor,
+      };
+
+      if (paymentFor === 'enrollment' && enrollmentId) {
+        body.enrollmentId = enrollmentId;
+      } else if (paymentFor === 'order' && orderId) {
+        body.orderId = orderId;
+      }
+
+      const res = await fetch('/api/payment_intents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setMessage('✅ Payment succeeded!');
+        // Optionally redirect to success page
+        setTimeout(() => {
+          window.location.href = '/payment/success';
+        }, 2000);
+      } else {
+        setMessage(`❌ Payment failed: ${data.error}`);
+      }
+    } catch (err: any) {
+      setMessage(`❌ Payment failed: ${err.message}`);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const paymentFor = enrollmentData ? 'enrollment' : 'order';
-
-    const body: any = {
-      paymentMethodId: paymentMethod.id,
-      userId,
-      paymentFor,
-    };
-
-    if (paymentFor === 'enrollment' && enrollmentData?._id) {
-      body.enrollmentId = enrollmentData._id;
-    } else if (paymentFor === 'order' && orderId) {
-      body.orderId = orderId;
-    }
-
-    const res = await fetch('/api/payment_intents', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-
-    setMessage(data.success ? '✅ Payment succeeded!' : `❌ Payment failed: ${data.error}`);
-    setLoading(false);
   };
 
-  /* ---------- UI ---------- */
   return (
     <div className={styles.pageWrapper}>
       <form onSubmit={handleSubmit} className={styles.container}>
@@ -116,7 +133,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
             <p>Price: ${item.price}</p>
           </div>
         ))}
-        <div className={styles.card}><strong>Total: ${totalAmount}</strong></div>
+        
+        <div className={styles.card}>
+          <strong>Total: ${totalAmount}</strong>
+        </div>
 
         <CardElement className={styles.card} />
 
