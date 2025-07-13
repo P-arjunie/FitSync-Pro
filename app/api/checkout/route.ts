@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "../../lib/mongodb";
 import Order from "../../models/order";
+import Product from "../../models/product";
 
 export async function POST(request: Request) {
   await connectToDatabase();
@@ -42,6 +43,25 @@ export async function POST(request: Request) {
     status: 'pending',
     orderNumber // manually include this to avoid the validation error
     });
+
+    // Update inventory quantities
+    for (const item of items) {
+      const product = await Product.findById(item._id);
+      if (product) {
+        // Check if we have enough stock
+        if (product.countInStock < item.quantity) {
+          // If not enough stock, delete the order and return error
+          await Order.findByIdAndDelete(newOrder._id);
+          return NextResponse.json({ 
+            error: `Insufficient stock for ${item.title}. Available: ${product.countInStock}, Requested: ${item.quantity}` 
+          }, { status: 400 });
+        }
+        
+        // Reduce the stock
+        product.countInStock -= item.quantity;
+        await product.save();
+      }
+    }
 
     // Return the created order
     return NextResponse.json({

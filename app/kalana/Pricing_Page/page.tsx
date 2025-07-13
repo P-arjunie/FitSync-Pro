@@ -1,9 +1,9 @@
 /* Pricing page */
 // app/kalana/Pricing_Page/page.tsx
 
-import Navbar from "../../Components/Navbar"; // Adjust if Navbar is in a different folder
-import Footer from "../../Components/Footer_02"; // Adjust if Footer is in a different folder
-import styles from "../../Components/PricingPage.module.css";
+import Navbar from "../../Components/navbar"; // Adjust if Navbar is in a different folder
+import Footer from "@/Components/Footer_02";  
+import styles from "@/Components/pricingpage.module.css";
 
 export default function PricingPage() {
   return (

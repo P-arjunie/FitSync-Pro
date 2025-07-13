@@ -5,7 +5,7 @@ import { useShoppingCartStore } from '../ShoppingCart/page';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
-import Navbar from '@/Components/Navbar';
+
 
 export default function CartPage() {
   const { items, removeFromCart, updateQuantity, clearCart, getCartTotal, getItemCount } = useShoppingCartStore();
@@ -17,8 +17,6 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Shopping Cart</h1>

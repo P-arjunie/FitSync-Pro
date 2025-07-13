@@ -1,6 +1,7 @@
 // Components/analytics/OrderAnalyticsDashboard.tsx
 import React, { useMemo } from "react";
-import { Line, Bar, Doughnut } from "react-chartjs-2";
+// 1. CHANGED: Imported 'Pie' instead of 'Doughnut'
+import { Line, Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -28,7 +29,7 @@ ChartJS.register(
   Filler,
   ArcElement
 );
-
+//structure of the props the component will receive
 interface OrderAnalyticsProps {
   labels: string[];
   orderCounts: number[];
@@ -190,7 +191,9 @@ const OrderAnalyticsDashboard: React.FC<OrderAnalyticsProps> = ({
     },
   };
 
-  const doughnutOptions = {
+  // 2. CHANGED: Renamed 'doughnutOptions' to 'pieOptions' for clarity.
+  // The options are compatible for both Pie and Doughnut charts.
+  const pieOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -354,7 +357,8 @@ const OrderAnalyticsDashboard: React.FC<OrderAnalyticsProps> = ({
                 <h3 className="text-xl font-bold text-white">Order Status Breakdown</h3>
               </div>
               <div className="h-80">
-                <Doughnut data={statusChartData} options={doughnutOptions} />
+                {/* 3. CHANGED: Used the <Pie> component instead of <Doughnut> */}
+                <Pie data={statusChartData} options={pieOptions} />
               </div>
             </div>
 

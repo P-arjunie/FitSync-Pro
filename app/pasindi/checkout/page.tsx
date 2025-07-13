@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useShoppingCartStore } from '../ShoppingCart/page';
-import Navbar from '@/Components/Navbar';
+
 import { CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/Components/ui/button';
@@ -22,6 +22,7 @@ export default function CheckoutPage() {
   };
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [userId, setUserId] = useState("");
+  const [orderId, setOrderId] = useState("");
 
   useEffect(() => {
     // Get userId from localStorage when component mounts
@@ -61,11 +62,8 @@ export default function CheckoutPage() {
       if (response.ok) {
         setSuccess(true);
         setOrderDetails(data.order);
+        setOrderId(data.order._id);
         clearCart(); // Clear cart after successful order
-        
-        // Redirect to payment page
-       window.location.href = `/kalana/checkout?orderId=${data.order._id}`;
-
       } else {
         setError(data.error || 'Something went wrong processing your order');
       }
@@ -77,13 +75,17 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleProceedToPayment = () => {
+    if (orderId) {
+      window.location.href = `/kalana/checkout?orderId=${orderId}`;
+    }
+  };
+
   // Only render after client-side hydration
   if (typeof window === "undefined" || !userId) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       <div className="max-w-4xl mx-auto px-4 py-12">
         {success ? (
           <div className="bg-white shadow-md rounded-lg p-8 text-center">
@@ -108,11 +110,24 @@ export default function CheckoutPage() {
               </div>
             </div>
             
-            <Link href="/products">
-              <button className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                Continue Shopping
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button 
+                onClick={handleProceedToPayment}
+                className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                Proceed to Payment
               </button>
-            </Link>
+              <Link href="/pasindi/my-orders">
+                <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                  View All Orders
+                </button>
+              </Link>
+              <Link href="/products">
+                <button className="px-8 py-4 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                  Continue Shopping
+                </button>
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="bg-white shadow-md rounded-lg overflow-hidden">
