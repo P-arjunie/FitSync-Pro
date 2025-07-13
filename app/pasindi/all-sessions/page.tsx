@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 import { useEffect, useState } from "react"
 import { Calendar, momentLocalizer, Views, type View } from "react-big-calendar"
@@ -11,15 +13,74 @@ import { Separator } from "../../Components/ui/separator"
 import type { ToolbarProps } from "react-big-calendar"
 import { CalendarIcon, Clock, MapPin, Users, User } from "lucide-react"
 
-// Add custom styles for month view
+// Enhanced custom styles with black, gray, red theme
 const customStyles = `
+  /* Calendar container */
+  .rbc-calendar {
+    background-color: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+  }
+
+  /* Toolbar styling */
+  .rbc-toolbar {
+    background-color: #111827 !important;
+    color: white !important;
+    padding: 16px !important;
+    border-radius: 8px 8px 0 0 !important;
+    margin-bottom: 0 !important;
+    border-bottom: 2px solid #ef4444 !important;
+  }
+
+  .rbc-toolbar button {
+    background-color: #374151 !important;
+    color: white !important;
+    border: 1px solid #6b7280 !important;
+    border-radius: 6px !important;
+    padding: 8px 16px !important;
+    margin: 0 4px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .rbc-toolbar button:hover {
+    background-color: #4b5563 !important;
+    border-color: #9ca3af !important;
+  }
+
+  .rbc-toolbar button.rbc-active {
+    background-color: #ef4444 !important;
+    border-color: #dc2626 !important;
+    color: white !important;
+  }
+
+  .rbc-toolbar-label {
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 18px !important;
+  }
+
+  /* Header styling */
+  .rbc-header {
+    background-color: #f9fafb !important;
+    color: #111827 !important;
+    font-weight: 600 !important;
+    padding: 12px 8px !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    text-transform: uppercase !important;
+    font-size: 12px !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  /* Month view specific styles */
   .rbc-month-view .rbc-event {
     font-size: 10px !important;
-    padding: 1px 3px !important;
+    padding: 2px 4px !important;
     margin: 1px 0 !important;
     line-height: 1.2 !important;
-    border-radius: 2px !important;
+    border-radius: 4px !important;
     min-height: 16px !important;
+    border: none !important;
   }
   
   .rbc-month-view .rbc-event-content {
@@ -32,34 +93,112 @@ const customStyles = `
   
   .rbc-show-more {
     font-size: 10px !important;
-    color: #0066cc !important;
+    color: #ef4444 !important;
     cursor: pointer !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
+    padding: 2px 4px !important;
+    border-radius: 2px !important;
+    background-color: #fef2f2 !important;
+  }
+  
+  .rbc-show-more:hover {
+    background-color: #fee2e2 !important;
   }
   
   .rbc-month-view .rbc-date-cell {
-    padding: 2px 4px !important;
+    padding: 4px 6px !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+  }
+
+  /* Day grid styling */
+  .rbc-day-bg {
+    background-color: white !important;
+    border-right: 1px solid #f3f4f6 !important;
+  }
+
+  .rbc-day-bg:hover {
+    background-color: #f9fafb !important;
+  }
+
+  .rbc-today {
+    background-color: #fef2f2 !important;
+  }
+
+  .rbc-off-range-bg {
+    background-color: #f8fafc !important;
+  }
+
+  .rbc-off-range {
+    color: #9ca3af !important;
+  }
+
+  /* Week and day view time slots */
+  .rbc-time-slot {
+    border-top: 1px solid #f3f4f6 !important;
+  }
+
+  .rbc-time-header {
+    background-color: #f9fafb !important;
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+
+  .rbc-time-header-content {
+    border-left: 1px solid #e5e7eb !important;
+  }
+
+  .rbc-time-content {
+    border-left: 1px solid #e5e7eb !important;
+  }
+
+  .rbc-time-view .rbc-time-header {
+    color: #374151 !important;
+  }
+
+  .rbc-label {
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+  }
+
+  /* Current time indicator */
+  .rbc-current-time-indicator {
+    background-color: #ef4444 !important;
+    height: 2px !important;
+  }
+
+  .rbc-current-time-indicator::before {
+    background-color: #ef4444 !important;
+  }
+
+  /* Popup styling */
+  .rbc-overlay {
+    background-color: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .rbc-overlay-header {
+    background-color: #111827 !important;
+    color: white !important;
+    padding: 12px 16px !important;
+    border-radius: 8px 8px 0 0 !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid #ef4444 !important;
+  }
+
+  /* Event selection */
+  .rbc-selected {
+    background-color: #374151 !important;
+    border: 2px solid #ef4444 !important;
+  }
+
+  /* Slots */
+  .rbc-slot-selection {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid #ef4444 !important;
   }
 `
-
-function CustomToolbar({ label, onView, views }: ToolbarProps) {
-  return (
-    <div className="flex items-center justify-between mb-2">
-      <span className="font-bold">{label}</span>
-      <div className="space-x-2">
-        {Object.keys(views).map((view) => (
-          <button
-            key={view}
-            onClick={() => onView(view as View)}
-            className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            {view.charAt(0).toUpperCase() + view.slice(1)}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 const localizer = momentLocalizer(moment)
 
@@ -92,7 +231,7 @@ export default function AllSessionsPage() {
         const data = await response.json()
         if (isMounted) {
           // Convert string dates to Date objects
-          const formattedSessions = data.map((session: any) => ({
+          const formattedSessions = data.map((session: Session) => ({
             ...session,
             start: new Date(session.start),
             end: new Date(session.end),
@@ -198,17 +337,17 @@ export default function AllSessionsPage() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-white">
       <style dangerouslySetInnerHTML={{ __html: customStyles }} />
-      <Card>
-        <CardHeader>
-          <CardTitle>All Trainers' Sessions</CardTitle>
+      <Card className="bg-white border-gray-200 shadow-lg">
+        <CardHeader className="bg-gray-900 text-white border-b-2 border-red-500">
+          <CardTitle className="text-xl font-bold text-white">All Trainers' Sessions</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 bg-white">
           <div className="h-[600px]">
             {isLoading ? (
               <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
               </div>
             ) : (
               <Calendar
@@ -232,7 +371,6 @@ export default function AllSessionsPage() {
                 selectable={true}
                 dayLayoutAlgorithm={"no-overlap"}
                 showMultiDayTimes={true}
-                // Remove the invalid 'max' prop, which expects a Date, not a number
                 onShowMore={handleShowMore}
                 components={{
                   event: (props: any) => {
@@ -244,13 +382,17 @@ export default function AllSessionsPage() {
                     if (currentView === Views.MONTH) {
                       return (
                         <div
-                          className={`text-xs p-1 rounded cursor-pointer overflow-hidden ${
-                            isPast ? "opacity-60" : ""
-                          } ${isFull ? "bg-red-100 border-red-300" : "bg-blue-100 border-blue-300"}`}
+                          className={`text-xs p-1 rounded cursor-pointer overflow-hidden transition-all duration-200 ${
+                            isPast ? "opacity-50" : ""
+                          } ${
+                            isFull 
+                              ? "bg-red-100 border-red-400 text-red-800" 
+                              : "bg-gray-100 border-gray-400 text-gray-800"
+                          }`}
                           title={`${session.title} - ${session.trainerName} (${session.currentParticipants || 0}/${session.maxParticipants})`}
                         >
                           <div className="font-semibold truncate text-[10px] leading-tight">{session.title}</div>
-                          <div className="truncate text-gray-600 text-[9px]">
+                          <div className="truncate text-[9px] opacity-80">
                             {moment(session.start).format("HH:mm")} - {session.trainerName}
                           </div>
                         </div>
@@ -260,16 +402,20 @@ export default function AllSessionsPage() {
                     // Original rendering for week/day views
                     return (
                       <div
-                        className={`text-xs p-1 rounded cursor-pointer ${
-                          isPast ? "opacity-60" : ""
-                        } ${isFull ? "bg-red-100 border-red-300" : "bg-blue-100 border-blue-300"}`}
+                        className={`text-xs p-2 rounded cursor-pointer border-l-4 transition-all duration-200 hover:shadow-md ${
+                          isPast ? "opacity-50" : ""
+                        } ${
+                          isFull 
+                            ? "bg-red-50 border-red-500 text-red-800" 
+                            : "bg-gray-50 border-gray-600 text-gray-800"
+                        }`}
                         title={`${session.title} - ${session.trainerName}`}
                       >
-                        <div className="font-semibold truncate">{session.title}</div>
-                        <div className="truncate text-gray-600">{session.trainerName}</div>
+                        <div className="font-semibold truncate text-sm">{session.title}</div>
+                        <div className="truncate text-gray-600 text-xs">{session.trainerName}</div>
                         <div className="flex items-center gap-1 mt-1">
                           <Users className="w-3 h-3" />
-                          <span>
+                          <span className="text-xs font-medium">
                             {session.currentParticipants || 0}/{session.maxParticipants}
                           </span>
                         </div>
@@ -285,10 +431,10 @@ export default function AllSessionsPage() {
 
       {/* Session Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5" />
+        <DialogContent className="max-w-md bg-white border-gray-200">
+          <DialogHeader className="border-b border-gray-200 pb-4">
+            <DialogTitle className="flex items-center gap-2 text-gray-900">
+              <CalendarIcon className="w-5 h-5 text-red-500" />
               Session Details
             </DialogTitle>
           </DialogHeader>
@@ -296,20 +442,20 @@ export default function AllSessionsPage() {
           {selectedSession && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold">{selectedSession.title}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">{selectedSession.title}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   <User className="w-4 h-4 text-gray-500" />
                   <span className="text-gray-600">Trainer: {selectedSession.trainerName}</span>
                 </div>
               </div>
 
-              <Separator />
+              <Separator className="bg-gray-200" />
 
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-gray-500" />
                   <div>
-                    <div className="font-medium">{formatDateTime(selectedSession.start)}</div>
+                    <div className="font-medium text-gray-900">{formatDateTime(selectedSession.start)}</div>
                     <div className="text-sm text-gray-500">
                       Duration: {formatDuration(selectedSession.start, selectedSession.end)}
                     </div>
@@ -318,38 +464,46 @@ export default function AllSessionsPage() {
 
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gray-500" />
-                  <span>{selectedSession.location}</span>
+                  <span className="text-gray-700">{selectedSession.location}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-gray-500" />
                   <div className="flex items-center gap-2">
-                    <span>
+                    <span className="text-gray-700">
                       {selectedSession.currentParticipants || 0} / {selectedSession.maxParticipants} participants
                     </span>
-                    {isSessionFull(selectedSession) && <Badge variant="destructive">Full</Badge>}
-                    {isSessionPast(selectedSession) && <Badge variant="secondary">Past</Badge>}
+                    {isSessionFull(selectedSession) && (
+                      <Badge className="bg-red-100 text-red-800 border-red-300">Full</Badge>
+                    )}
+                    {isSessionPast(selectedSession) && (
+                      <Badge className="bg-gray-100 text-gray-800 border-gray-300">Past</Badge>
+                    )}
                   </div>
                 </div>
               </div>
 
               {selectedSession.description && (
                 <>
-                  <Separator />
+                  <Separator className="bg-gray-200" />
                   <div>
-                    <h4 className="font-medium mb-2">Description</h4>
+                    <h4 className="font-medium mb-2 text-gray-900">Description</h4>
                     <p className="text-sm text-gray-600">{selectedSession.description}</p>
                   </div>
                 </>
               )}
 
-              <Separator />
+              <Separator className="bg-gray-200" />
 
               <div className="flex gap-2">
                 <Button
                   onClick={handleJoinSession}
                   disabled={isJoining || isSessionFull(selectedSession) || isSessionPast(selectedSession)}
-                  className="flex-1"
+                  className={`flex-1 ${
+                    isJoining || isSessionFull(selectedSession) || isSessionPast(selectedSession)
+                      ? "bg-gray-400 hover:bg-gray-400"
+                      : "bg-red-500 hover:bg-red-600"
+                  } text-white`}
                 >
                   {isJoining ? (
                     <>
@@ -364,7 +518,11 @@ export default function AllSessionsPage() {
                     "Join Session"
                   )}
                 </Button>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(false)}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
                   Close
                 </Button>
               </div>

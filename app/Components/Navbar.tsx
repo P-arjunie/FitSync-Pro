@@ -53,17 +53,22 @@ const Navbar: React.FC = () => {
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/">Home</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/About_page">About</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/Gallery_page">Gallery</Link></li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/class">Classes</Link></li>
+        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/#featured-classes">Classes</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/schedule">Schedule</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/Blogs">Blogs</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/pasindi/products">Shop</Link></li>
+
+        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/Contact_Page">Contact</Link></li>
+        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/sathya/trainerDetails">Trainers</Link></li>
+        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/sathya/feedback">Feedback</Link></li>
+
       </ul>
 
       {/* Right Icons */}
       <div className="flex items-center space-x-4">
         
         <button onClick={handleCartClick} className="text-white px-2 py-2">
-          <Image src="/cart.png" alt="Cart Icon" width={24} height={24} />
+          {/* <Image src="/cart.png" alt="Cart Icon" width={24} height={24} /> */}
         </button>
 
        
