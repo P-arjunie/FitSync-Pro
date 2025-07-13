@@ -1,7 +1,7 @@
-// models/Review.js
 import mongoose from "mongoose";
 
 const ReviewSchema = new mongoose.Schema({
+  memberEmail: { type: String, required: true },
   trainer: { type: String, required: true },
   sessionType: { type: String, required: true },
   date: { type: String, required: true },
