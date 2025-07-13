@@ -1,7 +1,6 @@
-// app/models/Payment.ts
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, model } from 'mongoose';
 
-interface IPayment extends Document {
+export interface IPayment extends Document {
   firstName: string;
   lastName: string;
   email: string;
@@ -16,13 +15,11 @@ interface IPayment extends Document {
     city: string;
     street: string;
   };
-  userId: mongoose.Types.ObjectId; // Changed to ObjectId for consistency
-  
-  paymentFor: "order" | "enrollment"; // Made required
-  relatedOrderId?: mongoose.Types.ObjectId; // Changed to ObjectId
-  relatedEnrollmentId?: mongoose.Types.ObjectId; // Changed to ObjectId
-  
-  stripePaymentIntentId?: string; // Added for Stripe tracking
+  userId: string;
+  paymentFor: 'order' | 'enrollment';
+  relatedOrderId?: mongoose.Types.ObjectId | null;
+  relatedEnrollmentId?: mongoose.Types.ObjectId | null;
+  stripePaymentIntentId?: string;
 }
 
 const paymentSchema = new Schema<IPayment>(
@@ -39,24 +36,34 @@ const paymentSchema = new Schema<IPayment>(
       zip: { type: String, required: true },
       country: { type: String, required: true },
       city: { type: String, required: true },
-      street: { type: String, required: true }
+      street: { type: String, required: true },
     },
-    userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
-    
-    paymentFor: { type: String, enum: ["order", "enrollment"], required: true },
-    relatedOrderId: { type: Schema.Types.ObjectId, ref: "Order", default: null },
-    relatedEnrollmentId: { type: Schema.Types.ObjectId, ref: "Enrollment", default: null },
-    
-    stripePaymentIntentId: { type: String }
+    userId: { type: String, required: true },
+    paymentFor: {
+      type: String,
+      enum: ['order', 'enrollment'],
+      required: true,
+    },
+    relatedOrderId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Order',
+      default: null,
+    },
+    relatedEnrollmentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Enrollment',
+      default: null,
+    },
+    stripePaymentIntentId: {
+      type: String,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    collection: 'kalana_paymentsses',
+  }
 );
 
-// Add indexes for better performance
-paymentSchema.index({ userId: 1, paymentFor: 1 });
-paymentSchema.index({ relatedEnrollmentId: 1 });
-paymentSchema.index({ stripePaymentIntentId: 1 });
-
-const Payment = mongoose.models.kalana_paymentsses || mongoose.model<IPayment>("kalana_paymentsses", paymentSchema);
+const Payment = mongoose.models.Payment || model<IPayment>('Payment', paymentSchema);
 
 export default Payment;

@@ -11,110 +11,111 @@ const CheckoutPage: React.FC = () => {
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const searchParams = useSearchParams();
+  const [orderIdState, setOrderIdState] = useState<string | null>(null);
+  const [enrollmentData, setEnrollmentData] = useState<{
+    className: string;
+    totalAmount: number;
+    enrollmentId: string;
+  } | null>(null);
 
+  const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const enrollmentId = searchParams.get("enrollmentId");
 
   useEffect(() => {
     const id = localStorage.getItem("userId");
-    console.log("Setting userId:", id);
     setUserId(id || "test_user_123");
   }, []);
 
   useEffect(() => {
-    if (!orderId) return;
+    // Clear previous state on param change
+    setError(null);
+    setLoading(true);
+    setOrderItems([]);
+    setTotalAmount(null);
+    setOrderIdState(null);
+    setEnrollmentData(null);
 
-    setOrderIdState(orderId);
-    const fetchOrder = async () => {
-      if (!orderId || !userId) return;
+    if (!userId) return;
 
-      console.log("Fetching order with orderId:", orderId, "userId:", userId);
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const res = await fetch(`/api/orders/${orderId}`, {
-          headers: {
-            'userId': userId,
-            'Content-Type': 'application/json'
-          }
-        });
-        const data = await res.json();
+    if (enrollmentId) {
+      // Fetch enrollment ONLY if enrollmentId is present
+      const fetchEnrollment = async () => {
+        try {
+          const res = await fetch(`/api/enrollments/${enrollmentId}`);
+          if (!res.ok) throw new Error("Enrollment fetch failed");
+          const data = await res.json();
 
-        if (res.ok) {
-          setOrderItems(data.orderItems);
-          setTotalAmount(data.totalAmount);
-        } else {
-          console.error("Failed to fetch order:", data.error);
-          setError(data.error || "Failed to fetch order details");
+          setEnrollmentData({
+            className: data.className,
+            totalAmount: data.totalAmount,
+            enrollmentId: data._id,
+          });
+
+          setLoading(false);
+        } catch (err) {
+          console.error(err);
+          setError("Could not load that enrollment - please retry.");
+          setLoading(false);
         }
-      } catch (err) {
-        console.error("Error fetching order by ID:", err);
-        setError("Network error while fetching order");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrder();
-  }, [orderId]);
+      };
 
-  // Fetch enrollment by enrollmentId if present
-// Fetch enrollment by enrollmentId if present
-useEffect(() => {
-  if (!enrollmentId) return;
+      fetchEnrollment();
+    } else if (orderId) {
+      // Fetch order ONLY if orderId is present and no enrollmentId
+      setOrderIdState(orderId);
 
-  const fetchEnrollment = async () => {
-    try {
-      const res = await fetch(`/api/enrollments/${enrollmentId}`);
-      if (!res.ok) throw new Error('Enrollment fetch failed');
-      const data = await res.json();
-      setEnrollmentData({ className: data.className, totalAmount: data.totalAmount });
-      setOrderItems([]);            // clear any order data
-      setTotalAmount(null);
-    } catch (err) {
-      console.error(err);
-      alert('Could not load that enrollment - please retry.');
+      const fetchOrder = async () => {
+        try {
+          const res = await fetch(`/api/orders/${orderId}`, {
+            headers: {
+              userId,
+              "Content-Type": "application/json",
+            },
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            setOrderItems(data.orderItems);
+            setTotalAmount(data.totalAmount);
+            setLoading(false);
+          } else {
+            setError(data.error || "Failed to fetch order details");
+            setLoading(false);
+          }
+        } catch (err) {
+          setError("Network error while fetching order");
+          setLoading(false);
+        }
+      };
+
+      fetchOrder();
+    } else {
+      // No orderId or enrollmentId, show error or redirect
+      setError("No order or enrollment ID provided");
+      setLoading(false);
     }
-  };
-
-  fetchEnrollment();
-}, [enrollmentId]);
-
+  }, [userId, orderId, enrollmentId]);
 
   if (!userId) return <p>Loading user...</p>;
-  
-  if (loading) return <p>Loading order details...</p>;
-  
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Order</h2>
-        <p className="text-gray-600 mb-4">{error}</p>
-        <button 
-          onClick={() => window.history.back()} 
-          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-        >
-          Go Back
-        </button>
-      </div>
-    </div>
-  );
+  if (loading) return <p>Loading details...</p>;
 
-  if (!orderId) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">No Order ID</h2>
-        <p className="text-gray-600 mb-4">No order ID provided in the URL</p>
-        <button 
-          onClick={() => window.history.back()} 
-          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-        >
-          Go Back
-        </button>
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.history.back()}
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Go Back
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <StripeProvider>
@@ -122,8 +123,8 @@ useEffect(() => {
         userId={userId}
         orderItems={orderItems}
         totalAmount={totalAmount === null ? undefined : totalAmount}
-        enrollmentData={enrollmentData || undefined}
         orderId={orderIdState || undefined}
+        enrollmentData={enrollmentData || undefined}
       />
     </StripeProvider>
   );

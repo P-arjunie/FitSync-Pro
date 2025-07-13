@@ -1,7 +1,3 @@
-// app/Components/checkoutform.tsx
-// This file contains the CheckoutForm component for handling Stripe payments in a Next.js application.
-// It fetches the user's latest order, displays it, and allows payment processing using Stripe's
-
 import { useEffect, useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { StripeCardElement } from "@stripe/stripe-js";
@@ -17,13 +13,21 @@ interface CheckoutFormProps {
   userId: string;
   orderItems?: OrderItem[];
   totalAmount?: number;
+  orderId?: string;
+  enrollmentData?: {
+    className: string;
+    totalAmount: number;
+    enrollmentId: string;
+  };
 }
 
-const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
+const CheckoutForm: React.FC<CheckoutFormProps> = ({
+  userId,
   orderItems: orderItemsProp,
-  totalAmount: totalAmountProp
- }) => {
-  
+  totalAmount: totalAmountProp,
+  orderId,
+  enrollmentData,
+}) => {
   const stripe = useStripe();
   const elements = useElements();
 
@@ -33,40 +37,29 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
   const [totalAmount, setTotalAmount] = useState<number>(0);
 
   useEffect(() => {
-    if (!userId) {
-      // Try to get from localStorage if not passed as prop
-      const storedId = localStorage.getItem("userId");
-      if (!storedId) return;
-      // If found, reload the page with userId as a prop (or set up state if you want to support dynamic userId)
-      // For now, just return to avoid running the rest of the effect without a userId
+    if (!userId) return;
+
+    if (orderItemsProp && totalAmountProp !== undefined) {
+      setOrderItems(orderItemsProp);
+      setTotalAmount(totalAmountProp);
       return;
     }
 
-    if (orderItemsProp && totalAmountProp !== undefined) {
-    // If passed via props, use them directly
-    setOrderItems(orderItemsProp);
-    setTotalAmount(totalAmountProp);
-    return;
-  }
-
-    // Else: fallback to fetching latest order (as before)
     const fetchOrders = async () => {
       try {
         const res = await fetch("/api/orders", {
-          headers: { 
+          headers: {
             userId,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
         });
-        
+
         if (!res.ok) {
-          console.error("API Error:", res.status, res.statusText);
-          // Fallback to dummy data if API fails
           setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
           setTotalAmount(10);
           return;
         }
-        
+
         const data = await res.json();
 
         if (Array.isArray(data) && data.length > 0) {
@@ -83,7 +76,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
     };
 
     fetchOrders();
-  }, [userId]);
+  }, [userId, orderItemsProp, totalAmountProp]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +109,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
       body: JSON.stringify({
         paymentMethodId: paymentMethod.id,
         userId,
+        paymentFor: enrollmentData ? "enrollment" : "order",
+        enrollmentId: enrollmentData?.enrollmentId || null,
       }),
     });
 
@@ -139,13 +134,17 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
           <div className={styles.grid}>
             {orderItems.map((item, idx) => (
               <div key={idx} className={styles.card}>
-                <p><strong>{item.title}</strong></p>
+                <p>
+                  <strong>{item.title}</strong>
+                </p>
                 <p>Qty: {item.quantity}</p>
                 <p>Price: ${item.price}</p>
               </div>
             ))}
             <div className={styles.card}>
-              <p><strong>Total: ${totalAmount}</strong></p>
+              <p>
+                <strong>Total: ${totalAmount}</strong>
+              </p>
             </div>
           </div>
         )}
@@ -164,7 +163,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
           }}
         />
 
-        <button type="submit" disabled={!stripe || loading} className={styles.button}>
+        <button
+          type="submit"
+          disabled={!stripe || loading}
+          className={styles.button}
+        >
           {loading ? "Processing..." : "Pay Now"}
         </button>
 
