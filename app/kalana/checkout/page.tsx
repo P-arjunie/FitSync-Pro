@@ -1,3 +1,5 @@
+// app/kalana/checkout/page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -9,27 +11,29 @@ const CheckoutPage: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState([]);
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
+  const [enrollmentData, setEnrollmentData] = useState<{ className: string; totalAmount: number } | null>(null);
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const enrollmentId = searchParams.get("enrollmentId");
 
   useEffect(() => {
     const id = localStorage.getItem("userId");
     setUserId(id || "test_user_123");
   }, []);
 
+  // Fetch order by orderId if present
   useEffect(() => {
-    const fetchOrder = async () => {
-      if (!orderId) return;
+    if (!orderId) return;
 
-      console.log("Fetching order with orderId:", orderId);
+    const fetchOrder = async () => {
       try {
         const res = await fetch(`/api/orders/${orderId}`);
         const data = await res.json();
 
-        console.log("Fetched order details:", data);
         if (res.ok) {
           setOrderItems(data.orderItems);
           setTotalAmount(data.totalAmount);
+          setEnrollmentData(null); // Clear enrollment if order loaded
         }
       } catch (err) {
         console.error("Error fetching order by ID:", err);
@@ -39,6 +43,29 @@ const CheckoutPage: React.FC = () => {
     fetchOrder();
   }, [orderId]);
 
+  // Fetch enrollment by enrollmentId if present
+// Fetch enrollment by enrollmentId if present
+useEffect(() => {
+  if (!enrollmentId) return;
+
+  const fetchEnrollment = async () => {
+    try {
+      const res = await fetch(`/api/enrollments/${enrollmentId}`);
+      if (!res.ok) throw new Error('Enrollment fetch failed');
+      const data = await res.json();
+      setEnrollmentData({ className: data.className, totalAmount: data.totalAmount });
+      setOrderItems([]);            // clear any order data
+      setTotalAmount(null);
+    } catch (err) {
+      console.error(err);
+      alert('Could not load that enrollment - please retry.');
+    }
+  };
+
+  fetchEnrollment();
+}, [enrollmentId]);
+
+
   if (!userId) return <p>Loading user...</p>;
 
   return (
@@ -47,16 +74,10 @@ const CheckoutPage: React.FC = () => {
         userId={userId}
         orderItems={orderItems}
         totalAmount={totalAmount === null ? undefined : totalAmount}
+        enrollmentData={enrollmentData || undefined}
       />
     </StripeProvider>
   );
 };
 
 export default CheckoutPage;
-
-
-{/* Scenario	Result	Displayed Details
-Valid userId & has an order	Real Instance	Real order items & total
-Valid userId but no orders	Dummy Instance	Dummy item & $10 total
-Invalid or missing userId	Dummy Instance	Dummy item & $10 total
-DB error fetching orders	Dummy Instance	Dummy item & $10 total*/}
