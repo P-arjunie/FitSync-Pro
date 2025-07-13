@@ -19,6 +19,11 @@ interface CheckoutFormProps {
     totalAmount: number;
     enrollmentId: string;
   };
+   pricingPlanData?: {
+    planName: string;
+    amount: number;
+    pricingPlanId: string;
+  };
 }
 
 const CheckoutForm: React.FC<CheckoutFormProps> = ({
@@ -27,6 +32,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   totalAmount: totalAmountProp,
   orderId,
   enrollmentData,
+  pricingPlanData,
 }) => {
   
   const stripe = useStripe();
@@ -110,8 +116,15 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       body: JSON.stringify({
         paymentMethodId: paymentMethod.id,
         userId,
-        paymentFor: enrollmentData ? "enrollment" : "order",
-        enrollmentId: enrollmentData?.enrollmentId || null,
+        
+        paymentFor: pricingPlanData
+  ? "pricing-plan"
+  : enrollmentData
+  ? "enrollment"
+  : "order",
+enrollmentId: enrollmentData?.enrollmentId || null,
+pricingPlanId: pricingPlanData?.pricingPlanId || null,
+
       }),
     });
 

@@ -376,22 +376,32 @@ const renderHeroButtons = () => {
           </div>
         </section>
 
-        {/* Fitness Service Section */}
-        <section className="fitness-service">
-          <h2 className="section-title3">We Are Always Provide Best Fitness Service For You</h2>
-          <div className="service-content">
-            <div className="service-item">
-              <h3 className="service-title">Sculpt Your Perfect Body With Us!</h3>
-              <p className="service-description">
-                A fitness legacy evolving with time, blending strength and innovation for modern excellence. It continues to inspire and transform, adapting seamlessly to modern needs while maintaining its core essence of strength and endurance.
-              </p>
-              <button className="button">Our Classes</button>
-            </div>
-            <div className="service-image">
-              <img src="/fitnessservice.jpg" alt="Fitness Service" className="service-image-style" />
-            </div>
-          </div>
-        </section>
+{/* Fitness Service Section */}
+<section className="fitness-service">
+  <h2 className="section-title3">
+    Choose the Right Fitness Plan to Match Your Goals
+  </h2>
+  <div className="service-content">
+    <div className="service-item">
+      <h3 className="service-title">Affordable Monthly Plans for Every Lifestyle</h3>
+      <p className="service-description">
+        Whether you're just starting your fitness journey or you're a seasoned athlete, we offer flexible monthly pricing plans designed to suit your needs. From basic access to full-featured memberships, select the plan that empowers your transformation.
+      </p>
+      <a href="/kalana/pricing_page">
+        <button className="button">View Pricing Plans</button>
+      </a>
+    </div>
+    <div className="service-image">
+      <img
+        src="/fitnessservice.jpg"
+        alt="Fitness Plans"
+        className="service-image-style"
+      />
+    </div>
+  </div>
+</section>
+
+
 
         {/* BMI Section */}
         <section className="bmi-wrapper">

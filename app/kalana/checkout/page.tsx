@@ -17,10 +17,17 @@ const CheckoutPage: React.FC = () => {
     totalAmount: number;
     enrollmentId: string;
   } | null>(null);
+  const [pricingPlanData, setPricingPlanData] = useState<{
+    planName: string;
+    amount: number;
+    pricingPlanId: string;
+  } | null>(null);
 
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const enrollmentId = searchParams.get("enrollmentId");
+  const paymentFor = searchParams.get("paymentFor");
+  const pricingPlanId = searchParams.get("pricingPlanId");
 
   useEffect(() => {
     const id = localStorage.getItem("userId");
@@ -28,75 +35,65 @@ const CheckoutPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Clear previous state on param change
+    // Reset all states on param change
     setError(null);
     setLoading(true);
     setOrderItems([]);
     setTotalAmount(null);
     setOrderIdState(null);
     setEnrollmentData(null);
+    setPricingPlanData(null);
 
     if (!userId) return;
 
-    if (enrollmentId) {
-      // Fetch enrollment ONLY if enrollmentId is present
-      const fetchEnrollment = async () => {
-        try {
+    const fetchData = async () => {
+      try {
+        if (enrollmentId) {
           const res = await fetch(`/api/enrollments/${enrollmentId}`);
           if (!res.ok) throw new Error("Enrollment fetch failed");
           const data = await res.json();
-
           setEnrollmentData({
             className: data.className,
             totalAmount: data.totalAmount,
             enrollmentId: data._id,
           });
-
-          setLoading(false);
-        } catch (err) {
-          console.error(err);
-          setError("Could not load that enrollment - please retry.");
-          setLoading(false);
-        }
-      };
-
-      fetchEnrollment();
-    } else if (orderId) {
-      // Fetch order ONLY if orderId is present and no enrollmentId
-      setOrderIdState(orderId);
-
-      const fetchOrder = async () => {
-        try {
+        } else if (orderId) {
+          setOrderIdState(orderId);
           const res = await fetch(`/api/orders/${orderId}`, {
             headers: {
               userId,
               "Content-Type": "application/json",
             },
           });
-
           const data = await res.json();
-
           if (res.ok) {
             setOrderItems(data.orderItems);
             setTotalAmount(data.totalAmount);
-            setLoading(false);
           } else {
-            setError(data.error || "Failed to fetch order details");
-            setLoading(false);
+            throw new Error(data.error || "Order fetch failed");
           }
-        } catch (err) {
-          setError("Network error while fetching order");
-          setLoading(false);
+        } else if (paymentFor === "pricing-plan" && pricingPlanId) {
+          const res = await fetch(`/api/pricing-plan-purchase/${pricingPlanId}`);
+          if (!res.ok) throw new Error("Pricing plan fetch failed");
+          const data = await res.json();
+          setPricingPlanData({
+            planName: data.planName,
+            amount: data.amount,
+            pricingPlanId: data._id,
+          });
+        } else {
+          throw new Error("No valid parameters provided");
         }
-      };
 
-      fetchOrder();
-    } else {
-      // No orderId or enrollmentId, show error or redirect
-      setError("No order or enrollment ID provided");
-      setLoading(false);
-    }
-  }, [userId, orderId, enrollmentId]);
+        setLoading(false);
+      } catch (err: any) {
+        setError(err.message || "Failed to load data");
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userId, orderId, enrollmentId, paymentFor, pricingPlanId]);
 
   if (!userId) return <p>Loading user...</p>;
   if (loading) return <p>Loading details...</p>;
@@ -125,6 +122,7 @@ const CheckoutPage: React.FC = () => {
         totalAmount={totalAmount === null ? undefined : totalAmount}
         orderId={orderIdState || undefined}
         enrollmentData={enrollmentData || undefined}
+        pricingPlanData={pricingPlanData || undefined}
       />
     </StripeProvider>
   );

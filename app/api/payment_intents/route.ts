@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import Payment from "@/models/Payment";
 import Order from "@/models/order";
 import Enrollment from "@/models/enrollment";
+import PricingPlanPurchase from "@/models/PricingPlanPurchase";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
@@ -21,7 +22,8 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDB();
 
-    const { paymentMethodId, userId, paymentFor, enrollmentId } = await req.json();
+    const body = await req.json();
+    const { paymentMethodId, userId, paymentFor, enrollmentId, pricingPlanId } = body;
 
     if (!paymentMethodId || !userId || !paymentFor) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -49,6 +51,7 @@ export async function POST(req: NextRequest) {
       amount = Math.round(enrollment.totalAmount * 100);
       itemTitle = enrollment.className;
       relatedEnrollmentId = enrollment._id;
+
     } else if (paymentFor === "order") {
       const latestOrder = await Order.findOne({ user: userId }).sort({ createdAt: -1 });
       if (!latestOrder) {
@@ -58,6 +61,20 @@ export async function POST(req: NextRequest) {
       amount = Math.round(latestOrder.totalAmount * 100);
       itemTitle = latestOrder.orderItems?.[0]?.title || "Order";
       relatedOrderId = latestOrder._id;
+
+    } else if (paymentFor === "pricing-plan") {
+      if (!pricingPlanId || !mongoose.Types.ObjectId.isValid(pricingPlanId)) {
+        return NextResponse.json({ error: "Invalid pricingPlanId" }, { status: 400 });
+      }
+
+      const plan = await PricingPlanPurchase.findById(pricingPlanId);
+      if (!plan) {
+        return NextResponse.json({ error: "Pricing plan not found" }, { status: 404 });
+      }
+
+      amount = Math.round(plan.amount * 100);
+      itemTitle = plan.planName || "Pricing Plan";
+
     } else {
       return NextResponse.json({ error: "Invalid paymentFor value" }, { status: 400 });
     }
@@ -97,7 +114,11 @@ export async function POST(req: NextRequest) {
 
       await newPayment.save();
 
-      // Update status in order or enrollment collection accordingly
+      // Update respective document status
+      if (paymentFor === "pricing_plan") {
+        await PricingPlanPurchase.findByIdAndUpdate(pricingPlanId, { status: "paid" });
+      }
+
       if (relatedOrderId) {
         await Order.findByIdAndUpdate(relatedOrderId, { status: "paid" });
       }

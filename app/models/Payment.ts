@@ -16,7 +16,7 @@ export interface IPayment extends Document {
     street: string;
   };
   userId: string;
-  paymentFor: 'order' | 'enrollment';
+  paymentFor: 'order' | 'enrollment' | 'pricing-plan';
   relatedOrderId?: mongoose.Types.ObjectId | null;
   relatedEnrollmentId?: mongoose.Types.ObjectId | null;
   stripePaymentIntentId?: string;
@@ -41,7 +41,7 @@ const paymentSchema = new Schema<IPayment>(
     userId: { type: String, required: true },
     paymentFor: {
       type: String,
-      enum: ['order', 'enrollment'],
+      enum: ['order', 'enrollment', 'pricing-plan'],
       required: true,
     },
     relatedOrderId: {
@@ -64,6 +64,9 @@ const paymentSchema = new Schema<IPayment>(
   }
 );
 
-const Payment = mongoose.models.Payment || model<IPayment>('Payment', paymentSchema);
+delete mongoose.models.Payment;
+
+const Payment = mongoose.models.Payment as mongoose.Model<IPayment> || 
+model<IPayment>('Payment', paymentSchema);
 
 export default Payment;
