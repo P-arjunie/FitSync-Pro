@@ -1,14 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  FaUser,
-  FaEnvelope,
-  FaLock,
-  FaEye,
-  FaEyeSlash,
-  FaCamera,
-} from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaCamera } from "react-icons/fa";
 
 interface SignUpData {
   name: string;
@@ -30,7 +23,6 @@ interface AuthFormProps {
 
 const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
   const router = useRouter();
-
   const [signUpData, setSignUpData] = useState<SignUpData>({
     name: "",
     email: "",
@@ -39,19 +31,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     role: "",
     profileImage: null,
   });
-
-  const [loginData, setLoginData] = useState<LoginData>({
-    email: "",
-    password: "",
-  });
-
+  const [loginData, setLoginData] = useState<LoginData>({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignUpChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value, files } = e.target as HTMLInputElement;
-    if (name === "profileImage" && files && files[0]) {
+    if (name === "profileImage" && files?.[0]) {
       const file = files[0];
       if (!file.type.startsWith("image/")) {
         alert("Please upload a valid image file.");
@@ -72,140 +60,164 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     setLoginData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const isValidEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleLogin = async () => {
-    if (!loginData.email || !loginData.password) {
-      alert("Please enter email and password to login.");
-      return;
-    }
+  // Replace the handleLogin function in your AuthForm component
+const handleLogin = async () => {
+  if (!loginData.email || !loginData.password) {
+    alert("Please enter email and password to login.");
+    return;
+  }
 
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loginData),
-      });
+  setIsLoading(true);
 
-      const data = await res.json();
+  // Admin login (if needed)
+  if (loginData.email === "admin@123.com" && loginData.password === "123456") {
+    localStorage.setItem("userRole", "admin");
+    localStorage.setItem("userEmail", "admin@123.com");
+    localStorage.setItem("userName", "Admin");
+    localStorage.setItem("userId", "admin_001");
+    router.push("/");
+    return;
+  }
 
-      if (res.ok) {
-        alert(data.message);
-        localStorage.setItem("userRole", data.user.role);
-        localStorage.setItem("userEmail", data.user.email);
-        localStorage.setItem("userName", data.user.name);
-        localStorage.setItem("userId", data.user.id);
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(loginData),
+    });
 
-        if (data.user.role === "member") {
-          window.location.href = "/lithira/MemberProfilePage";
-        } else if (data.user.role === "trainer") {
-          window.location.href = "/lithira/TrainerProfilePage";
-        } else {
-          alert("Unknown user role.");
-        }
-      } else {
-        alert(data.error);
+    const data = await res.json();
+
+    if (res.ok) {
+      if (data.user.status === "suspended") {
+        alert("Your account has been suspended. Please contact support.");
+        return;
       }
-    } catch (error) {
-      alert("Login failed");
+
+      // Store user data in localStorage with consistent naming
+      localStorage.setItem("userRole", data.user.role); // This should now be lowercase
+      localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("userName", data.user.name);
+      localStorage.setItem("userId", data.user.id);
+      localStorage.setItem("userStatus", data.user.status || "active");
+      
+      if (data.user.profileImage) {
+        localStorage.setItem("profileImage", data.user.profileImage);
+      }
+
+      console.log('Login successful, stored role:', data.user.role); // Debug log
+
+      alert("Login successful!");
+      router.push("/");
+    } else {
+      alert(data.error || "Login failed");
     }
-  };
+  } catch (error) {
+    console.error("Login error:", error);
+    alert("Login failed. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
+    // Validation checks
     if (signUpData.password.length < 6) {
       alert("Password should be at least 6 characters.");
+      setIsLoading(false);
       return;
     }
 
     if (signUpData.password !== signUpData.confirmPassword) {
       alert("Passwords do not match.");
+      setIsLoading(false);
       return;
     }
 
     if (!signUpData.role) {
       alert("Please select a role.");
+      setIsLoading(false);
       return;
     }
 
     if (!signUpData.profileImage) {
       alert("Please upload a profile image.");
+      setIsLoading(false);
       return;
     }
 
     if (!isValidEmail(signUpData.email)) {
       alert("Please enter a valid email address.");
+      setIsLoading(false);
       return;
     }
 
-    let imageUrl = "";
-
     try {
-      const toBase64 = (file: File): Promise<string> =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (error) => reject(error);
-        });
+      // Convert image to base64
+      const base64Image = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(signUpData.profileImage!);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+      });
 
-      const base64Image = await toBase64(signUpData.profileImage);
-
+      // Upload image
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: base64Image }),
       });
 
+      if (!uploadRes.ok) {
+        throw new Error("Image upload failed");
+      }
+
       const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed");
+      const imageUrl = uploadData.url;
 
-      imageUrl = uploadData.url;
-    } catch (err) {
-      console.error("Image upload failed:", err);
-      alert("Image upload failed.");
-      return;
-    }
+      // Register user
+      const userData = {
+        name: signUpData.name,
+        email: signUpData.email,
+        password: signUpData.password,
+        role: signUpData.role,
+        profileImage: imageUrl,
+        status: "pending" // New users are pending approval
+      };
 
-    const userData = {
-      name: signUpData.name,
-      email: signUpData.email,
-      password: signUpData.password,
-      role: signUpData.role,
-      profileImage: imageUrl,
-    };
-
-    try {
-      const res = await fetch("/api/auth/register", {
+      const regRes = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
 
-      const data = await res.json();
+      const data = await regRes.json();
 
-      if (res.ok) {
-        alert(data.message);
+      if (regRes.ok) {
         localStorage.setItem("userId", data.userId);
+        if (onNewUser) onNewUser({ name: signUpData.name, role: signUpData.role });
 
-        if (onNewUser) {
-          onNewUser({ name: signUpData.name, role: signUpData.role });
-        }
+        const profileKey = signUpData.role === "trainer" 
+          ? "trainerProfileImage" 
+          : "memberProfileImage";
+        localStorage.setItem(profileKey, imageUrl);
 
-        if (signUpData.role === "trainer") {
-          localStorage.setItem("trainerProfileImage", imageUrl);
-          router.push("/lithira/trainerregform");
-        } else {
-          localStorage.setItem("memberProfileImage", imageUrl);
-          router.push("/lithira/memberregform");
-        }
+        router.push(signUpData.role === "trainer" 
+          ? "/lithira/trainerregform" 
+          : "/lithira/memberregform");
       } else {
-        alert(data.error);
+        alert(data.error || "Registration failed");
       }
     } catch (error) {
-      alert("Registration failed.");
+      console.error("Registration error:", error);
+      alert("Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -253,9 +265,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
             className="bg-red-600 text-white px-3 py-2 rounded-lg mb-4"
             required
           >
-            <option value="" disabled>
-              Select Role
-            </option>
+            <option value="" disabled>Select Role</option>
             <option value="member">Member</option>
             <option value="trainer">Trainer</option>
           </select>
@@ -300,9 +310,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
                 <input
                   type={showPassword[field] ? "text" : "password"}
                   name={field}
-                  placeholder={
-                    field === "password" ? "Enter Password" : "Confirm Password"
-                  }
+                  placeholder={field === "password" ? "Password" : "Confirm Password"}
                   className="bg-transparent w-full outline-none"
                   value={signUpData[field as keyof SignUpData] as string}
                   onChange={handleSignUpChange}
@@ -325,14 +333,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
             <div className="flex justify-between mt-4">
               <button
                 type="submit"
-                className="bg-red-600 px-4 py-2 rounded-lg w-[48%]"
+                className="bg-red-600 px-4 py-2 rounded-lg w-[48%] disabled:opacity-50"
+                disabled={isLoading}
               >
-                Proceed
+                {isLoading ? "Processing..." : "Proceed"}
               </button>
               <button
                 type="button"
                 className="bg-gray-500 px-4 py-2 rounded-lg w-[48%]"
                 onClick={handleCancel}
+                disabled={isLoading}
               >
                 Cancel
               </button>
@@ -381,10 +391,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
             </div>
 
             <button
-              className="bg-red-600 px-4 py-2 rounded-lg w-full"
+              className="bg-red-600 px-4 py-2 rounded-lg w-full disabled:opacity-50"
               onClick={handleLogin}
+              disabled={isLoading}
             >
-              Log In
+              {isLoading ? "Logging in..." : "Log In"}
             </button>
           </div>
         </div>
@@ -394,4 +405,3 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 };
 
 export default AuthForm;
-

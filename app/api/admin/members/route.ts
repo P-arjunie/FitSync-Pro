@@ -4,16 +4,16 @@ import { connectToDatabase } from "@/lib/mongodb"; // Import function to connect
 import Member from "@/models/member"; // Import the Member model
 import { NextResponse } from "next/server"; // Import Next.js helper for sending responses
 
-// GET handler to fetch all pending members for admin review
+// GET handler to fetch all members for admin management
 export async function GET() {
   try {
     // Establish connection to the database
     await connectToDatabase();
 
-    // Query the Member collection for members with status "pending"
-    const members = await Member.find({ status: "pending" });
 
-    // Return the list of pending members as a JSON response
+    const members = await Member.find({ status: { $ne: "deleted" } });
+
+    // Return the list of members as a JSON response
     return NextResponse.json(members);
   } catch (error) {
     // Log any errors that occur during the database operation

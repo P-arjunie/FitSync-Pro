@@ -1,78 +1,49 @@
-import { NextResponse } from "next/server"; // Import Next.js response utility
-import { connectToDatabase } from "@/lib/mongodb"; // Import database connection function
+import { NextRequest, NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/mongodb";
+import Trainer from "@/models/Trainer";
+import ApprovedTrainer from "@/models/ApprovedTrainer";
 
-import Trainer from "@/models/Trainer"; // Import the model for pending trainers
-import ApprovedTrainer from "@/models/ApprovedTrainer"; // Import the model for approved trainers
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await connectToDatabase();
+    const { id } = await params;
 
-// POST handler to approve a trainer using their ID from the URL parameters
-export async function POST(_: Request, { params }: { params: { id: string } }) {
-  // Connect to the MongoDB database
-  await connectToDatabase();
+    // Find the pending trainer and explicitly include the password field
+    const trainer = await Trainer.findById(id).select('+password');
+    
+    if (!trainer) {
+      return NextResponse.json({ error: "Trainer not found" }, { status: 404 });
+    }
 
-  // Find the pending trainer in the Trainer collection using the ID
-  const trainer = await Trainer.findById(params.id);
-  
-  // If the trainer is not found, return a 404 response
-  if (!trainer) {
-    return NextResponse.json({ error: "Trainer not found" }, { status: 404 });
+    // Create the approved trainer with ALL fields including password
+    await ApprovedTrainer.create({
+      // Spread all fields from the original trainer
+      ...trainer.toObject(),
+      
+      // Map nested emergencyContact to flat fields
+      emergencyName: trainer.emergencyContact?.name,
+      emergencyPhone: trainer.emergencyContact?.phone,
+      relationship: trainer.emergencyContact?.relationship,
+      
+      // Ensure required fields for ApprovedTrainer schema
+      role: "trainer",
+      status: "approved",
+      startDate: new Date()
+    });
+
+    // Delete the pending trainer
+    await trainer.deleteOne();
+
+    console.log(`✅ Trainer approved: ${trainer.email}`);
+    return NextResponse.json({ message: "Trainer approved" });
+  } catch (error) {
+    console.error("❌ Error approving trainer:", error);
+    return NextResponse.json({
+      error: "Error approving trainer",
+      details: error instanceof Error ? error.message : "Unknown error",
+    }, { status: 500 });
   }
-
-  // Destructure all relevant fields from the pending trainer document
-  const {
-    firstName,
-    lastName,
-    email,
-    phone,
-    dob,
-    gender,
-    address,
-    specialization,
-    certifications,
-    preferredTrainingHours,
-    yearsOfExperience,
-    availability,
-    pricingPlan,
-    emergencyName,
-    emergencyPhone,
-    relationship,
-    startDate,
-    termsAccepted,
-    profileImage,
-    submittedAt,
-    biography,
-    skills,
-  } = trainer;
-
-  // Create a new document in the ApprovedTrainer collection with the same data
-  await ApprovedTrainer.create({
-    firstName,
-    lastName,
-    email,
-    phone,
-    dob,
-    gender,
-    address,
-    specialization,
-    certifications,
-    preferredTrainingHours,
-    yearsOfExperience,
-    availability,
-    pricingPlan,
-    emergencyName,
-    emergencyPhone,
-    relationship,
-    startDate,
-    termsAccepted,
-    profileImage,
-    submittedAt,
-    biography,
-    skills,
-  });
-
-  // Delete the trainer from the pending Trainer collection
-  await trainer.deleteOne();
-
-  // Return a success message indicating the trainer has been approved
-  return NextResponse.json({ message: "Trainer approved" });
 }
-

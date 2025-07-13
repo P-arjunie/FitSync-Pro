@@ -13,6 +13,8 @@ interface TrainerFormData {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
+  confirmPassword: string;
   phone: string;
   dob: string;
   gender: string;
@@ -40,6 +42,8 @@ export default function TrainerRegistrationForm() {
     firstName: "",
     lastName: "",
     email: "",
+    password: "",
+    confirmPassword: "",
     phone: "",
     dob: "",
     gender: "",
@@ -144,6 +148,17 @@ export default function TrainerRegistrationForm() {
     return;
   }
 
+  // Password validation
+  if (formData.password.length < 6) {
+    alert("Password must be at least 6 characters long.");
+    return;
+  }
+
+  if (formData.password !== formData.confirmPassword) {
+    alert("Passwords do not match.");
+    return;
+  }
+
   // Phone number format (simple numeric check)
   const phoneRegex = /^[0-9]{7,15}$/;
   if (!phoneRegex.test(formData.phone) || !phoneRegex.test(formData.emergencyPhone)) {
@@ -159,8 +174,11 @@ export default function TrainerRegistrationForm() {
     }
   }
 
+  // Remove confirmPassword from the data sent to backend
+  const { confirmPassword, ...submitData } = formData;
+
   const payload = {
-    ...formData,
+    ...submitData,
     profileImage,
     status: "pending",
     submittedAt: new Date(),
@@ -175,7 +193,7 @@ export default function TrainerRegistrationForm() {
 
     if (res.ok) {
       alert("Trainer registration submitted for approval.");
-      router.push("/thank-you");
+      router.push("/"); // Changed from "/thank-you" to "/"
     } else {
       const err = await res.json();
       alert("Submission failed: " + err.message);
@@ -243,6 +261,35 @@ export default function TrainerRegistrationForm() {
               </div>
             ))}
           </div>
+
+          {/* Password fields */}
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Password</label>
+              <input
+                type="password"
+                name="password"
+                className="border border-red-500 p-2 rounded"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                minLength={6}
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Confirm Password</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                className="border border-red-500 p-2 rounded"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                minLength={6}
+              />
+            </div>
+          </div>
+
           <div className="flex gap-4 mt-4">
             <span className="font-semibold">Gender:</span>
             {["Male", "Female", "Other"].map((g) => (
@@ -322,20 +369,20 @@ export default function TrainerRegistrationForm() {
               </div>
             ))}
             <div className="flex flex-col">
-  <label className="text-sm font-semibold">Pricing Plan</label>
-  <select
-    name="pricingPlan"
-    value={formData.pricingPlan}
-    onChange={handleChange}
-    className="border border-red-500 p-2 rounded"
-    required
-  >
-    <option value="">Select a plan</option>
-    <option value="Basic">Basic - $30/month</option>
-    <option value="Standard">Standard - $50/month</option>
-    <option value="Premium">Premium - $80/month</option>
-  </select>
-</div>
+              <label className="text-sm font-semibold">Pricing Plan</label>
+              <select
+                name="pricingPlan"
+                value={formData.pricingPlan}
+                onChange={handleChange}
+                className="border border-red-500 p-2 rounded"
+                required
+              >
+                <option value="">Select a plan</option>
+                <option value="Basic">Basic - $30/month</option>
+                <option value="Standard">Standard - $50/month</option>
+                <option value="Premium">Premium - $80/month</option>
+              </select>
+            </div>
 
             <div className="col-span-2">
               <label className="text-sm font-semibold">

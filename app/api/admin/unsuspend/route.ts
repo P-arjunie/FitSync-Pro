@@ -1,4 +1,4 @@
-// app/api/admin/suspend/route.ts
+// app/api/admin/unsuspend/route.ts
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from "@/lib/mongodb";
 import Member from '@/models/member';
@@ -6,7 +6,7 @@ import ApprovedTrainer from '@/models/ApprovedTrainer';
 
 export async function PUT(req: Request) {
   try {
-    const { id, role, status = 'suspended' } = await req.json();
+    const { id, role, status = 'active' } = await req.json();
 
     if (!id || !role) {
       return NextResponse.json(
@@ -20,13 +20,13 @@ export async function PUT(req: Request) {
     let updatedUser;
     if (role === 'member') {
       updatedUser = await Member.findByIdAndUpdate(
-        id, 
+        id,
         { status },
         { new: true }
       );
     } else if (role === 'trainer') {
       updatedUser = await ApprovedTrainer.findByIdAndUpdate(
-        id, 
+        id,
         { status },
         { new: true }
       );
@@ -45,14 +45,14 @@ export async function PUT(req: Request) {
     }
 
     return NextResponse.json({
-      message: `User ${status === 'suspended' ? 'suspended' : 'activated'} successfully`,
+      message: `User unsuspended successfully`,
       user: updatedUser
     });
 
   } catch (error) {
-    console.error("Status update error:", error);
+    console.error("Unsuspend error:", error);
     return NextResponse.json(
-      { error: "Failed to update user status" },
+      { error: "Failed to unsuspend user" },
       { status: 500 }
     );
   }

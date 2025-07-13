@@ -1,85 +1,127 @@
-import { connectToDatabase } from "@/lib/mongodb"; // Import function to connect to MongoDB
-import PendingMember from "@/models/pendingMember"; // Import Mongoose model for storing pending member registrations
-import { NextResponse } from "next/server"; // Import Next.js response utility
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import PendingMember from "@/models/pendingMember"; // Note: Case-sensitive import
+import { connectToDatabase } from "@/lib/mongodb";
 
-// Defines a POST handler for new member registrations
 export async function POST(req: Request) {
   try {
-    // Establish a connection to the MongoDB database
+    // Connect to database
     await connectToDatabase();
+    console.log("✅ Connected to MongoDB");
 
-    // Parse the incoming JSON body from the request
-    const body = await req.json();
-    console.log("📦 Incoming Member Registration Body:", body); // Log the received data
+    // Parse incoming data
+    const data = await req.json();
+    console.log("📥 Incoming data:", JSON.stringify(data, null, 2));
 
-    // Destructure required fields from the request body
+    // Destructure with defaults for optional fields
     const {
-      firstName,
-      lastName,
-      dob,
-      gender,
-      nic,
-      contactNumber,
-      email,
-      address,
-      emergencyContact,
-      membershipInfo,
-      image,
-      currentWeight,
-      height,
-      bmi,
-      goalWeight,
-      termsAccepted,
-    } = body;
+      firstName = '',
+      lastName = '',
+      email = '',
+      password = '',
+      contactNumber = '',
+      dob = '',
+      gender = '',
+      address = '',
+      currentWeight = 0,
+      height = 0,
+      bmi = 0,
+      goalWeight = 0,
+      image = '',
+      emergencyContact = {
+        name: '',
+        relationship: '',
+        phone: ''
+      },
+      membershipInfo = {
+        plan: '',
+        startDate: '',
+        paymentPlan: ''
+      }
+    } = data;
 
-    // Validate presence of all required fields including nested emergency contact and membership info
-    if (
-      !firstName || !lastName || !dob || !gender || !contactNumber || !email || !address ||
-      !emergencyContact?.name || !emergencyContact?.phone || !emergencyContact?.relationship ||
-      !membershipInfo?.plan || !membershipInfo?.startDate ||
-      !termsAccepted || !image ||
-      currentWeight === undefined || height === undefined || bmi === undefined || goalWeight === undefined
-    ) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
+    // Validate required fields
+    if (!email || !password) {
+      console.error("❌ Missing email or password");
+      return NextResponse.json(
+        { error: "Email and password are required" }, 
+        { status: 400 }
+      );
     }
 
-    // Double-check if emergency contact phone number is provided
-    if (!emergencyContact?.phone) {
-      return NextResponse.json({ message: "Emergency contact phone is required" }, { status: 400 });
+    // Check for existing member
+    const existingMember = await PendingMember.findOne({ email });
+    if (existingMember) {
+      console.error("❌ User already exists:", email);
+      return NextResponse.json(
+        { error: "User already exists" }, 
+        { status: 409 }
+      );
     }
 
-    // Create a new pending member document in the database with status "pending"
-    await PendingMember.create({
+    // Hash password (with salt rounds = 10)
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("🔑 Password hashed successfully");
+
+    // Ensure membershipInfo has all required fields
+    const completeMembershipInfo = {
+      plan: membershipInfo.plan || '',
+      startDate: membershipInfo.startDate || '',
+      paymentPlan: membershipInfo.paymentPlan || membershipInfo.plan || 'Monthly' // Use plan as fallback or default
+    };
+
+    // Create new member document
+    const newMember = new PendingMember({
       firstName,
       lastName,
+      email,
+      password: hashedPassword,
+      contactNumber,
       dob,
       gender,
-      nic,
-      contactNumber,
-      email,
       address,
+      currentWeight: Number(currentWeight),
+      height: Number(height),
+      bmi: Number(bmi),
+      goalWeight: Number(goalWeight),
       image,
       emergencyContact,
-      membershipInfo,
-      currentWeight,
-      height,
-      bmi,
-      goalWeight,
-      termsAccepted, // Confirm that the terms checkbox was accepted
-      role: "member", // Default role is set to "member"
-      status: "pending", // Status indicates admin approval is still required
+      membershipInfo: completeMembershipInfo, // Use the complete object
+      status: "pending"
     });
 
-    // Respond with a success message and 201 Created status
+    // Save to database
+    const savedMember = await newMember.save();
+    console.log("💾 Member saved to DB:", savedMember._id);
+
+    // Return success response (excluding password)
     return NextResponse.json(
-      { message: "Member registration submitted successfully!" },
+      { 
+        message: "Registration successful",
+        member: {
+          id: savedMember._id,
+          email: savedMember.email,
+          status: savedMember.status
+        }
+      },
       { status: 201 }
     );
-  } catch (error) {
-    // Log unexpected errors and return a 500 Internal Server Error response
-    console.error("Registration error:", error);
+
+  } catch (error: any) {
+    console.error("❌ Registration error:", error);
+    
+    // Handle Mongoose validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map((err: any) => err.message);
+      return NextResponse.json(
+        { error: "Validation failed", details: errors },
+        { status: 400 }
+      );
+    }
+
+    // Handle other errors
     return NextResponse.json(
-      { message: "An unexpected error occurred." },
+      { error: error.message || "Internal server error" },
       { status: 500 }
     );
   }

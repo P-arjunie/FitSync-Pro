@@ -1,14 +1,15 @@
 import mongoose, { Schema, Document, models, model } from "mongoose";
+import { PasswordUtils } from '@/lib/password-utils';
 
 export interface IMember extends Document {
   firstName: string;
   lastName: string;
+  email: string;
+  password: string; // Add password field
   dob: string;
   gender: string;
-  nic: string;
   address: string;
   contactNumber: string;
-  email: string;
   emergencyContact: {
     name: string;
     relationship: string;
@@ -24,21 +25,26 @@ export interface IMember extends Document {
   height: number;
   bmi: number;
   goalWeight: number;
-  status: string;
+  status: {
+    type: String;
+    enum: ["pending", "approved", "suspended"];
+    default: "approved";
+  };
   role: string;
 }
 
 
+
 const memberSchema: Schema = new Schema(
   {
-    firstName: String,
-    lastName: String,
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    email: { type: String, required: true, unique: true }, // Add unique constraint
+    password: { type: String, required: true }, // Add password field
     dob: String,
     gender: String,
-    nic: String,
     address: String,
     contactNumber: String,
-    email: String,
     emergencyContact: {
       name: String,
       relationship: String,
@@ -56,7 +62,7 @@ const memberSchema: Schema = new Schema(
     goalWeight: Number,
     status: {
       type: String,
-      enum:["pending","approved"],
+      enum: ["pending", "approved", "suspended"],
       default: "approved",
     },
     role: {
@@ -67,9 +73,5 @@ const memberSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-
 const Member = models.Member || model<IMember>("Member", memberSchema);
 export default Member;
-
-
-

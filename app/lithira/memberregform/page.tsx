@@ -11,6 +11,8 @@ const MemberRegistrationForm: React.FC = () => {
     firstName: "",
     lastName: "",
     email: "",
+    password: "",
+    confirmPassword: "",
     contactNumber: "",
     dob: "",
     gender: "",
@@ -33,10 +35,13 @@ const MemberRegistrationForm: React.FC = () => {
   });
 
   useEffect(() => {
-    // Load stored profile image from localStorage on mount
-    const storedImage = localStorage.getItem("memberProfileImage");
-    if (storedImage) {
-      setFormData((prev) => ({ ...prev, image: storedImage }));
+    // Get the image from localStorage where AuthForm stored it
+    if (typeof window !== 'undefined') {
+      const savedImage = localStorage.getItem('memberProfileImage') || "";
+      setFormData(prev => ({
+        ...prev,
+        image: savedImage
+      }));
     }
   }, []);
 
@@ -69,48 +74,51 @@ const MemberRegistrationForm: React.FC = () => {
     }
   };
 
-  // Simple email regex for basic validation
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // Simple phone number validation (digits only, length 7-15)
   const isValidPhone = (phone: string) =>
     /^\d{7,15}$/.test(phone.replace(/\D/g, ""));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Terms must be accepted
     if (!formData.termsAccepted) {
       alert("Please accept the terms and conditions.");
       return;
     }
 
-    // Image is required
     if (!formData.image) {
       alert("Profile image is required.");
       return;
     }
 
-    // Validate email format
     if (!isValidEmail(formData.email)) {
       alert("Please enter a valid email address.");
       return;
     }
 
-    // Validate contact number format
     if (!isValidPhone(formData.contactNumber)) {
       alert("Please enter a valid contact number (digits only).");
       return;
     }
 
-    // Validate emergency contact phone
     if (!isValidPhone(formData.emergencyContact.phone)) {
       alert("Please enter a valid emergency contact phone number (digits only).");
       return;
     }
 
-    // Validate currentWeight, height, bmi, goalWeight as positive numbers if filled
+    // Password validation
+    if (formData.password.length < 6) {
+      alert("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
     const numericFields = ["currentWeight", "height", "bmi", "goalWeight"] as const;
     for (const field of numericFields) {
       const val = formData[field];
@@ -120,12 +128,14 @@ const MemberRegistrationForm: React.FC = () => {
       }
     }
 
+    // Remove confirmPassword from the data sent to backend
+    const { confirmPassword, ...submitData } = formData;
+
     try {
-      // Submit form data to backend API
       const res = await fetch("/api/member/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       if (!res.ok) {
@@ -133,9 +143,8 @@ const MemberRegistrationForm: React.FC = () => {
         throw new Error(err.message || "Registration failed");
       }
 
-      alert("Registration submitted for admin approval.");
-      localStorage.removeItem("memberProfileImage");
-      router.push("/some/confirmation-page");
+      alert("Registration submitted for admin approval. You will be redirected to the home page.");
+      router.push("/");
     } catch (error) {
       console.error("Error submitting form:", error);
       alert("Registration failed.");
@@ -148,7 +157,7 @@ const MemberRegistrationForm: React.FC = () => {
         onSubmit={handleSubmit}
         className="w-[800px] bg-gray-100 p-6 rounded-lg shadow-xl relative"
       >
-        {/* Profile Image Preview */}
+        {/* Profile Image Preview - Only shows image, no upload */}
         <div className="absolute top-6 right-6 w-20 h-20 rounded-full overflow-hidden border-4 border-red-500 bg-white flex items-center justify-center">
           {formData.image ? (
             <img
@@ -157,10 +166,9 @@ const MemberRegistrationForm: React.FC = () => {
               className="w-full h-full object-cover"
             />
           ) : (
-            <label className="cursor-pointer flex items-center justify-center w-full h-full">
+            <div className="w-full h-full flex items-center justify-center">
               <FaCamera className="text-2xl text-gray-600" />
-              <input type="file" className="hidden" accept="image/*" />
-            </label>
+            </div>
           )}
         </div>
 
@@ -201,6 +209,34 @@ const MemberRegistrationForm: React.FC = () => {
                 />
               </div>
             ))}
+          </div>
+
+          {/* Password fields */}
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Password</label>
+              <input
+                type="password"
+                name="password"
+                className="border border-red-500 p-2 rounded"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                minLength={6}
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Confirm Password</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                className="border border-red-500 p-2 rounded"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                minLength={6}
+              />
+            </div>
           </div>
 
           {/* Gender selection */}
