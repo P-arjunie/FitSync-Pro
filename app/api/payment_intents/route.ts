@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import mongoose from "mongoose";
-import Payment from "../../models/Payment"; // Adjust to correct path
-import Order from "../../models/order"; // Adjust to correct pathnp
+import Payment from "../../models/Payment";
+import Order from "../../models/order";
+import Enrollment from "../../models/enrollment";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
@@ -10,61 +11,68 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const connectToDB = async () => {
   if (mongoose.connections[0].readyState === 0) {
-    console.log("Connecting to DB...");
-    try {
-      await mongoose.connect(process.env.MONGODB_URI!);
-      console.log("Connected to DB");
-    } catch (error) {
-      console.error("Error connecting to DB:", error);
-      throw new Error("Failed to connect to the database");
-    }
+    await mongoose.connect(process.env.MONGODB_URI!);
   }
 };
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { paymentMethodId, userId } = body;
+    const { paymentMethodId, userId, paymentFor } = body;
 
-    console.log("Received userId:", userId); // Log the userId for debugging
-
-    if (!paymentMethodId || !userId) {
-      return NextResponse.json({ error: "Missing paymentMethodId or userId" }, { status: 400 });
+    if (!paymentMethodId || !userId || !paymentFor) {
+      return NextResponse.json(
+        { error: "Missing paymentMethodId, userId or paymentFor" },
+        { status: 400 }
+      );
     }
 
-    // Connect to DB
-    await connectToDB();
-
-    // Ensure userId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      console.log("Invalid User ID format:", userId);
       return NextResponse.json({ error: "Invalid User ID format" }, { status: 400 });
     }
 
-    const userObjectId = new mongoose.Types.ObjectId(userId); // Convert to ObjectId if valid
+    await connectToDB();
 
-    // Query the user's most recent order
-    let latestOrder = await Order.findOne({ user: userObjectId }).sort({ createdAt: -1 });
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
-    // Handle missing orders gracefully
-    if (!latestOrder) {
-      latestOrder = {
-        user: userObjectId, // Assign the user as ObjectId if order doesn't exist
-        orderItems: [
-          {
-            product: "dummy_product_id",  // Example of dummy data
-            title: "Dummy Plan",          // Dummy title
-            image: "/dummy.jpg",          // Dummy image
-            price: 19.99,                 // Dummy price
-            quantity: 1,                  // Dummy quantity
-            category: "general"           // Dummy category
-          }
-        ],
-        totalAmount: 19.99               // Total price for the dummy order
-      };
+    let paymentSubject = null;
+    let amount = 0;
+    let title = "";
+
+    if (paymentFor === "enrollment") {
+      // Find latest pending enrollment for user
+      paymentSubject = await Enrollment.findOne({ userId: userObjectId, status: "pending" }).sort({ createdAt: -1 });
+
+      if (!paymentSubject) {
+        return NextResponse.json(
+          { error: "No pending enrollment found for user" },
+          { status: 404 }
+        );
+      }
+
+      amount = Math.round(paymentSubject.totalAmount * 100);
+      title = paymentSubject.className;
+
+    } else if (paymentFor === "order") {
+      // Find latest pending order for user
+      paymentSubject = await Order.findOne({ user: userObjectId, status: "pending" }).sort({ createdAt: -1 });
+
+      if (!paymentSubject) {
+        return NextResponse.json(
+          { error: "No pending order found for user" },
+          { status: 404 }
+        );
+      }
+
+      amount = Math.round(paymentSubject.totalAmount * 100);
+      title = paymentSubject.orderItems?.[0]?.title || "Order";
+
+    } else {
+      return NextResponse.json(
+        { error: `Unsupported paymentFor type: ${paymentFor}` },
+        { status: 400 }
+      );
     }
-
-    const amount = Math.round(latestOrder.totalAmount * 100);  // Convert the amount to cents
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
@@ -76,9 +84,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (paymentIntent.status === "succeeded") {
-      const payment = new Payment({
-        firstName: latestOrder?.orderItems?.[0]?.title || "N/A",
-        lastName: userObjectId,
+      const paymentData: any = {
+        firstName: title,
+        lastName: userObjectId.toString(),
         email: "placeholder@example.com",
         company: "FitSyncPro",
         amount: paymentIntent.amount / 100,
@@ -89,18 +97,35 @@ export async function POST(req: NextRequest) {
           zip: "10100",
           country: "USA",
           city: "New York",
-          street: "456 Real Street"
+          street: "456 Real Street",
         },
-        userId: userObjectId
-      });
+        userId: userObjectId.toString(),
+        paymentFor,
+      };
 
+      if (paymentFor === "enrollment") {
+        paymentData.relatedEnrollmentId = paymentSubject._id.toString();
+      } else if (paymentFor === "order") {
+        paymentData.relatedOrderId = paymentSubject._id.toString();
+      }
+
+      const payment = new Payment(paymentData);
       await payment.save();
+
+      if (paymentFor === "enrollment") {
+        await Enrollment.findByIdAndUpdate(paymentSubject._id, { status: "success" });
+      } else if (paymentFor === "order") {
+        await Order.findByIdAndUpdate(paymentSubject._id, { status: "paid" });
+      }
+
       return NextResponse.json({ success: true });
     }
 
-    return NextResponse.json({ error: `Unhandled status: ${paymentIntent.status}` }, { status: 400 });
+    return NextResponse.json(
+      { error: `Unhandled payment status: ${paymentIntent.status}` },
+      { status: 400 }
+    );
   } catch (error: any) {
-    console.error("Stripe error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
