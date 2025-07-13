@@ -1,18 +1,11 @@
-// app/api/enrollments/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import Enrollment from "@/models/enrollment";
 
 const connectToDB = async () => {
-  if (mongoose.connections[0].readyState === 0) {
-    try {
-      await mongoose.connect(process.env.MONGODB_URI!);
-      console.log("✅ MongoDB Connected");
-    } catch (error) {
-      console.error("❌ DB connection error:", error);
-      throw new Error("Failed to connect to the database");
-    }
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(process.env.MONGODB_URI!);
+    console.log("✅ MongoDB connected (enrollments)");
   }
 };
 
@@ -20,14 +13,11 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDB();
 
-    const body = await req.json();
-    console.log("📦 Incoming POST data:", body);
-
-    const { userId, className, totalAmount } = body;
+    const { userId, className, totalAmount } = await req.json();
 
     if (!userId || !className || typeof totalAmount !== "number") {
       return NextResponse.json(
-        { error: "Missing or invalid fields: userId, className, totalAmount" },
+        { error: "Missing or invalid fields" },
         { status: 400 }
       );
     }
@@ -46,9 +36,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(savedEnrollment, { status: 201 });
   } catch (error: any) {
-    console.error("❌ Error creating enrollment:", error);
+    console.error("❌ Enrollment creation error:", error);
     return NextResponse.json(
-      { error: error.message || "Could not create enrollment" },
+      { error: error.message || "Enrollment creation failed" },
       { status: 500 }
     );
   }

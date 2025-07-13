@@ -1,7 +1,7 @@
 /* Pricing page */
 // app/kalana/Pricing_Page/page.tsx
 
-import Navbar from "../../Components/navbar"; // Adjust if Navbar is in a different folder
+import Navbar from "../../Components/Navbar"; // Adjust if Navbar is in a different folder
 import Footer from "@/Components/Footer_02";  
 import styles from "@/Components/pricingpage.module.css";
 

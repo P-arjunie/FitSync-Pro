@@ -28,6 +28,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   orderId,
   enrollmentData,
 }) => {
+  
   const stripe = useStripe();
   const elements = useElements();
 

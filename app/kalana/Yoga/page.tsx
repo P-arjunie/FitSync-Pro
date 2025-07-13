@@ -13,6 +13,8 @@ const YogaClassPage = () => {
     router.push('/#featured-classes');
   };
 
+//ENROLLING FUNCTION FOR PAID CLASSES
+
 const enrollNow = async () => {
   const userId = localStorage.getItem("userId");
 

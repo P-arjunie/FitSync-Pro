@@ -3,8 +3,8 @@
 import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/Components/navbar';
-import Footer1 from '@/Components/footer_01';
+import Navbar from '@/Components/Navbar';
+import Footer1 from '@/Components/Footer_01';
 
 const MMAClassPage = () => {
   const router = useRouter();
@@ -13,14 +13,48 @@ const MMAClassPage = () => {
     router.push('/#featured-classes');
   };
 
-  const enrollNow = () => {
+  /*const enrollNow = () => {
     const userId = localStorage.getItem('userId');
     if (userId) {
       router.push('/kalana/checkout');
     } else {
       router.push('/lithira/Authform');
     }
-  };
+  }; */
+
+  const enrollNow = async () => {
+  const userId = localStorage.getItem("userId");
+
+  if (!userId) {
+    router.push("/lithira/Authform");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/enrollments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        className: "mma", 
+        totalAmount: 15,      
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("🔴 Server responded with error:", data);
+      throw new Error(data.error || "Failed to create enrollment");
+    }
+
+    router.push(`/kalana/checkout?enrollmentId=${data._id}`);
+  } catch (error) {
+    console.error("Enrollment creation failed", error);
+    alert("Could not create enrollment, please try again.");
+  }
+};
+
 
   return (
     <>
@@ -32,7 +66,7 @@ const MMAClassPage = () => {
             ← Back to Classes
           </button>
           <h1 className="class-title">MMA</h1>
-          <p className="class-subtitle">Train Like a Fighter – Strength, Agility & Endurance</p>
+          <p className="class-subtitle">Train Like a Fighter - Strength, Agility & Endurance</p>
         </div>
       </header>
 
