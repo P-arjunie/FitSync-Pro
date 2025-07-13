@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-// Define the Payment schema
+// Define the Payment schema interface
 interface IPayment extends Document {
   firstName: string;
   lastName: string;
@@ -16,7 +16,11 @@ interface IPayment extends Document {
     city: string;
     street: string;
   };
-  userId: string; // Store userId as string
+  userId: string; // userId as string (per your original)
+  
+  paymentFor?: "order" | "enrollment"; // optional new field
+  relatedOrderId?: string; // optional ref to Order _id as string
+  relatedEnrollmentId?: string; // optional ref to Enrollment _id as string
 }
 
 const paymentSchema = new Schema<IPayment>(
@@ -35,12 +39,16 @@ const paymentSchema = new Schema<IPayment>(
       city: { type: String, required: true },
       street: { type: String, required: true }
     },
-    userId: { type: String, required: true }, // userId is stored as a string
+    userId: { type: String, required: true }, // string as before
+    
+    paymentFor: { type: String, enum: ["order", "enrollment"], default: "order" },
+    relatedOrderId: { type: String, default: null },
+    relatedEnrollmentId: { type: String, default: null }
   },
-  { timestamps: true } // Add createdAt and updatedAt automatically
+  { timestamps: true }
 );
 
-// Create the Payment model, specifying the correct collection name
+// Keep collection name as your original "kalana_paymentsses"
 const Payment = mongoose.models.kalana_paymentsses || mongoose.model<IPayment>("kalana_paymentsses", paymentSchema);
 
 export default Payment;

@@ -1,3 +1,5 @@
+// app/kalana/checkout/page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,6 +15,7 @@ const CheckoutPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const enrollmentId = searchParams.get("enrollmentId");
 
   useEffect(() => {
     const id = localStorage.getItem("userId");
@@ -20,7 +23,10 @@ const CheckoutPage: React.FC = () => {
     setUserId(id || "test_user_123");
   }, []);
 
+  // Fetch order by orderId if present
   useEffect(() => {
+    if (!orderId) return;
+
     const fetchOrder = async () => {
       if (!orderId || !userId) return;
 
@@ -37,7 +43,6 @@ const CheckoutPage: React.FC = () => {
         });
         const data = await res.json();
 
-        console.log("Fetched order details:", data);
         if (res.ok) {
           setOrderItems(data.orderItems);
           setTotalAmount(data.totalAmount);
@@ -96,16 +101,10 @@ const CheckoutPage: React.FC = () => {
         userId={userId}
         orderItems={orderItems}
         totalAmount={totalAmount === null ? undefined : totalAmount}
+        enrollmentData={enrollmentData || undefined}
       />
     </StripeProvider>
   );
 };
 
 export default CheckoutPage;
-
-
-{/* Scenario	Result	Displayed Details
-Valid userId & has an order	Real Instance	Real order items & total
-Valid userId but no orders	Dummy Instance	Dummy item & $10 total
-Invalid or missing userId	Dummy Instance	Dummy item & $10 total
-DB error fetching orders	Dummy Instance	Dummy item & $10 total*/}
