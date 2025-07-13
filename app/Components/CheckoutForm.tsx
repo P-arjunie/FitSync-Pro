@@ -1,8 +1,11 @@
-// app/Components/CheckoutForm.tsx
-import { useEffect, useState } from 'react';
-import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
-import { StripeCardElement } from '@stripe/stripe-js';
-import styles from './checkoutform.module.css';
+// app/Components/checkoutform.tsx
+// This file contains the CheckoutForm component for handling Stripe payments in a Next.js application.
+// It fetches the user's latest order, displays it, and allows payment processing using Stripe's
+
+import { useEffect, useState } from "react";
+import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { StripeCardElement } from "@stripe/stripe-js";
+import styles from "./checkoutform.module.css";
 
 interface OrderItem {
   title: string;
@@ -14,111 +17,117 @@ interface CheckoutFormProps {
   userId: string;
   orderItems?: OrderItem[];
   totalAmount?: number;
-  enrollmentData?: { _id: string; className: string; totalAmount: number };
-  orderId?: string;
-  enrollmentId?: string;
 }
 
-const CheckoutForm: React.FC<CheckoutFormProps> = ({
-  userId,
+const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId,
   orderItems: orderItemsProp,
-  totalAmount: totalAmountProp,
-  enrollmentData,
-  orderId,
-  enrollmentId,
-}) => {
+  totalAmount: totalAmountProp
+ }) => {
+  
   const stripe = useStripe();
   const elements = useElements();
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
 
-  // Load summary
   useEffect(() => {
+    if (!userId) {
+      // Try to get from localStorage if not passed as prop
+      const storedId = localStorage.getItem("userId");
+      if (!storedId) return;
+      // If found, reload the page with userId as a prop (or set up state if you want to support dynamic userId)
+      // For now, just return to avoid running the rest of the effect without a userId
+      return;
+    }
+
     if (orderItemsProp && totalAmountProp !== undefined) {
-      setOrderItems(orderItemsProp);
-      setTotalAmount(totalAmountProp);
-      return;
-    }
+    // If passed via props, use them directly
+    setOrderItems(orderItemsProp);
+    setTotalAmount(totalAmountProp);
+    return;
+  }
 
-    if (enrollmentData) {
-      setOrderItems([
-        { title: enrollmentData.className, price: enrollmentData.totalAmount, quantity: 1 }
-      ]);
-      setTotalAmount(enrollmentData.totalAmount);
-      return;
-    }
+    // Else: fallback to fetching latest order (as before)
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch("/api/orders", {
+          headers: { 
+            userId,
+            "Content-Type": "application/json"
+          },
+        });
+        
+        if (!res.ok) {
+          console.error("API Error:", res.status, res.statusText);
+          // Fallback to dummy data if API fails
+          setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
+          setTotalAmount(10);
+          return;
+        }
+        
+        const data = await res.json();
 
-    // Fallback
-    setOrderItems([{ title: 'Dummy Plan', price: 10, quantity: 1 }]);
-    setTotalAmount(10);
-  }, [orderItemsProp, totalAmountProp, enrollmentData]);
+        if (Array.isArray(data) && data.length > 0) {
+          const latest = data[data.length - 1];
+          setOrderItems(latest.orderItems);
+          setTotalAmount(latest.totalAmount);
+        } else {
+          throw new Error("No orders found");
+        }
+      } catch (err) {
+        setOrderItems([{ title: "Dummy Plan", price: 100, quantity: 20 }]);
+        setTotalAmount(2000);
+      }
+    };
 
-  // Submit payment
+    fetchOrders();
+  }, [userId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!stripe || !elements) return;
-
     setLoading(true);
-    setMessage('');
+    setMessage("");
 
-    const card = elements.getElement(CardElement) as StripeCardElement | null;
-    if (!card) {
-      setMessage('Card element not found.');
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      setMessage("Card element not found.");
       setLoading(false);
       return;
     }
 
-    try {
-      const { paymentMethod, error } = await stripe.createPaymentMethod({
-        type: 'card',
-        card
-      });
+    const { paymentMethod, error } = await stripe.createPaymentMethod({
+      type: "card",
+      card: cardElement as StripeCardElement,
+    });
 
-      if (error || !paymentMethod) {
-        setMessage(error?.message || 'Payment method creation failed.');
-        setLoading(false);
-        return;
-      }
+    if (error || !paymentMethod) {
+      setMessage(error?.message || "Payment method creation failed.");
+      setLoading(false);
+      return;
+    }
 
-      const paymentFor = enrollmentData ? 'enrollment' : 'order';
-
-      const body: any = {
+    const res = await fetch("/api/payment_intents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         paymentMethodId: paymentMethod.id,
         userId,
-        paymentFor,
-      };
+      }),
+    });
 
-      if (paymentFor === 'enrollment' && enrollmentId) {
-        body.enrollmentId = enrollmentId;
-      } else if (paymentFor === 'order' && orderId) {
-        body.orderId = orderId;
-      }
+    const data = await res.json();
 
-      const res = await fetch('/api/payment_intents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setMessage('✅ Payment succeeded!');
-        // Optionally redirect to success page
-        setTimeout(() => {
-          window.location.href = '/payment/success';
-        }, 2000);
-      } else {
-        setMessage(`❌ Payment failed: ${data.error}`);
-      }
-    } catch (err: any) {
-      setMessage(`❌ Payment failed: ${err.message}`);
-    } finally {
-      setLoading(false);
+    if (data.success) {
+      setMessage("✅ Payment succeeded!");
+    } else {
+      setMessage(`❌ Payment failed: ${data.error || "Unknown error"}`);
     }
+
+    setLoading(false);
   };
 
   return (
@@ -126,22 +135,37 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       <form onSubmit={handleSubmit} className={styles.container}>
         <h2 className={styles.title}>Checkout Summary</h2>
 
-        {orderItems.map((item, i) => (
-          <div key={i} className={styles.card}>
-            <p><strong>{item.title}</strong></p>
-            <p>Qty: {item.quantity}</p>
-            <p>Price: ${item.price}</p>
+        {orderItems.length > 0 && (
+          <div className={styles.grid}>
+            {orderItems.map((item, idx) => (
+              <div key={idx} className={styles.card}>
+                <p><strong>{item.title}</strong></p>
+                <p>Qty: {item.quantity}</p>
+                <p>Price: ${item.price}</p>
+              </div>
+            ))}
+            <div className={styles.card}>
+              <p><strong>Total: ${totalAmount}</strong></p>
+            </div>
           </div>
-        ))}
-        
-        <div className={styles.card}>
-          <strong>Total: ${totalAmount}</strong>
-        </div>
+        )}
 
-        <CardElement className={styles.card} />
+        <CardElement
+          className={styles.card}
+          options={{
+            style: {
+              base: {
+                fontSize: "16px",
+                color: "#424770",
+                "::placeholder": { color: "#aab7c4" },
+              },
+              invalid: { color: "#9e2146" },
+            },
+          }}
+        />
 
         <button type="submit" disabled={!stripe || loading} className={styles.button}>
-          {loading ? 'Processing…' : 'Pay Now'}
+          {loading ? "Processing..." : "Pay Now"}
         </button>
 
         {message && <p className={styles.error}>{message}</p>}

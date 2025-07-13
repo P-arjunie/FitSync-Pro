@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/Components/Navbar';
@@ -8,106 +8,116 @@ import Footer1 from '@/Components/Footer_01';
 
 const YogaClassPage = () => {
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setUserId(localStorage.getItem('userId'));
-  }, []);
 
   const goBackToClasses = () => {
     router.push('/#featured-classes');
   };
 
-  const enrollNow = async () => {
-    if (!userId) {
+  const enrollNow = () => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      router.push('/kalana/checkout');
+    } else {
       router.push('/lithira/Authform');
-      return;
     }
-
-    // No enrollment needed – just go to checkout
-    router.push('/kalana/checkout');
   };
 
   return (
     <>
       <Navbar />
 
-      <div className="header">
+      <header className="header">
         <div className="container">
-          <button className="back-btn" onClick={goBackToClasses}>← Back to Classes</button>
-          <h1 className="class-title">Yoga Class</h1>
-          <p className="class-subtitle">Find your balance, strength and inner peace</p>
+          <button onClick={goBackToClasses} className="back-btn" type="button">
+            ← Back to Classes
+          </button>
+          <h1 className="class-title">YOGA</h1>
+          <p className="class-subtitle">Enhance Flexibility & Inner Peace</p>
         </div>
-      </div>
+      </header>
 
-      <div className="container main-content">
-        <div className="class-image-section">
-          <Image
-            src="/images/yoga-banner.jpg"
-            alt="Yoga Class"
-            width={800}
-            height={500}
-            className="class-hero-image"
-          />
-          <div className="image-overlay">
-            <span className="schedule-badge">Every Monday, 6 PM</span>
-          </div>
-        </div>
-
-        <div className="class-details">
-          <div className="details-section">
-            <h2 className="section-title">What You'll Learn</h2>
-            <p className="description">
-              This yoga class focuses on improving flexibility, building strength, and achieving mindfulness.
-              Whether you're a beginner or seasoned yogi, our instructor will guide you through postures that suit your level.
-            </p>
-            <ul className="benefits-list">
-              <li>Stress relief</li>
-              <li>Improved flexibility</li>
-              <li>Core strength</li>
-              <li>Mindful breathing</li>
-            </ul>
-          </div>
-
-          <div className="class-info">
-            <div className="info-grid">
-              <div className="info-item">
-                <div className="info-label">Duration</div>
-                <div className="info-value">1 Hour</div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Instructor</div>
-                <div className="info-value">Kalani Perera</div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Level</div>
-                <div className="info-value">All Levels</div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Language</div>
-                <div className="info-value">English</div>
-              </div>
+      <main className="container">
+        <div className="main-content">
+          <div className="class-image-section">
+            <Image
+              src="/yoga.jpg"
+              alt="Yoga Class"
+              className="class-hero-image"
+              width={1000}
+              height={500}
+            />
+            <div className="image-overlay">
+              <h3>Next Session</h3>
+              <div className="schedule-badge">Wednesday | 6:30 AM</div>
             </div>
           </div>
 
-          <div className="enrollment-section">
-            <div className="price-tag">LKR 2,000</div>
-            <div className="price-period">One-time Payment</div>
-            <button className="enroll-btn" onClick={enrollNow}>Enroll Now</button>
-            <div className="enrollment-benefits">
-              <ul>
-                <li>Instant Access</li>
-                <li>Certified Trainer</li>
-                <li>7 Days Refund Policy</li>
+          <div className="class-details">
+            <div className="details-section">
+              <h2 className="section-title">About This Class</h2>
+              <p className="description">
+                Our yoga sessions focus on enhancing flexibility, balance, and mindfulness.
+                With a blend of physical postures, breathing exercises, and guided relaxation,
+                this class is perfect for both beginners and seasoned practitioners.
+              </p>
+            </div>
+
+            <div className="details-section">
+              <h2 className="section-title">Class Benefits</h2>
+              <ul className="benefits-list">
+                <li>Improved flexibility and posture</li>
+                <li>Reduced stress and tension</li>
+                <li>Better breathing and lung capacity</li>
+                <li>Enhanced mental clarity</li>
+                <li>Boosted energy levels</li>
+                <li>Increased body awareness</li>
               </ul>
             </div>
           </div>
         </div>
-      </div>
+
+        <div className="class-info">
+          <div className="info-grid">
+            <div className="info-item">
+              <div className="info-label">Duration</div>
+              <div className="info-value">60 Minutes</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">Intensity</div>
+              <div className="info-value">Moderate</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">Equipment</div>
+              <div className="info-value">Yoga Mats Provided</div>
+            </div>
+            <div className="info-item">
+              <div className="info-label">Max Capacity</div>
+              <div className="info-value">20 People</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="enrollment-section">
+          <div className="price-tag">$10</div>
+          <div className="price-period">per month</div>
+          <button className="enroll-btn" onClick={enrollNow}>
+            Enroll Now
+          </button>
+          <div className="enrollment-benefits">
+            <h4>What's Included:</h4>
+            <ul>
+              <li>Unlimited monthly classes</li>
+              <li>Certified yoga instructors</li>
+              <li>Relaxing environment</li>
+              <li>Support for all skill levels</li>
+              <li>Mind-body wellness tools</li>
+            </ul>
+          </div>
+        </div>
+      </main>
 
       <Footer1 />
 
-      {/* GLOBAL STYLES */}
       <style jsx global>{`
         * {
           margin: 0;
@@ -125,7 +135,6 @@ const YogaClassPage = () => {
         }
       `}</style>
 
-      {/* PAGE-SPECIFIC STYLES */}
       <style jsx>{`
         .container {
           max-width: 1200px;
@@ -141,10 +150,7 @@ const YogaClassPage = () => {
         .header::before {
           content: '';
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
+          inset: 0;
           background: linear-gradient(45deg, rgba(220, 20, 60, 0.1) 0%, transparent 50%);
         }
         .header > .container {
