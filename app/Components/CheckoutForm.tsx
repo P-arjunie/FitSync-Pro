@@ -55,34 +55,30 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
     }
 
     const fetchOrders = async () => {
-      try {
-        const res = await fetch("/api/orders", {
-          headers: {
-            userId,
-            "Content-Type": "application/json",
-          },
-        });
+  try {
+    if (!orderId) return; // Don't fetch unless it's an actual order
 
-        if (!res.ok) {
-          setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
-          setTotalAmount(10);
-          return;
-        }
+    const res = await fetch("/api/orders", {
+      headers: {
+        userId,
+        "Content-Type": "application/json",
+      },
+    });
 
-        const data = await res.json();
+    if (!res.ok) return;
 
-        if (Array.isArray(data) && data.length > 0) {
-          const latest = data[data.length - 1];
-          setOrderItems(latest.orderItems);
-          setTotalAmount(latest.totalAmount);
-        } else {
-          throw new Error("No orders found");
-        }
-      } catch (err) {
-        setOrderItems([{ title: "Dummy Plan", price: 100, quantity: 20 }]);
-        setTotalAmount(2000);
-      }
-    };
+    const data = await res.json();
+
+    if (Array.isArray(data) && data.length > 0) {
+      const latest = data[data.length - 1];
+      setOrderItems(latest.orderItems);
+      setTotalAmount(latest.totalAmount);
+    }
+  } catch (err) {
+    console.error("Order fetch error:", err);
+  }
+};
+
 
     fetchOrders();
   }, [userId, orderItemsProp, totalAmountProp]);
@@ -147,24 +143,56 @@ pricingPlanId: pricingPlanData?.pricingPlanId || null,
       <form onSubmit={handleSubmit} className={styles.container}>
         <h2 className={styles.title}>Checkout Summary</h2>
 
-        {orderItems.length > 0 && (
-          <div className={styles.grid}>
-            {orderItems.map((item, idx) => (
-              <div key={idx} className={styles.card}>
-                <p>
-                  <strong>{item.title}</strong>
-                </p>
-                <p>Qty: {item.quantity}</p>
-                <p>Price: ${item.price}</p>
-              </div>
-            ))}
-            <div className={styles.card}>
-              <p>
-                <strong>Total: ${totalAmount}</strong>
-              </p>
-            </div>
-          </div>
-        )}
+        <div className={styles.grid}>
+  {/* Order Items */}
+  {orderItems.length > 0 &&
+    orderItems.map((item, idx) => (
+      <div key={idx} className={styles.card}>
+        <p>
+          <strong>{item.title}</strong>
+        </p>
+        <p>Qty: {item.quantity}</p>
+        <p>Price: ${item.price}</p>
+      </div>
+    ))}
+
+  {/* Enrollment Summary */}
+  {enrollmentData && (
+    <div className={styles.card}>
+      <p>
+        <strong>{enrollmentData.className}</strong>
+      </p>
+      <p>Qty: 1</p>
+      <p>Price: ${enrollmentData.totalAmount}</p>
+    </div>
+  )}
+
+  {/* Pricing Plan Summary */}
+  {pricingPlanData && (
+    <div className={styles.card}>
+      <p>
+        <strong>{pricingPlanData.planName}</strong>
+      </p>
+      <p>Qty: 1</p>
+      <p>Price: ${pricingPlanData.amount}</p>
+    </div>
+  )}
+
+  {/* Total Summary */}
+  <div className={styles.card}>
+    <p>
+      <strong>
+        Total: $
+        {pricingPlanData
+          ? pricingPlanData.amount
+          : enrollmentData
+          ? enrollmentData.totalAmount
+          : totalAmount}
+      </strong>
+    </p>
+  </div>
+</div>
+
 
         <CardElement
           className={styles.card}
