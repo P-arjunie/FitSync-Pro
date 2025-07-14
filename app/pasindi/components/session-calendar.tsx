@@ -10,6 +10,7 @@ import {
   useEffect,
   useState,
 } from "react"
+import { useParams } from 'next/navigation'
 import { Calendar, momentLocalizer, Views } from "react-big-calendar"
 import moment from "moment"
 import "react-big-calendar/lib/css/react-big-calendar.css"
@@ -36,7 +37,26 @@ type Session = {
   currentParticipants?: number
 }
 
-export default function SessionCalendar() {
+interface SessionCalendarProps {
+  trainerId?: string // Optional prop to override the trainerId
+  mode?: 'trainer' | 'public' // Different modes for different use cases
+  showHeader?: boolean // Whether to show the card header
+  height?: string // Custom height for the calendar
+  title?: string // Custom title for the calendar
+  description?: string // Custom description for the calendar
+}
+
+export default function SessionCalendar({ 
+  trainerId: propTrainerId,
+  mode = 'trainer',
+  showHeader = true,
+  height = '600px',
+  title,
+  description
+}: SessionCalendarProps) {
+  const params = useParams()
+  const urlTrainerId = params?.id as string
+  
   const [sessions, setSessions] = useState<Session[]>([])
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -47,6 +67,29 @@ export default function SessionCalendar() {
   // Add state for participants
   const [participants, setParticipants] = useState([])
   const [showParticipants, setShowParticipants] = useState(false)
+
+  // Determine which trainer ID to use based on mode and available sources
+  const getTrainerId = () => {
+    if (propTrainerId) return propTrainerId
+    if (urlTrainerId) return urlTrainerId
+    if (mode === 'trainer' && typeof window !== "undefined") {
+      return localStorage.getItem("userId")
+    }
+    return null
+  }
+
+  // Get default title and description based on mode
+  const getDefaultTitle = () => {
+    if (title) return title
+    return mode === 'trainer' ? 'Session Calendar' : 'Available Sessions'
+  }
+
+  const getDefaultDescription = () => {
+    if (description) return description
+    return mode === 'trainer' 
+      ? 'View all scheduled gym sessions. Click on a session to see details.'
+      : 'View trainer\'s available sessions. Click on a session to see details and join.'
+  }
 
   // Add function to fetch participants
   const fetchParticipants = async (sessionId: string) => {
@@ -61,23 +104,65 @@ export default function SessionCalendar() {
     }
   }
 
-  // Load sessions from API only once when component mounts
+  // Load sessions from API
   useEffect(() => {
     let isMounted = true
-    const trainerId = typeof window !== "undefined" ? localStorage.getItem("userId") : null
-    console.log("Fetching sessions for trainerId:", trainerId)
+    const trainerId = getTrainerId()
+    console.log("Fetching sessions for trainerId:", trainerId, "Mode:", mode)
 
     const fetchSessions = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`/api/sessions?trainerId=${trainerId}`)
+        
+        // Different API endpoints based on mode
+        let apiUrl = ''
+        if (mode === 'trainer' && trainerId) {
+          apiUrl = `/api/sessions?trainerId=${trainerId}`
+        } else if (mode === 'public' && trainerId) {
+          apiUrl = `/api/sessions?trainerId=${trainerId}&public=true`
+        } else if (mode === 'public' && !trainerId) {
+          apiUrl = `/api/sessions?public=true` // All public sessions
+        } else {
+          throw new Error("Invalid configuration")
+        }
+
+        console.log("SessionCalendar: Making API call to:", apiUrl)
+        const response = await fetch(apiUrl)
+
+        console.log("SessionCalendar: Response status:", response.status)
+        console.log("SessionCalendar: Response headers:", Object.fromEntries(response.headers.entries()))
 
         if (!response.ok) {
+          const errorText = await response.text()
+          console.log("SessionCalendar: Error response:", errorText)
           throw new Error("Failed to fetch sessions")
         }
 
         const data = await response.json()
-        console.log("Fetched sessions:", data)
+        console.log("SessionCalendar: Fetched sessions data:", data)
+        console.log("SessionCalendar: Number of sessions:", data.length)
+
+        // If no sessions found for specific trainer, try to get all sessions
+        if (data.length === 0 && trainerId && mode === 'public') {
+          console.log("SessionCalendar: No sessions found for trainer, fetching all sessions")
+          const allSessionsResponse = await fetch('/api/sessions?public=true')
+          if (allSessionsResponse.ok) {
+            const allSessionsData = await allSessionsResponse.json()
+            console.log("SessionCalendar: All sessions data:", allSessionsData)
+            
+            if (isMounted) {
+              const formattedSessions = allSessionsData.map((session: any) => ({
+                ...session,
+                start: new Date(session.start),
+                end: new Date(session.end),
+                title: session.title || "Unnamed Session",
+              }))
+              console.log("SessionCalendar: Formatted all sessions:", formattedSessions)
+              setSessions(formattedSessions)
+              return
+            }
+          }
+        }
 
         // Only update state if component is still mounted
         if (isMounted) {
@@ -90,10 +175,11 @@ export default function SessionCalendar() {
             title: session.title || "Unnamed Session",
           }))
 
+          console.log("SessionCalendar: Formatted sessions:", formattedSessions)
           setSessions(formattedSessions)
         }
       } catch (error) {
-        console.error("Error loading sessions:", error)
+        console.error("SessionCalendar: Error loading sessions:", error)
         if (isMounted) {
           toast({
             title: "Error",
@@ -114,7 +200,7 @@ export default function SessionCalendar() {
     return () => {
       isMounted = false
     }
-  }, []) // Empty dependency array ensures this runs only once
+  }, [propTrainerId, urlTrainerId, mode]) // Add mode to dependencies
 
   // Handle session click to show details
   const handleSelectEvent = (session: Session) => {
@@ -127,83 +213,151 @@ export default function SessionCalendar() {
     setCurrentView(newView)
   }
 
-  // Custom event styling
+  // Custom event styling - different colors for different modes
   const eventStyleGetter = (event: Session) => {
-    return {
-      style: {
-        backgroundColor: "#dc2626", // red-600
-        borderRadius: "6px",
-        color: "white",
-        border: "1px solid #b91c1c", // red-700
-        display: "block",
-        overflow: "hidden",
-        padding: "4px 8px",
-        fontSize: "12px",
-        fontWeight: "500",
-      },
+    const baseStyle = {
+      borderRadius: "6px",
+      color: "white",
+      display: "block",
+      overflow: "hidden",
+      padding: "4px 8px",
+      fontSize: "12px",
+      fontWeight: "500",
+    }
+
+    if (mode === 'trainer') {
+      return {
+        style: {
+          ...baseStyle,
+          backgroundColor: "#dc2626", // red-600
+          border: "1px solid #b91c1c", // red-700
+        },
+      }
+    } else {
+      return {
+        style: {
+          ...baseStyle,
+          backgroundColor: "#059669", // green-600
+          border: "1px solid #047857", // green-700
+        },
+      }
     }
   }
 
+  // Function to handle joining a session (only for public mode)
+  const handleJoinSession = async (sessionId: string) => {
+    try {
+      const userId = localStorage.getItem("userId")
+      if (!userId) {
+        toast({
+          title: "Error",
+          description: "Please log in to join sessions.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const response = await fetch(`/api/sessions/${sessionId}/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Successfully joined the session!",
+        })
+        // Refresh sessions to update participant count
+        window.location.reload()
+      } else {
+        const errorData = await response.json()
+        toast({
+          title: "Error",
+          description: errorData.message || "Failed to join session.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error joining session:", error)
+      toast({
+        title: "Error",
+        description: "Failed to join session. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const calendarContent = (
+    <div className={`h-[${height}] calendar-container`}>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-600"></div>
+        </div>
+      ) : (
+        <Calendar
+          localizer={localizer}
+          events={sessions}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: "100%" }}
+          onSelectEvent={handleSelectEvent}
+          eventPropGetter={eventStyleGetter}
+          views={{
+            month: true,
+            week: true,
+            day: true,
+          }}
+          view={currentView as any}
+          onView={handleViewChange}
+          defaultView={Views.WEEK}
+          toolbar={true}
+          popup={true}
+          selectable={true}
+          dayLayoutAlgorithm={"no-overlap"}
+          showMultiDayTimes={true}
+          components={{
+            event: (props: {
+              title:
+                | string
+                | number
+                | bigint
+                | boolean
+                | ReactElement<any, string | JSXElementConstructor<any>>
+                | Iterable<ReactNode>
+                | Promise<AwaitedReactNode>
+                | null
+                | undefined
+            }) => (
+              <div className="text-xs truncate font-medium" title={String(props.title)}>
+                {props.title}
+              </div>
+            ),
+          }}
+        />
+      )}
+    </div>
+  )
+
   return (
     <div className="space-y-6">
-      <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gray-50 border-b border-gray-200">
-          <CardTitle className="text-black text-xl">Session Calendar</CardTitle>
-          <CardDescription className="text-gray-600">
-            View all scheduled gym sessions. Click on a session to see details.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6 bg-white">
-          <div className="h-[600px] calendar-container">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-600"></div>
-              </div>
-            ) : (
-              <Calendar
-                localizer={localizer}
-                events={sessions}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: "100%" }}
-                onSelectEvent={handleSelectEvent}
-                eventPropGetter={eventStyleGetter}
-                views={{
-                  month: true,
-                  week: true,
-                  day: true,
-                }}
-                view={currentView as any}
-                onView={handleViewChange}
-                defaultView={Views.WEEK}
-                toolbar={true}
-                popup={true}
-                selectable={true}
-                dayLayoutAlgorithm={"no-overlap"}
-                showMultiDayTimes={true}
-                components={{
-                  event: (props: {
-                    title:
-                      | string
-                      | number
-                      | bigint
-                      | boolean
-                      | ReactElement<any, string | JSXElementConstructor<any>>
-                      | Iterable<ReactNode>
-                      | Promise<AwaitedReactNode>
-                      | null
-                      | undefined
-                  }) => (
-                    <div className="text-xs truncate font-medium" title={String(props.title)}>
-                      {props.title}
-                    </div>
-                  ),
-                }}
-              />
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {showHeader ? (
+        <Card className="border-gray-200 shadow-sm">
+          <CardHeader className="bg-gray-50 border-b border-gray-200">
+            <CardTitle className="text-black text-xl">{getDefaultTitle()}</CardTitle>
+            <CardDescription className="text-gray-600">
+              {getDefaultDescription()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6 bg-white">
+            {calendarContent}
+          </CardContent>
+        </Card>
+      ) : (
+        calendarContent
+      )}
 
       {/* Session Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -212,10 +366,11 @@ export default function SessionCalendar() {
             <DialogHeader>
               <DialogTitle className="text-black text-xl">{selectedSession.title}</DialogTitle>
               <DialogDescription>
-                <Badge variant="outline" className="mt-2 border-red-200 text-red-700 bg-red-50">
-                  {selectedSession.trainerName}
-                </Badge>
+                Trainer
               </DialogDescription>
+              <Badge variant="outline" className="mt-2 border-red-200 text-red-700 bg-red-50">
+                {selectedSession.trainerName}
+              </Badge>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="flex items-center gap-3">
@@ -231,7 +386,9 @@ export default function SessionCalendar() {
               </div>
               <div className="flex items-center gap-3">
                 <Users className="h-5 w-5 text-gray-500" />
-                <span className="text-gray-700">Max {selectedSession.maxParticipants} participants</span>
+                <span className="text-gray-700">
+                  {selectedSession.currentParticipants || 0} / {selectedSession.maxParticipants} participants
+                </span>
               </div>
               {selectedSession.description && (
                 <div className="pt-2">
@@ -258,6 +415,22 @@ export default function SessionCalendar() {
                   View Participants ({selectedSession.currentParticipants || 0})
                 </Button>
               </div>
+
+              {/* Join Session Button - Only show in public mode */}
+              {mode === 'public' && (
+                <div className="pt-2">
+                  <Button
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => handleJoinSession(selectedSession._id)}
+                    disabled={(selectedSession.currentParticipants ?? 0) >= selectedSession.maxParticipants}
+                  >
+                    {(selectedSession.currentParticipants ?? 0) >= selectedSession.maxParticipants 
+                      ? 'Session Full' 
+                      : 'Join Session'
+                    }
+                  </Button>
+                </div>
+              )}
             </div>
           </DialogContent>
         )}

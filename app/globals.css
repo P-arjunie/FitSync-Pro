@@ -116,3 +116,80 @@ html {
     /* your custom base styles */
   }
 }
+
+/* Add consistent image height classes */
+.image-height-standard {
+  height: 320px; /* 20rem - h-80 */
+}
+
+.image-height-large {
+  height: 400px; /* 25rem - h-96 */
+}
+
+.image-height-medium {
+  height: 256px; /* 16rem - h-64 */
+}
+
+.image-height-small {
+  height: 200px; /* 12.5rem - h-50 */
+}
+
+/* Product image specific heights */
+.product-image-upload {
+  height: 320px; /* Consistent height for product upload preview */
+}
+
+.product-card-image {
+  aspect-ratio: 1; /* Square aspect ratio for product cards */
+}
+
+.gallery-image {
+  height: 300px; /* Consistent height for gallery images */
+}
+
+/* Responsive image heights */
+@media (max-width: 768px) {
+  .image-height-standard {
+    height: 240px;
+  }
+  
+  .image-height-large {
+    height: 300px;
+  }
+  
+  .product-image-upload {
+    height: 240px;
+  }
+}
+
+/* Product card utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Card equal height utilities */
+.card-equal-height {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.card-content-stretch {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-footer {
+  margin-top: auto;
+}

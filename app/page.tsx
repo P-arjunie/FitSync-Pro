@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import './Components/HomePage.css';
-import Navbar from './Components/navbar';
-import Footer1 from './Components/footer_01';
+import Navbar from './Components/Navbar';
+import Footer1 from './Components/Footer_01';
 import GaugeChart from 'react-gauge-chart';
 import StripeProvider from "./Components/stripeprovider";
 {/*import CheckoutForm from "./Components/CheckoutForm"; */}
@@ -313,7 +313,7 @@ const renderHeroButtons = () => {
                 <img src="/cycling.png" alt="Cycling" className="class-image" />
                 <div className="overlay-content">
                   <p className="class-text" >Cycling</p>
-                  <button className="date-button" onClick={() => router.push('/kalana/Cycling')}>Monday | 7:00 AM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/cycling')}>Monday | 7:00 AM</button>
                 </div>
               </div>
               <p className="class-name">Cycling</p>
@@ -324,7 +324,7 @@ const renderHeroButtons = () => {
                 <img src="/workout2.jpg" alt="Workout" className="class-image" />
                 <div className="overlay-content">
                   <p className="class-text">Workout</p>
-                  <button className="date-button" onClick={() => router.push('/kalana/Workout')}>Tuesday | 6:00 PM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/workout')}>Tuesday | 6:00 PM</button>
                 </div>
               </div>
               <p className="class-name">Workout</p>
@@ -335,7 +335,7 @@ const renderHeroButtons = () => {
                 <img src="/powerlifting.jpg" alt="Power Lifting" className="class-image" />
                 <div className="overlay-content">
                   <p className="class-text">Power Lifting</p>
-                  <button className="date-button" onClick={() => router.push('/kalana/Power_Lifting')}>Wednesday | 8:00 PM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/power_lifting')}>Wednesday | 8:00 PM</button>
                 </div>
               </div>
               <p className="class-name">Power Lifting</p>
@@ -346,7 +346,7 @@ const renderHeroButtons = () => {
                 <img src="/meditation.jpg" alt="Meditation" className="class-image" />
                 <div className="overlay-content">
                   <p className="class-text">Meditation</p>
-                  <button className="date-button" onClick={() => router.push('/kalana/Meditation')}>Thursday | 7:00 AM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/meditation')}>Thursday | 7:00 AM</button>
                 </div>
               </div>
               <p className="class-name">Meditation</p>
@@ -357,7 +357,7 @@ const renderHeroButtons = () => {
                 <img src="/yoga.jpg" alt="Yoga" className="class-image" />
                 <div className="overlay-content">
                   <p className="class-text">Yoga</p>
-                  <button className="date-button" onClick={() => router.push('/kalana/Yoga')}>Friday | 7:30 AM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/yoga')}>Friday | 7:30 AM</button>
                 </div>
               </div>
               <p className="class-name">Yoga</p>
@@ -368,7 +368,7 @@ const renderHeroButtons = () => {
                 <img src="/mma.jpg" alt="MMA" className="class-image" />
                 <div className="overlay-content">
                   <p className="class-text">MMA</p>
-                  <button className="date-button" onClick={() => router.push('/kalana/MMA')}>Saturday | 5:00 PM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/mma')}>Saturday | 5:00 PM</button>
                 </div>
               </div>
               <p className="class-name">MMA</p>
@@ -376,22 +376,32 @@ const renderHeroButtons = () => {
           </div>
         </section>
 
-        {/* Fitness Service Section */}
-        <section className="fitness-service">
-          <h2 className="section-title3">We Are Always Provide Best Fitness Service For You</h2>
-          <div className="service-content">
-            <div className="service-item">
-              <h3 className="service-title">Sculpt Your Perfect Body With Us!</h3>
-              <p className="service-description">
-                A fitness legacy evolving with time, blending strength and innovation for modern excellence. It continues to inspire and transform, adapting seamlessly to modern needs while maintaining its core essence of strength and endurance.
-              </p>
-              <button className="button">Our Classes</button>
-            </div>
-            <div className="service-image">
-              <img src="/fitnessservice.jpg" alt="Fitness Service" className="service-image-style" />
-            </div>
-          </div>
-        </section>
+{/* Fitness Service Section */}
+<section className="fitness-service">
+  <h2 className="section-title3">
+    Choose the Right Fitness Plan to Match Your Goals
+  </h2>
+  <div className="service-content">
+    <div className="service-item">
+      <h3 className="service-title">Affordable Monthly Plans for Every Lifestyle</h3>
+      <p className="service-description">
+        Whether you're just starting your fitness journey or you're a seasoned athlete, we offer flexible monthly pricing plans designed to suit your needs. From basic access to full-featured memberships, select the plan that empowers your transformation.
+      </p>
+      <a href="/kalana/pricing_page">
+        <button className="button">View Pricing Plans</button>
+      </a>
+    </div>
+    <div className="service-image">
+      <img
+        src="/fitnessservice.jpg"
+        alt="Fitness Plans"
+        className="service-image-style"
+      />
+    </div>
+  </div>
+</section>
+
+
 
         {/* BMI Section */}
         <section className="bmi-wrapper">

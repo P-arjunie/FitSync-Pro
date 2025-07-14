@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -9,8 +9,25 @@ const CheckoutPage: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState([]);
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [orderIdState, setOrderIdState] = useState<string | null>(null);
+  const [enrollmentData, setEnrollmentData] = useState<{
+    className: string;
+    totalAmount: number;
+    enrollmentId: string;
+  } | null>(null);
+  const [pricingPlanData, setPricingPlanData] = useState<{
+    planName: string;
+    amount: number;
+    pricingPlanId: string;
+  } | null>(null);
+
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const enrollmentId = searchParams.get("enrollmentId");
+  const paymentFor = searchParams.get("paymentFor");
+  const pricingPlanId = searchParams.get("pricingPlanId");
 
   useEffect(() => {
     const id = localStorage.getItem("userId");
@@ -18,28 +35,84 @@ const CheckoutPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetchOrder = async () => {
-      if (!orderId) return;
+    // Reset all states on param change
+    setError(null);
+    setLoading(true);
+    setOrderItems([]);
+    setTotalAmount(null);
+    setOrderIdState(null);
+    setEnrollmentData(null);
+    setPricingPlanData(null);
 
-      console.log("Fetching order with orderId:", orderId);
+    if (!userId) return;
+
+    const fetchData = async () => {
       try {
-        const res = await fetch(`/api/orders/${orderId}`);
-        const data = await res.json();
-
-        console.log("Fetched order details:", data);
-        if (res.ok) {
-          setOrderItems(data.orderItems);
-          setTotalAmount(data.totalAmount);
+        if (enrollmentId) {
+          const res = await fetch(`/api/enrollments/${enrollmentId}`);
+          if (!res.ok) throw new Error("Enrollment fetch failed");
+          const data = await res.json();
+          setEnrollmentData({
+            className: data.className,
+            totalAmount: data.totalAmount,
+            enrollmentId: data._id,
+          });
+        } else if (orderId) {
+          setOrderIdState(orderId);
+          const res = await fetch(`/api/orders/${orderId}`, {
+            headers: {
+              userId,
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setOrderItems(data.orderItems);
+            setTotalAmount(data.totalAmount);
+          } else {
+            throw new Error(data.error || "Order fetch failed");
+          }
+        } else if (paymentFor === "pricing-plan" && pricingPlanId) {
+          const res = await fetch(`/api/pricing-plan-purchase/${pricingPlanId}`);
+          if (!res.ok) throw new Error("Pricing plan fetch failed");
+          const data = await res.json();
+          setPricingPlanData({
+            planName: data.planName,
+            amount: data.amount,
+            pricingPlanId: data._id,
+          });
+        } else {
+          throw new Error("No valid parameters provided");
         }
-      } catch (err) {
-        console.error("Error fetching order by ID:", err);
+
+        setLoading(false);
+      } catch (err: any) {
+        setError(err.message || "Failed to load data");
+        setLoading(false);
       }
     };
 
-    fetchOrder();
-  }, [orderId]);
+    fetchData();
+  }, [userId, orderId, enrollmentId, paymentFor, pricingPlanId]);
 
   if (!userId) return <p>Loading user...</p>;
+  if (loading) return <p>Loading details...</p>;
+
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.history.back()}
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
 
   return (
     <StripeProvider>
@@ -47,16 +120,12 @@ const CheckoutPage: React.FC = () => {
         userId={userId}
         orderItems={orderItems}
         totalAmount={totalAmount === null ? undefined : totalAmount}
+        orderId={orderIdState || undefined}
+        enrollmentData={enrollmentData || undefined}
+        pricingPlanData={pricingPlanData || undefined}
       />
     </StripeProvider>
   );
 };
 
 export default CheckoutPage;
-
-
-{/* Scenario	Result	Displayed Details
-Valid userId & has an order	Real Instance	Real order items & total
-Valid userId but no orders	Dummy Instance	Dummy item & $10 total
-Invalid or missing userId	Dummy Instance	Dummy item & $10 total
-DB error fetching orders	Dummy Instance	Dummy item & $10 total*/}
