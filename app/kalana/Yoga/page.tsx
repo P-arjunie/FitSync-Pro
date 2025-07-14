@@ -13,36 +13,41 @@ const YogaClassPage = () => {
     router.push('/#featured-classes');
   };
 
-  const enrollNow = async () => {
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      router.push('/lithira/Authform'); // your original login path
-      return;
+//ENROLLING FUNCTION FOR PAID CLASSES
+
+const enrollNow = async () => {
+  const userId = localStorage.getItem("userId");
+
+  if (!userId) {
+    router.push("/lithira/Authform");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/enrollments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        className: "Yoga",
+        totalAmount: 10,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("🔴 Server responded with error:", data);
+      throw new Error(data.error || "Failed to create enrollment");
     }
 
-    try {
-      const res = await fetch('/api/enrollments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          className: 'Yoga Class',
-          totalAmount: 2000,
-        }),
-      });
+    router.push(`/kalana/checkout?enrollmentId=${data._id}`);
+  } catch (error) {
+    console.error("Enrollment creation failed", error);
+    alert("Could not create enrollment, please try again.");
+  }
+};
 
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error || 'Failed to enroll');
-      }
-
-      const enrollment = await res.json();
-      alert(`Enrollment ID = ${enrollment._id}`);
-      router.push(`/kalana/checkout?enrollmentId=${enrollment._id}`);
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
 
   return (
     <>
@@ -70,7 +75,7 @@ const YogaClassPage = () => {
             />
             <div className="image-overlay">
               <h3>Next Session</h3>
-              <div className="schedule-badge">Monday | 7:00 AM</div>
+              <div className="schedule-badge">Wednesday | 6:30 AM</div>
             </div>
           </div>
 
@@ -78,21 +83,21 @@ const YogaClassPage = () => {
             <div className="details-section">
               <h2 className="section-title">About This Class</h2>
               <p className="description">
-                Experience a calming yoga session focused on flexibility, mindfulness, and
-                inner peace. Suitable for all levels, our expert instructors guide you through
-                poses and breathing techniques to improve your body and mind.
+                Our yoga sessions focus on enhancing flexibility, balance, and mindfulness.
+                With a blend of physical postures, breathing exercises, and guided relaxation,
+                this class is perfect for both beginners and seasoned practitioners.
               </p>
             </div>
 
             <div className="details-section">
               <h2 className="section-title">Class Benefits</h2>
               <ul className="benefits-list">
-                <li>Improved flexibility and balance</li>
-                <li>Stress relief and mental clarity</li>
-                <li>Enhanced respiratory function</li>
+                <li>Improved flexibility and posture</li>
+                <li>Reduced stress and tension</li>
+                <li>Better breathing and lung capacity</li>
+                <li>Enhanced mental clarity</li>
+                <li>Boosted energy levels</li>
                 <li>Increased body awareness</li>
-                <li>Better posture and alignment</li>
-                <li>Holistic wellness approach</li>
               </ul>
             </div>
           </div>
@@ -106,11 +111,11 @@ const YogaClassPage = () => {
             </div>
             <div className="info-item">
               <div className="info-label">Intensity</div>
-              <div className="info-value">Low to Moderate</div>
+              <div className="info-value">Moderate</div>
             </div>
             <div className="info-item">
               <div className="info-label">Equipment</div>
-              <div className="info-value">Yoga Mat Provided</div>
+              <div className="info-value">Yoga Mats Provided</div>
             </div>
             <div className="info-item">
               <div className="info-label">Max Capacity</div>
@@ -129,10 +134,10 @@ const YogaClassPage = () => {
             <h4>What's Included:</h4>
             <ul>
               <li>Unlimited monthly classes</li>
-              <li>Professional instruction</li>
-              <li>All equipment provided</li>
-              <li>Personalized guidance</li>
-              <li>Progress tracking</li>
+              <li>Certified yoga instructors</li>
+              <li>Relaxing environment</li>
+              <li>Support for all skill levels</li>
+              <li>Mind-body wellness tools</li>
             </ul>
           </div>
         </div>
@@ -172,10 +177,7 @@ const YogaClassPage = () => {
         .header::before {
           content: '';
           position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
+          inset: 0;
           background: linear-gradient(45deg, rgba(220, 20, 60, 0.1) 0%, transparent 50%);
         }
         .header > .container {

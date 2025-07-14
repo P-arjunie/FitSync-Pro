@@ -1,7 +1,6 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, model } from 'mongoose';
 
-// Define the Payment schema interface
-interface IPayment extends Document {
+export interface IPayment extends Document {
   firstName: string;
   lastName: string;
   email: string;
@@ -16,11 +15,11 @@ interface IPayment extends Document {
     city: string;
     street: string;
   };
-  userId: string; // userId as string (per your original)
-  
-  paymentFor?: "order" | "enrollment"; // optional new field
-  relatedOrderId?: string; // optional ref to Order _id as string
-  relatedEnrollmentId?: string; // optional ref to Enrollment _id as string
+  userId: string;
+  paymentFor: 'order' | 'enrollment' | 'pricing-plan';
+  relatedOrderId?: mongoose.Types.ObjectId | null;
+  relatedEnrollmentId?: mongoose.Types.ObjectId | null;
+  stripePaymentIntentId?: string;
 }
 
 const paymentSchema = new Schema<IPayment>(
@@ -37,18 +36,37 @@ const paymentSchema = new Schema<IPayment>(
       zip: { type: String, required: true },
       country: { type: String, required: true },
       city: { type: String, required: true },
-      street: { type: String, required: true }
+      street: { type: String, required: true },
     },
-    userId: { type: String, required: true }, // string as before
-    
-    paymentFor: { type: String, enum: ["order", "enrollment"], default: "order" },
-    relatedOrderId: { type: String, default: null },
-    relatedEnrollmentId: { type: String, default: null }
+    userId: { type: String, required: true },
+    paymentFor: {
+      type: String,
+      enum: ['order', 'enrollment', 'pricing-plan'],
+      required: true,
+    },
+    relatedOrderId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Order',
+      default: null,
+    },
+    relatedEnrollmentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Enrollment',
+      default: null,
+    },
+    stripePaymentIntentId: {
+      type: String,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    collection: 'kalana_paymentsses',
+  }
 );
 
-// Keep collection name as your original "kalana_paymentsses"
-const Payment = mongoose.models.kalana_paymentsses || mongoose.model<IPayment>("kalana_paymentsses", paymentSchema);
+delete mongoose.models.Payment;
+
+const Payment = mongoose.models.Payment as mongoose.Model<IPayment> || 
+model<IPayment>('Payment', paymentSchema);
 
 export default Payment;

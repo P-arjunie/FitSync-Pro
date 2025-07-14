@@ -1,35 +1,45 @@
-// app/api/enrollments/route.ts
-
-import { NextRequest, NextResponse } from 'next/server';
-import mongoose from 'mongoose';
-import Enrollment from '@/models/enrollment';
+import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
+import Enrollment from "@/models/enrollment";
 
 const connectToDB = async () => {
-  if (mongoose.connections[0].readyState === 0) {
+  if (mongoose.connection.readyState === 0) {
     await mongoose.connect(process.env.MONGODB_URI!);
+    console.log("✅ MongoDB connected (enrollments)");
   }
 };
 
-/* -------- POST /api/enrollments -------- */
 export async function POST(req: NextRequest) {
   try {
-    const { userId, className, totalAmount } = await req.json();
-    if (!userId || !className || totalAmount == null) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
-    }
-
     await connectToDB();
 
-    const enrollment = await Enrollment.create({
+    const { userId, className, totalAmount } = await req.json();
+
+    if (!userId || !className || typeof totalAmount !== "number") {
+      return NextResponse.json(
+        { error: "Missing or invalid fields" },
+        { status: 400 }
+      );
+    }
+
+    const newEnrollment = new Enrollment({
       userId,
       className,
       totalAmount,
-      status: 'pending'
+      status: "pending",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
-    /* ⭐  Return the doc so the client gets _id */
-    return NextResponse.json(enrollment);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const savedEnrollment = await newEnrollment.save();
+    console.log("✅ Enrollment saved:", savedEnrollment);
+
+    return NextResponse.json(savedEnrollment, { status: 201 });
+  } catch (error: any) {
+    console.error("❌ Enrollment creation error:", error);
+    return NextResponse.json(
+      { error: error.message || "Enrollment creation failed" },
+      { status: 500 }
+    );
   }
 }
