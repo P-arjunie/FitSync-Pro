@@ -445,8 +445,6 @@ const renderHeroButtons = () => {
   </div>
 </section>
 
-
-
         {/* BMI Section */}
         <section className="bmi-wrapper">
           <div className="bmi-box">

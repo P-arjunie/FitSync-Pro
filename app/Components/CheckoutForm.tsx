@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { StripeCardElement } from "@stripe/stripe-js";
 import styles from "./checkoutform.module.css";
+import Navbar from "./Navbar";
+import Footer_02 from "./Footer_02";
 
 interface OrderItem {
   title: string;
@@ -141,6 +143,7 @@ pricingPlanId: pricingPlanData?.pricingPlanId || null,
 
   return (
     <div className={styles.pageWrapper}>
+      <Navbar />
       <form onSubmit={handleSubmit} className={styles.container}>
         <h2 className={styles.title}>Checkout Summary</h2>
 
@@ -187,6 +190,7 @@ pricingPlanId: pricingPlanData?.pricingPlanId || null,
 
         {message && <p className={styles.error}>{message}</p>}
       </form>
+      <Footer_02 />
     </div>
   );
 };
