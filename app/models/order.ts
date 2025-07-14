@@ -1,9 +1,8 @@
-
-// app/models/order.ts
 import mongoose, { Schema, Document } from "mongoose";
 
+// Order schema interface
 interface IOrder extends Document {
-  user: mongoose.Types.ObjectId;
+  user: string; // userId as string
   orderItems: {
     product: string;
     title: string;
@@ -13,15 +12,15 @@ interface IOrder extends Document {
     category: string;
   }[];
   totalAmount: number;
-  orderNumber: string;
-  status: "pending" | "paid" | "shipped" | "completed" | "cancelled";
+  orderNumber: string;  // <-- Add this field here
+  status: string; // <-- Add this field here
   createdAt: Date;
   updatedAt: Date;
 }
 
 const orderSchema = new Schema<IOrder>(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    user: { type: String, required: true }, // userId as string
     orderItems: [
       {
         product: { type: String, required: true },
@@ -29,18 +28,23 @@ const orderSchema = new Schema<IOrder>(
         image: { type: String, required: true },
         price: { type: Number, required: true },
         quantity: { type: Number, required: true },
-        category: { type: String, required: true },
-      },
+        category: { type: String, required: true }
+      }
     ],
     totalAmount: { type: Number, required: true },
-    orderNumber: { type: String, required: true, unique: true },
+
+    orderNumber: {  // <-- Add this here
+      type: String,
+      required: true,
+      unique: true
+    },
     status: {
       type: String,
       enum: ["pending", "paid", "shipped", "completed", "cancelled"],
-      default: "pending",
-    },
+      default: "pending"
+    }
   },
-  { timestamps: true }
+  { timestamps: true } // Include timestamps for createdAt and updatedAt
 );
 
 const Order = mongoose.models.Order || mongoose.model<IOrder>("Order", orderSchema);

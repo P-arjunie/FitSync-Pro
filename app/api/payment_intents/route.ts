@@ -1,97 +1,103 @@
+// app/api/payment_intents/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import mongoose from "mongoose";
-import Payment from "../../models/Payment";
-import Order from "../../models/order";
-import Enrollment from "../../models/enrollment";
+import Payment from "@/models/Payment";
+import Order from "@/models/order";
+import Enrollment from "@/models/enrollment";
+import PricingPlanPurchase from "@/models/PricingPlanPurchase";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
 });
 
 const connectToDB = async () => {
-  if (mongoose.connections[0].readyState === 0) {
+  if (mongoose.connection.readyState === 0) {
     await mongoose.connect(process.env.MONGODB_URI!);
+    console.log("✅ MongoDB connected (payments)");
   }
 };
 
 export async function POST(req: NextRequest) {
   try {
+    await connectToDB();
+
     const body = await req.json();
-    const { paymentMethodId, userId, paymentFor } = body;
+    const { paymentMethodId, userId, paymentFor, enrollmentId, pricingPlanId } = body;
 
     if (!paymentMethodId || !userId || !paymentFor) {
-      return NextResponse.json(
-        { error: "Missing paymentMethodId, userId or paymentFor" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return NextResponse.json({ error: "Invalid User ID format" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
     }
 
-    await connectToDB();
-
-    const userObjectId = new mongoose.Types.ObjectId(userId);
-
-    let paymentSubject = null;
     let amount = 0;
-    let title = "";
+    let itemTitle = "";
+    let relatedOrderId = null;
+    let relatedEnrollmentId = null;
 
     if (paymentFor === "enrollment") {
-      // Find latest pending enrollment for user
-      paymentSubject = await Enrollment.findOne({ userId: userObjectId, status: "pending" }).sort({ createdAt: -1 });
-
-      if (!paymentSubject) {
-        return NextResponse.json(
-          { error: "No pending enrollment found for user" },
-          { status: 404 }
-        );
+      if (!enrollmentId || !mongoose.Types.ObjectId.isValid(enrollmentId)) {
+        return NextResponse.json({ error: "Invalid enrollmentId" }, { status: 400 });
       }
 
-      amount = Math.round(paymentSubject.totalAmount * 100);
-      title = paymentSubject.className;
+      const enrollment = await Enrollment.findById(enrollmentId);
+      if (!enrollment) {
+        return NextResponse.json({ error: "Enrollment not found" }, { status: 404 });
+      }
+
+      amount = Math.round(enrollment.totalAmount * 100);
+      itemTitle = enrollment.className;
+      relatedEnrollmentId = enrollment._id;
 
     } else if (paymentFor === "order") {
-      // Find latest pending order for user
-      paymentSubject = await Order.findOne({ user: userObjectId, status: "pending" }).sort({ createdAt: -1 });
-
-      if (!paymentSubject) {
-        return NextResponse.json(
-          { error: "No pending order found for user" },
-          { status: 404 }
-        );
+      const latestOrder = await Order.findOne({ user: userId }).sort({ createdAt: -1 });
+      if (!latestOrder) {
+        return NextResponse.json({ error: "No order found" }, { status: 404 });
       }
 
-      amount = Math.round(paymentSubject.totalAmount * 100);
-      title = paymentSubject.orderItems?.[0]?.title || "Order";
+      amount = Math.round(latestOrder.totalAmount * 100);
+      itemTitle = latestOrder.orderItems?.[0]?.title || "Order";
+      relatedOrderId = latestOrder._id;
+
+    } else if (paymentFor === "pricing-plan") {
+      if (!pricingPlanId || !mongoose.Types.ObjectId.isValid(pricingPlanId)) {
+        return NextResponse.json({ error: "Invalid pricingPlanId" }, { status: 400 });
+      }
+
+      const plan = await PricingPlanPurchase.findById(pricingPlanId);
+      if (!plan) {
+        return NextResponse.json({ error: "Pricing plan not found" }, { status: 404 });
+      }
+
+      amount = Math.round(plan.amount * 100);
+      itemTitle = plan.planName || "Pricing Plan";
 
     } else {
-      return NextResponse.json(
-        { error: `Unsupported paymentFor type: ${paymentFor}` },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid paymentFor value" }, { status: 400 });
     }
 
+    // Create Stripe payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "usd",
       payment_method: paymentMethodId,
       confirm: true,
-      return_url: `${req.nextUrl.origin}/payment/complete`,
-      automatic_payment_methods: { enabled: true },
+      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
     });
 
     if (paymentIntent.status === "succeeded") {
-      const paymentData: any = {
-        firstName: title,
-        lastName: userObjectId.toString(),
+      // Save payment in kalana_paymentsses collection
+      const newPayment = new Payment({
+        firstName: itemTitle,
+        lastName: userId.toString(),
         email: "placeholder@example.com",
         company: "FitSyncPro",
-        amount: paymentIntent.amount / 100,
-        currency: paymentIntent.currency,
-        paymentStatus: paymentIntent.status,
+        amount: amount / 100,
+        currency: "usd",
+        paymentStatus: "succeeded",
         paymentMethodId,
         billingAddress: {
           zip: "10100",
@@ -99,33 +105,37 @@ export async function POST(req: NextRequest) {
           city: "New York",
           street: "456 Real Street",
         },
-        userId: userObjectId.toString(),
+        userId,
         paymentFor,
-      };
+        relatedOrderId,
+        relatedEnrollmentId,
+        stripePaymentIntentId: paymentIntent.id,
+      });
 
-      if (paymentFor === "enrollment") {
-        paymentData.relatedEnrollmentId = paymentSubject._id.toString();
-      } else if (paymentFor === "order") {
-        paymentData.relatedOrderId = paymentSubject._id.toString();
+      await newPayment.save();
+
+      // Update respective document status
+      if (paymentFor === "pricing_plan") {
+        await PricingPlanPurchase.findByIdAndUpdate(pricingPlanId, { status: "paid" });
       }
 
-      const payment = new Payment(paymentData);
-      await payment.save();
+      if (relatedOrderId) {
+        await Order.findByIdAndUpdate(relatedOrderId, { status: "paid" });
+      }
 
-      if (paymentFor === "enrollment") {
-        await Enrollment.findByIdAndUpdate(paymentSubject._id, { status: "success" });
-      } else if (paymentFor === "order") {
-        await Order.findByIdAndUpdate(paymentSubject._id, { status: "paid" });
+      if (relatedEnrollmentId) {
+        await Enrollment.findByIdAndUpdate(relatedEnrollmentId, { status: "paid" });
       }
 
       return NextResponse.json({ success: true });
     }
 
     return NextResponse.json(
-      { error: `Unhandled payment status: ${paymentIntent.status}` },
+      { error: `Payment failed with status: ${paymentIntent.status}` },
       { status: 400 }
     );
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("❌ Payment processing error:", error);
+    return NextResponse.json({ error: error.message || "Payment processing failed" }, { status: 500 });
   }
 }

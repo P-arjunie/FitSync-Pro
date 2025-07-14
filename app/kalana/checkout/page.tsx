@@ -1,6 +1,4 @@
-// app/kalana/checkout/page.tsx
-
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -13,87 +11,108 @@ const CheckoutPage: React.FC = () => {
   const [totalAmount, setTotalAmount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [orderIdState, setOrderIdState] = useState<string | null>(null);
+  const [enrollmentData, setEnrollmentData] = useState<{
+    className: string;
+    totalAmount: number;
+    enrollmentId: string;
+  } | null>(null);
+  const [pricingPlanData, setPricingPlanData] = useState<{
+    planName: string;
+    amount: number;
+    pricingPlanId: string;
+  } | null>(null);
+
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
   const enrollmentId = searchParams.get("enrollmentId");
+  const paymentFor = searchParams.get("paymentFor");
+  const pricingPlanId = searchParams.get("pricingPlanId");
 
   useEffect(() => {
     const id = localStorage.getItem("userId");
-    console.log("Setting userId:", id);
     setUserId(id || "test_user_123");
   }, []);
 
-  // Fetch order by orderId if present
   useEffect(() => {
-    if (!orderId) return;
+    // Reset all states on param change
+    setError(null);
+    setLoading(true);
+    setOrderItems([]);
+    setTotalAmount(null);
+    setOrderIdState(null);
+    setEnrollmentData(null);
+    setPricingPlanData(null);
 
-    const fetchOrder = async () => {
-      if (!orderId || !userId) return;
+    if (!userId) return;
 
-      console.log("Fetching order with orderId:", orderId, "userId:", userId);
-      setLoading(true);
-      setError(null);
-      
+    const fetchData = async () => {
       try {
-        const res = await fetch(`/api/orders/${orderId}`, {
-          headers: {
-            'userId': userId,
-            'Content-Type': 'application/json'
+        if (enrollmentId) {
+          const res = await fetch(`/api/enrollments/${enrollmentId}`);
+          if (!res.ok) throw new Error("Enrollment fetch failed");
+          const data = await res.json();
+          setEnrollmentData({
+            className: data.className,
+            totalAmount: data.totalAmount,
+            enrollmentId: data._id,
+          });
+        } else if (orderId) {
+          setOrderIdState(orderId);
+          const res = await fetch(`/api/orders/${orderId}`, {
+            headers: {
+              userId,
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setOrderItems(data.orderItems);
+            setTotalAmount(data.totalAmount);
+          } else {
+            throw new Error(data.error || "Order fetch failed");
           }
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-          setOrderItems(data.orderItems);
-          setTotalAmount(data.totalAmount);
+        } else if (paymentFor === "pricing-plan" && pricingPlanId) {
+          const res = await fetch(`/api/pricing-plan-purchase/${pricingPlanId}`);
+          if (!res.ok) throw new Error("Pricing plan fetch failed");
+          const data = await res.json();
+          setPricingPlanData({
+            planName: data.planName,
+            amount: data.amount,
+            pricingPlanId: data._id,
+          });
         } else {
-          console.error("Failed to fetch order:", data.error);
-          setError(data.error || "Failed to fetch order details");
+          throw new Error("No valid parameters provided");
         }
-      } catch (err) {
-        console.error("Error fetching order by ID:", err);
-        setError("Network error while fetching order");
-      } finally {
+
+        setLoading(false);
+      } catch (err: any) {
+        setError(err.message || "Failed to load data");
         setLoading(false);
       }
     };
 
-    fetchOrder();
-  }, [orderId, userId]);
+    fetchData();
+  }, [userId, orderId, enrollmentId, paymentFor, pricingPlanId]);
 
   if (!userId) return <p>Loading user...</p>;
-  
-  if (loading) return <p>Loading order details...</p>;
-  
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Order</h2>
-        <p className="text-gray-600 mb-4">{error}</p>
-        <button 
-          onClick={() => window.history.back()} 
-          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-        >
-          Go Back
-        </button>
-      </div>
-    </div>
-  );
+  if (loading) return <p>Loading details...</p>;
 
-  if (!orderId) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">No Order ID</h2>
-        <p className="text-gray-600 mb-4">No order ID provided in the URL</p>
-        <button 
-          onClick={() => window.history.back()} 
-          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-        >
-          Go Back
-        </button>
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.history.back()}
+            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Go Back
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <StripeProvider>
@@ -101,7 +120,9 @@ const CheckoutPage: React.FC = () => {
         userId={userId}
         orderItems={orderItems}
         totalAmount={totalAmount === null ? undefined : totalAmount}
+        orderId={orderIdState || undefined}
         enrollmentData={enrollmentData || undefined}
+        pricingPlanData={pricingPlanData || undefined}
       />
     </StripeProvider>
   );
