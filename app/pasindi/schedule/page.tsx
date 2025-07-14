@@ -63,7 +63,14 @@ export default function Home() {
           </TabsList>
 
           <TabsContent value="calendar" className="mt-0">
-            <SessionCalendar />
+            {/* Use the unified component in trainer mode */}
+            <SessionCalendar 
+              mode="trainer"
+              showHeader={true}
+              height="600px"
+              title="Session Calendar"
+              description="View all scheduled gym sessions. Click on a session to see details."
+            />
           </TabsContent>
 
           <TabsContent value="schedule" className="mt-0">
