@@ -47,7 +47,7 @@ const enrollNow = async () => {
     alert("Could not create enrollment, please try again.");
   }
 };
-
+//
 
   return (
     <>

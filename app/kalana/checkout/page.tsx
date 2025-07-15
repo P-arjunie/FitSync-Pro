@@ -1,7 +1,10 @@
+// app/kalana/checkout/page.tsx
 'use client';
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Navbar from "../../Components/Navbar";
+import Footer from "@/Components/Footer_02";
 import StripeProvider from "../../Components/stripeprovider";
 import CheckoutForm from "../../Components/CheckoutForm";
 

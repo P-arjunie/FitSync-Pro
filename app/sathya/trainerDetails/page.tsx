@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+
+import Link from "next/link";
 import { Search, Filter, X, Star, User, Award, Clock } from 'lucide-react';
 
 interface Review {
@@ -329,6 +331,14 @@ const TrainerReviewsPage = () => {
             >
               See more
             </button>
+            <Link
+              href={`/pasindi/trainer-page/${trainer._id}?name=${encodeURIComponent(trainer.fullName)}`}
+              className="mt-2 inline-block"
+            >
+              <button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 shadow hover:shadow-xl">
+                Join Session
+              </button>
+            </Link>
           </div>
         ))}
       </div>

@@ -41,10 +41,8 @@ const Navbar: React.FC = () => {
     <nav className="bg-black text-white py-7 px-2 flex items-center justify-between w-full border-b border-black">
       {/* Logo */}
       <Link href="/" className="flex items-center">
-        <Image src="/logo.png" alt="FitSync Pro Logo" width={50} height={50} />
+        <Image src="/Logo.png" alt="FitSync Pro Logo" width={150} height={100} />
         <div className="ml-2 flex flex-col text-left">
-          <span className="text-sm font-normal">FITSYNC PRO</span>
-          <span className="text-xs font-normal">ULTIMATE GYM CENTER</span>
         </div>
       </Link>
 
@@ -53,14 +51,13 @@ const Navbar: React.FC = () => {
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/">Home</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/About_page">About</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/Gallery_page">Gallery</Link></li>
+        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/#fitness-service">Pricing plans</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/#featured-classes">Classes</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/schedule">Schedule</Link></li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/Blogs">Blogs</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/pasindi/products">Shop</Link></li>
-
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/Contact_Page">Contact</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/sathya/trainerDetails">Trainers</Link></li>
         <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/sathya/feedback">Feedback</Link></li>
+        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2"><Link href="/hasini/Contact_Page">Contact</Link></li>
 
       </ul>
 

@@ -36,13 +36,33 @@ export async function GET(request: NextRequest) {
     // --- ADDED: filter by trainerId if present ---
     const { searchParams } = new URL(request.url);
     const trainerId = searchParams.get("trainerId");
+    const publicOnly = searchParams.get("public") === "true";
+    
+    console.log("API: Fetching sessions with trainerId:", trainerId, "publicOnly:", publicOnly);
+    
     const query: any = {};
     if (trainerId) {
-      query.trainerId = trainerId;
+      // Only use ApprovedTrainer model for consistency
+      const ApprovedTrainer = (await import('@/models/ApprovedTrainer')).default;
+      
+      // Find the trainer in ApprovedTrainer model
+      let approvedTrainer = await ApprovedTrainer.findById(trainerId);
+      if (approvedTrainer) {
+        const fullName = `${approvedTrainer.firstName} ${approvedTrainer.lastName}`;
+        console.log("API: Found trainer in ApprovedTrainer model:", fullName);
+        query.trainerName = fullName;
+      } else {
+        console.log("API: Trainer not found in ApprovedTrainer model, using trainerId directly");
+        query.trainerId = trainerId;
+      }
     }
+    
+    console.log("API: Final query:", query);
+    
     const sessions = await Session.find(query).sort({ start: 1 });
-    // --- END ADDED ---
-
+    console.log("API: Found sessions count:", sessions.length);
+    console.log("API: Sessions:", sessions.map(s => ({ id: s._id, title: s.title, trainerId: s.trainerId, trainerName: s.trainerName })));
+    
     // Update cache
     sessionsCache = {
       data: sessions,
@@ -92,8 +112,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for scheduling conflicts for the same trainer
     await connectToDatabase();
+
+    // If trainerId is provided, verify it's from ApprovedTrainer model
+    let verifiedTrainerId = body.trainerId;
+    if (body.trainerId) {
+      const ApprovedTrainer = (await import('@/models/ApprovedTrainer')).default;
+      const approvedTrainer = await ApprovedTrainer.findById(body.trainerId);
+      
+      if (approvedTrainer) {
+        console.log("Session creation: Using ApprovedTrainer ID:", body.trainerId);
+        verifiedTrainerId = body.trainerId;
+      } else {
+        console.log("Session creation: Trainer not found in ApprovedTrainer, using provided ID");
+      }
+    }
+
+    // Check for scheduling conflicts for the same trainer
     const conflictingSession = await Session.findOne({
       trainerName: body.trainerName,
       $or: [
@@ -122,10 +157,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the new session
+    // Create the new session with verified trainer ID
     const session = await Session.create({
       ...body,
+      trainerId: verifiedTrainerId,
       maxParticipants: Number(body.maxParticipants),
+    });
+    
+    console.log("Session created successfully:", {
+      id: session._id,
+      title: session.title,
+      trainerId: session.trainerId,
+      trainerName: session.trainerName
     });
     
     // Invalidate the cache after creating a new session
