@@ -133,7 +133,7 @@ export default function SessionForm() {
     <div className="mx-auto max-w-2xl">
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-lg">
-          <h2 className="text-2xl font-bold text-black">Schedule a New Session</h2>
+          <h2 className="text-2xl font-bold text-black">Schedule a New Physical Session</h2>
           <p className="text-gray-600 mt-1">Fill out the details below to create a new training session</p>
         </div>
 
