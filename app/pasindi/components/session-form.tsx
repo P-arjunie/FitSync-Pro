@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../Components/ui/pop
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../Components/ui/select"
 import { useToast } from "../components/ui/use-toast"
 import { cn } from "@/lib/utils"
+import React from "react"
 
 //validation with zod - min length field + valid format
 const formSchema = z.object({
@@ -50,7 +51,11 @@ export default function SessionForm() {
 
   // Get trainer name from localStorage
   const trainerName = typeof window !== "undefined" ? localStorage.getItem("userName") || "" : ""
-  const trainerId = typeof window !== "undefined" ? localStorage.getItem("userId") || "" : ""
+  // Use ApprovedTrainer ID instead of old user table ID
+  const trainerId = typeof window !== "undefined" ? localStorage.getItem("approvedTrainerId") || localStorage.getItem("userId") || "" : ""
+
+  console.log("SessionForm: Using trainerId:", trainerId)
+  console.log("SessionForm: Using trainerName:", trainerName)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -133,7 +138,7 @@ export default function SessionForm() {
     <div className="mx-auto max-w-2xl">
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-lg">
-          <h2 className="text-2xl font-bold text-black">Schedule a New Session</h2>
+          <h2 className="text-2xl font-bold text-black">Schedule a New Physical Session</h2>
           <p className="text-gray-600 mt-1">Fill out the details below to create a new training session</p>
         </div>
 
@@ -226,14 +231,14 @@ export default function SessionForm() {
                           {Array.from({ length: 24 }).map((_, i) => {
                             const hour = i.toString().padStart(2, "0")
                             return (
-                              <>
+                              <React.Fragment key={hour}>
                                 <SelectItem key={`${hour}:00`} value={`${hour}:00`} className="hover:bg-gray-50">
                                   {`${hour}:00`}
                                 </SelectItem>
                                 <SelectItem key={`${hour}:30`} value={`${hour}:30`} className="hover:bg-gray-50">
                                   {`${hour}:30`}
                                 </SelectItem>
-                              </>
+                              </React.Fragment>
                             )
                           })}
                         </SelectContent>
@@ -258,14 +263,14 @@ export default function SessionForm() {
                           {Array.from({ length: 24 }).map((_, i) => {
                             const hour = i.toString().padStart(2, "0")
                             return (
-                              <>
+                              <React.Fragment key={hour}>
                                 <SelectItem key={`${hour}:00`} value={`${hour}:00`} className="hover:bg-gray-50">
                                   {`${hour}:00`}
                                 </SelectItem>
                                 <SelectItem key={`${hour}:30`} value={`${hour}:30`} className="hover:bg-gray-50">
                                   {`${hour}:30`}
                                 </SelectItem>
-                              </>
+                              </React.Fragment>
                             )
                           })}
                         </SelectContent>
