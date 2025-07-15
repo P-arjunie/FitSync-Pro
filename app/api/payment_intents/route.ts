@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       await newPayment.save();
 
       // Update respective document status
-      if (paymentFor === "pricing_plan") {
+      if (paymentFor === "pricing-plan") {
         await PricingPlanPurchase.findByIdAndUpdate(pricingPlanId, { status: "paid" });
       }
 
