@@ -12,12 +12,10 @@ const footer_02: React.FC = () => {
           <h2 className={styles.brandTitle}>
             <span className={styles.brandHighlight}>F</span>ITSYNC PRO
           </h2>
-          <p className={styles.subTitle}>ULTIMATE GYM CENTER</p>
+          <p className={styles.subTitle}>ULTIMATE FITNESS CENTER</p>
           <p className={styles.legal}>Privacy Policy | © 2025 FitSyncPro</p>
-          <p className={styles.description}>
-            When an unknown printer took a galley of type and scrambled it to create a unique specimen book,
-            it marked the beginning of a new era in printing, surviving centuries of evolution and adapting
-            to modern advancements.
+          <p className={styles.description}>  FitSync Pro is where smart training meets real results. We blend expert coaching, modern equipment, and
+            a supportive community to help you reach your fitness goals, no matter your starting point.
           </p>
         </div>
 
