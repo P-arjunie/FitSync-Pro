@@ -1,73 +1,68 @@
-import { NextResponse } from "next/server"; // Import Next.js Response helper
-import { connectToDatabase } from "@/lib/mongodb"; // Import MongoDB connection utility
-import User from "@/models/User"; // Import User model
-import bcrypt from "bcryptjs"; // Import bcryptjs for password hashing and comparison
+import { NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/mongodb";
+import User from "@/models/User";
+import bcrypt from "bcryptjs";
 
-// Define the POST handler function for login
+// A helper function to call the logging API without waiting for it to finish.
+// It constructs the full URL to ensure it works in all environments (dev, prod).
+const logAttempt = (data: object) => {
+  const url = new URL("/api/analytics/log-login-attempt", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+  fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(error => {
+    // Log fetch errors, but don't let them crash the main application
+    console.error("Fire-and-forget log failed:", error);
+  });
+};
+
 export async function POST(req: Request) {
+  const ipAddress = req.headers.get("x-forwarded-for") || req.headers.get("remote-addr");
+  const userAgent = req.headers.get("user-agent");
+
   try {
-    // Extract email and password from the request body
     const { email, password } = await req.json();
 
-    // Basic input validation: ensure both fields are provided
     if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
     }
 
-    // Establish a connection to the MongoDB database
     await connectToDatabase();
-
-    // Look up the user by email in the database
     const user = await User.findOne({ email });
-    if (!user) {
-      // If user is not found, return an unauthorized error
-      return NextResponse.json(
-        { error: "Invalid email or password." },
-        { status: 401 }
-      );
+
+    // Handle invalid credentials
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      // "Fire-and-forget" the log for the failed attempt
+      logAttempt({ email, status: "failure", reason: "invalid_credentials", ipAddress, userAgent });
+      return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 
-    // ❗️Block login if account is suspended
+    // Handle suspended account
     if (user.status === "suspended") {
-      return NextResponse.json(
-        { error: "Your account is suspended. Please contact the admin." },
-        { status: 403 }
-      );
+      // "Fire-and-forget" the log for the suspended attempt
+      logAttempt({ userId: user._id, email, status: "failure", reason: "suspended_account", ipAddress, userAgent });
+      return NextResponse.json({ error: "Your account is suspended." }, { status: 403 });
     }
 
-    // Compare the provided password with the hashed password in the database
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      // If password doesn't match, return an unauthorized error
-      return NextResponse.json(
-        { error: "Invalid email or password." },
-        { status: 401 }
-      );
-    }
+    // Handle successful login
+    // "Fire-and-forget" the log for the successful attempt
+    logAttempt({ userId: user._id, email, status: "success", ipAddress, userAgent });
 
-    // If login is successful, return user details (excluding password)
-    return NextResponse.json(
-      {
-        message: "Login successful",
-        user: {
-          id: user._id,
-          name: user.name,
-          role: user.role,
-          email: user.email,
-          image: user.image, // Profile image URL
-        },
+    // Return the successful response to the user immediately
+    return NextResponse.json({
+      message: "Login successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        role: user.role,
+        email: user.email,
+        image: user.image,
       },
-      { status: 200 }
-    );
+    }, { status: 200 });
+
   } catch (error) {
-    // Handle unexpected errors and return server error response
     console.error("Login Error:", error);
-    return NextResponse.json(
-      { error: "Something went wrong. Please try again later." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   }
 }
