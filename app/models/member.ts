@@ -71,6 +71,51 @@ const memberSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+<<<<<<< Updated upstream
+=======
+// Pre-save middleware to hash password
+memberSchema.pre('save', async function(next) {
+  const member = this as unknown as IMember;
+  
+  if (!member.isModified('password')) {
+    return next();
+  }
+  
+  try {
+    if (!member.password || member.password.length < 6) {
+      throw new Error('Password must be at least 6 characters long');
+    }
+    
+    member.password = await PasswordUtils.hashPassword(member.password);
+    next();
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Password hashing error in pre-save:', error);
+      next(error);
+    } else {
+      next(new Error('Unknown error occurred during password hashing'));
+    }
+  }
+});
+
+// Instance method to compare password
+memberSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
+  return await PasswordUtils.comparePassword(password, this.password);
+};
+
+// Instance method to hash password manually
+memberSchema.methods.hashPassword = async function(password: string): Promise<void> {
+  this.password = await PasswordUtils.hashPassword(password);
+};
+
+// Ensure password field is never returned in queries by default
+memberSchema.set('toJSON', {
+  transform: function(doc, ret) {
+    delete ret.password;
+    return ret;
+  }
+});
+>>>>>>> Stashed changes
 
 const Member = models.Member || model<IMember>("Member", memberSchema);
 export default Member;

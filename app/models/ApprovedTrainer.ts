@@ -55,5 +55,60 @@ const approvedTrainerSchema = new Schema<IApprovedTrainer>({
   ],
 });
 
+<<<<<<< Updated upstream
 export default mongoose.models.ApprovedTrainer ||
   mongoose.model<IApprovedTrainer>("ApprovedTrainer", approvedTrainerSchema);
+=======
+// Pre-save middleware to hash password
+ApprovedTrainerSchema.pre('save', async function(next) {
+  const trainer = this as unknown as IApprovedTrainer;
+
+  if (!trainer.isModified('password')) {
+    console.log('[ApprovedTrainer pre-save] Password not modified, skipping hash.');
+    return next();
+  }
+
+  try {
+    if (!trainer.password || trainer.password.length < 6) {
+      throw new Error('Password must be at least 6 characters long');
+    }
+    // Only hash if not already a bcrypt hash (any salt rounds)
+    const bcryptRegex = /^\$2[abxy]?\$\d{2}\$[./A-Za-z0-9]{53}$/;
+    if (bcryptRegex.test(trainer.password)) {
+      console.log('[ApprovedTrainer pre-save] Password already a bcrypt hash, skipping hash.');
+      return next();
+    }
+    console.log('[ApprovedTrainer pre-save] Hashing password.');
+    trainer.password = await PasswordUtils.hashPassword(trainer.password);
+    next();
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Password hashing error in pre-save:', error);
+      next(error);
+    } else {
+      next(new Error('Unknown error occurred during password hashing'));
+    }
+  }
+});
+
+// Instance method to compare password
+ApprovedTrainerSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
+  return await PasswordUtils.comparePassword(password, this.password);
+};
+
+// Instance method to hash password manually
+ApprovedTrainerSchema.methods.hashPassword = async function(password: string): Promise<void> {
+  this.password = await PasswordUtils.hashPassword(password);
+};
+
+// Ensure password field is never returned in queries by default
+ApprovedTrainerSchema.set('toJSON', {
+  transform: function(doc, ret) {
+    delete ret.password;
+    return ret;
+  }
+});
+
+export default mongoose.models.ApprovedTrainer || 
+  mongoose.model<IApprovedTrainer>('ApprovedTrainer', ApprovedTrainerSchema);
+>>>>>>> Stashed changes

@@ -68,4 +68,26 @@ const TrainerSchema = new Schema<ITrainer>({
   ],
 });
 
+<<<<<<< Updated upstream
 export default mongoose.models.Trainer || mongoose.model<ITrainer>("Trainer", TrainerSchema);
+=======
+trainerSchema.pre("save", async function(next) {
+  if (!this.isModified("password")) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(12); // Use 12 rounds for consistency
+    const hash = await bcrypt.hash(this.password, salt);
+    this.password = hash;
+    next();
+  } catch (err) {
+    console.error("Hashing failed:", err);
+    next(new Error("Password hashing failed"));
+  }
+});
+
+// Critical Change 2: Force model recompilation
+delete models.Trainer;
+const Trainer = model("Trainer", trainerSchema);
+
+export default Trainer;
+>>>>>>> Stashed changes
