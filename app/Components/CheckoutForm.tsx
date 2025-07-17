@@ -4,13 +4,14 @@ import { StripeCardElement } from "@stripe/stripe-js";
 import styles from "./checkoutform.module.css";
 import Navbar from "./Navbar";
 import Footer_02 from "./Footer_02";
-import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import cartImg from "../../public/cart.png";
+import classImg from "../../public/classesb.png";
 
 interface OrderItem {
   title: string;
   price: number;
   quantity: number;
-  image?: string; // Added image property
+  image?: string;
 }
 
 interface CheckoutFormProps {
@@ -139,7 +140,7 @@ pricingPlanId: pricingPlanData?.pricingPlanId || null,
     setLoading(false);
   };
 
-  // Static image map for classes
+  // Map class names to their respective images
   const classImageMap: Record<string, string> = {
     meditation: "/meditation.jpg",
     workout: "/workout.jpg",
@@ -149,99 +150,106 @@ pricingPlanId: pricingPlanData?.pricingPlanId || null,
     power_lifting: "/powerlifting.jpg",
   };
 
-  // Themed icon for pricing plans
-  const pricingPlanImage = "/cards.png";
-
   return (
     <div className={styles.pageWrapper}>
       <Navbar />
       <form onSubmit={handleSubmit} className={styles.container}>
-        {/* Summary Card */}
-        <div className={styles.summaryCard}>
-          <div className={styles.accentBar}></div>
-          {/* Show image and details for the first item/enrollment/plan */}
-          {orderItems.length > 0 && (
-            <>
-              <img
-                src={orderItems[0].image || "/file.svg"}
-                alt={orderItems[0].title}
-                className={styles.summaryImage}
-              />
-              <div className={styles.summaryHeader}>{orderItems[0].title}</div>
-              <div className={styles.summaryPrice}>${orderItems[0].price}</div>
-              <ul className={styles.summaryFeatures}>
-                <li className={styles.featureItem}><FaCheckCircle className={styles.featureIcon}/>Qty: {orderItems[0].quantity}</li>
-              </ul>
-            </>
-          )}
+        <h2 className={styles.title}>Checkout Summary</h2>
+        <div className={styles.grid}>
+          {/* Order Items */}
+          {orderItems.length > 0 &&
+            orderItems.map((item, idx) => (
+              <div key={idx} className={styles.card}>
+                <img
+                  src={item.image || cartImg.src}
+                  alt={item.title}
+                  className={styles.itemImage}
+                />
+                <div className={styles.cardContent}>
+                  <p><strong>{item.title}</strong></p>
+                  <p>Qty: {item.quantity}</p>
+                  <p>Price: ${item.price}</p>
+                </div>
+              </div>
+            ))}
+
+          {/* Enrollment Summary */}
           {enrollmentData && (
-            <>
+            <div className={styles.card}>
               <img
-                src={classImageMap[enrollmentData.className.toLowerCase()] || "/file.svg"}
+                src={classImageMap[enrollmentData.className.toLowerCase().replace(/ /g, "_")] || classImg.src}
                 alt={enrollmentData.className}
-                className={styles.summaryImage}
+                className={styles.itemImage}
               />
-              <div className={styles.summaryHeader}>{enrollmentData.className}</div>
-              <div className={styles.summaryPrice}>${enrollmentData.totalAmount}</div>
-              <ul className={styles.summaryFeatures}>
-                <li className={styles.featureItem}><FaCheckCircle className={styles.featureIcon}/>Unlimited monthly classes</li>
-                <li className={styles.featureItem}><FaCheckCircle className={styles.featureIcon}/>Expert guidance</li>
-                <li className={styles.featureItem}><FaCheckCircle className={styles.featureIcon}/>Peaceful environment</li>
-              </ul>
-            </>
+              <div className={styles.cardContent}>
+                <p><strong>{enrollmentData.className}</strong></p>
+                <p>Qty: 1</p>
+                <p>Price: ${enrollmentData.totalAmount}</p>
+              </div>
+            </div>
           )}
+
+          {/* Pricing Plan Summary */}
           {pricingPlanData && (
-            <>
+            <div className={styles.card}>
               <img
-                src={pricingPlanImage}
-                alt={pricingPlanData.planName}
-                className={styles.summaryImage}
+                src={cartImg.src}
+                alt="Plan"
+                className={styles.itemImage}
               />
-              <div className={styles.summaryHeader}>{pricingPlanData.planName}</div>
-              <div className={styles.summaryPrice}>${pricingPlanData.amount} <span style={{fontSize:'1rem',fontWeight:400}}>/month</span></div>
-              <ul className={styles.summaryFeatures}>
-                <li className={styles.featureItem}><FaCheckCircle className={styles.featureIcon}/>Training Overview</li>
-                <li className={styles.featureItem}><FaCheckCircle className={styles.featureIcon}/>Beginner Classes</li>
-                <li className={`${styles.featureItem} ${styles.inactive}`}><FaTimesCircle className={styles.featureIcon}/>Personal Training</li>
-                <li className={`${styles.featureItem} ${styles.inactive}`}><FaTimesCircle className={styles.featureIcon}/>Olympic Weightlifting</li>
-                <li className={`${styles.featureItem} ${styles.inactive}`}><FaTimesCircle className={styles.featureIcon}/>Foundation Training</li>
-              </ul>
-            </>
+              <div className={styles.cardContent}>
+                <p><strong>{pricingPlanData.planName}</strong></p>
+                <p>Qty: 1</p>
+                <p>Price: ${pricingPlanData.amount}</p>
+              </div>
+            </div>
           )}
-          <div className={styles.summaryTotal}>
-            Total: $
-            {pricingPlanData
-              ? pricingPlanData.amount
-              : enrollmentData
-              ? enrollmentData.totalAmount
-              : totalAmount}
+
+          {/* Total Summary */}
+          <div className={styles.card}>
+            <div className={styles.cardContent}>
+              <p>
+                <strong>
+                  Total: $
+                  {pricingPlanData
+                    ? pricingPlanData.amount
+                    : enrollmentData
+                    ? enrollmentData.totalAmount
+                    : totalAmount}
+                </strong>
+              </p>
+            </div>
           </div>
         </div>
-        {/* Payment Form */}
-        <div className={styles.paymentSection}>
-          <h2 className={styles.title}>Payment</h2>
+
+        <div className={styles.paymentCard}>
+          <h3 className={styles.paymentTitle}>Enter Card Details</h3>
           <CardElement
-            className={styles.card}
+            className={styles.cardElement}
             options={{
               style: {
                 base: {
                   fontSize: "16px",
-                  color: "#424770",
-                  "::placeholder": { color: "#aab7c4" },
+                  color: "#222",
+                  '::placeholder': { color: "#bbb" },
+                  fontFamily: "inherit",
+                  backgroundColor: "#fff",
                 },
-                invalid: { color: "#9e2146" },
+                invalid: { color: "#e3342f" },
               },
             }}
           />
-          <button
-            type="submit"
-            disabled={!stripe || loading}
-            className={styles.button}
-          >
-            {loading ? "Processing..." : "Pay Now"}
-          </button>
-          {message && <p className={styles.error}>{message}</p>}
         </div>
+
+        <button
+          type="submit"
+          disabled={!stripe || loading}
+          className={styles.button}
+        >
+          {loading ? "Processing..." : "Pay Now"}
+        </button>
+
+        {message && <p className={styles.error}>{message}</p>}
       </form>
       <Footer_02 />
     </div>
