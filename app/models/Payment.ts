@@ -1,3 +1,4 @@
+// app/models/Payment.ts
 import mongoose, { Schema, Document, model } from 'mongoose';
 
 export interface IPayment extends Document {

@@ -1,59 +1,62 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/Components/Navbar';
 import Footer1 from '@/Components/Footer_01';
+import { getAuthUser } from '@/lib/auth';
+import { createSubscription, redirectToSubscriptionCheckout } from '@/lib/subscription';
 
 const MMAClassPage = () => {
   const router = useRouter();
+  const [authUser, setAuthUser] = useState(getAuthUser());
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const user = getAuthUser();
+      setAuthUser(user);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
 
   const goBackToClasses = () => {
     router.push('/#featured-classes');
   };
 
-  /*const enrollNow = () => {
-    const userId = localStorage.getItem('userId');
-    if (userId) {
-      router.push('/kalana/checkout');
-    } else {
-      router.push('/lithira/Authform');
-    }
-  }; */
-
   const enrollNow = async () => {
-  const userId = localStorage.getItem("userId");
-
-  if (!userId) {
-    router.push("/lithira/Authform");
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/enrollments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        className: "mma", 
-        totalAmount: 15,      
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("🔴 Server responded with error:", data);
-      throw new Error(data.error || "Failed to create enrollment");
+    if (!authUser) {
+      router.push("/lithira/Authform");
+      return;
     }
 
-    router.push(`/kalana/checkout?enrollmentId=${data._id}`);
-  } catch (error) {
-    console.error("Enrollment creation failed", error);
-    alert("Could not create enrollment, please try again.");
-  }
-};
+    try {
+      const res = await fetch("/api/enrollments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: authUser.userId,
+          className: "mma", 
+          totalAmount: 15,      
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("🔴 Server responded with error:", data);
+        throw new Error(data.error || "Failed to create enrollment");
+      }
+
+      router.push(`/kalana/checkout?enrollmentId=${data._id}`);
+    } catch (error) {
+      console.error("Enrollment creation failed", error);
+      alert("Could not create enrollment, please try again.");
+    }
+  };
 
 
   return (
@@ -133,19 +136,24 @@ const MMAClassPage = () => {
         <div className="enrollment-section">
           <div className="price-tag">$15</div>
           <div className="price-period">per month</div>
-          <button className="enroll-btn" onClick={enrollNow}>
-            Enroll Now
+          <button 
+            className="enroll-btn" 
+            onClick={enrollNow}
+            disabled={isLoading}
+          >
+            {isLoading ? "Loading..." : authUser ? "Enroll Now" : "Login to Enroll"}
           </button>
-          <div className="enrollment-benefits">
-            <h4>What's Included:</h4>
-            <ul>
-              <li>Unlimited MMA training sessions</li>
-              <li>Pro coaching staff</li>
-              <li>Protective gear & gloves</li>
-              <li>Drills & sparring routines</li>
-              <li>Progress evaluations</li>
-            </ul>
-          </div>
+                      <div className="enrollment-benefits">
+              <h4>What's Included:</h4>
+              <ul>
+                <li>Unlimited MMA training sessions</li>
+                <li>Pro coaching staff</li>
+                <li>Protective gear & gloves</li>
+                <li>Drills & sparring routines</li>
+                <li>Progress evaluations</li>
+
+              </ul>
+            </div>
         </div>
       </main>
 
