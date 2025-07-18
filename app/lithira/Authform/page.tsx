@@ -9,6 +9,8 @@ import {
   FaEyeSlash,
   FaCamera,
 } from "react-icons/fa";
+import Navbar from "@/Components/Navbar";
+import Footer1 from "@/Components/Footer_01";
 
 interface SignUpData {
   name: string;
@@ -39,13 +41,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     role: "",
     profileImage: null,
   });
-
   const [loginData, setLoginData] = useState<LoginData>({
     email: "",
     password: "",
   });
-
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignUpChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -81,9 +82,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       return;
     }
 
-    // Check for admin credentials
-    if (loginData.email === "admin@123.com" && loginData.password === "123456") {
-      alert("Admin login successful!");
+    setIsLoading(true);
+
+    // Admin login (if needed)
+    if (
+      loginData.email === "admin@123.com" &&
+      loginData.password === "123456"
+    ) {
       localStorage.setItem("userRole", "admin");
       localStorage.setItem("userEmail", "admin@123.com");
       localStorage.setItem("userName", "Admin");
@@ -102,17 +107,34 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       const data = await res.json();
 
       if (res.ok) {
-        alert(data.message);
-        localStorage.setItem("userRole", data.user.role);
+        if (data.user.status === "suspended") {
+          alert("Your account has been suspended. Please contact support.");
+          return;
+        }
+
+        // Store user data in localStorage with consistent naming
+        localStorage.setItem("userRole", data.user.role); // This should now be lowercase
         localStorage.setItem("userEmail", data.user.email);
         localStorage.setItem("userName", data.user.name);
         localStorage.setItem("userId", data.user.id);
+        localStorage.setItem("userStatus", data.user.status || "active");
+
+        if (data.user.profileImage) {
+          localStorage.setItem("profileImage", data.user.profileImage);
+        }
+
+        console.log("Login successful, stored role:", data.user.role); // Debug log
+
+        alert("Login successful!");
         router.push("/");
       } else {
         alert(data.error || "Login failed");
       }
     } catch (error) {
-      alert("Login failed");
+      console.error("Login error:", error);
+      alert("Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -147,25 +169,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     let imageUrl = "";
 
     try {
-      const toBase64 = (file: File): Promise<string> =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (error) => reject(error);
-        });
-
-      const base64Image = await toBase64(signUpData.profileImage);
+      const formData = new FormData();
+      formData.append("file", signUpData.profileImage);
 
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64Image }),
+        body: formData,
       });
 
       const uploadData = await uploadRes.json();
       if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed");
-
       imageUrl = uploadData.url;
     } catch (err) {
       console.error("Image upload failed:", err);
@@ -173,12 +186,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       return;
     }
 
+    // Register user
     const userData = {
       name: signUpData.name,
       email: signUpData.email,
       password: signUpData.password,
       role: signUpData.role,
       profileImage: imageUrl,
+      status: "pending", // New users are pending approval
     };
 
     try {
@@ -193,18 +208,20 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       if (res.ok) {
         alert(data.message);
         localStorage.setItem("userId", data.userId);
-
-        if (onNewUser) {
+        if (onNewUser)
           onNewUser({ name: signUpData.name, role: signUpData.role });
-        }
 
-        if (signUpData.role === "trainer") {
-          localStorage.setItem("trainerProfileImage", imageUrl);
-          router.push("/lithira/trainerregform");
-        } else {
-          localStorage.setItem("memberProfileImage", imageUrl);
-          router.push("/lithira/memberregform");
-        }
+        const profileKey =
+          signUpData.role === "trainer"
+            ? "trainerProfileImage"
+            : "memberProfileImage";
+        localStorage.setItem(profileKey, imageUrl);
+
+        router.push(
+          signUpData.role === "trainer"
+            ? "/lithira/trainerregform"
+            : "/lithira/memberregform"
+        );
       } else {
         alert(data.error);
       }
@@ -225,170 +242,192 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen w-screen bg-black text-white">
-      <div className="flex w-[800px] shadow-xl">
-        {/* Sign Up Section */}
-        <div className="w-1/2 bg-gray-800 p-6 flex flex-col items-center rounded-l-lg">
-          <label className="mb-4 cursor-pointer relative w-20 h-20">
-            {signUpData.profileImage ? (
-              <img
-                src={URL.createObjectURL(signUpData.profileImage)}
-                alt="Profile"
-                className="w-full h-full object-cover rounded-full border-2 border-red-500"
-              />
-            ) : (
-              <div className="bg-gray-700 p-4 rounded-full border-2 border-red-500 flex items-center justify-center w-full h-full">
-                <FaCamera className="text-3xl text-white" />
-              </div>
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              name="profileImage"
-              className="hidden"
-              onChange={handleSignUpChange}
-            />
-          </label>
-
-          <select
-            name="role"
-            value={signUpData.role}
-            onChange={handleSignUpChange}
-            className="bg-red-600 text-white px-3 py-2 rounded-lg mb-4"
-            required
+    <div className="min-h-screen flex flex-col w-screen bg-gray-200 text-white">
+      {" "}
+      {/* Changed bg-black to bg-gray-200 (ash) */}
+      <Navbar />
+      <div className="flex flex-1 justify-center items-center w-full">
+        <div className="flex w-[800px] min-h-[500px] shadow-xl">
+          {/* Sign Up Section */}
+          <div
+            className="w-1/2 bg-white/90 backdrop-blur-md p-6 flex flex-col items-center rounded-l-lg border border-white/30 shadow-lg"
+            style={{ boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)" }}
           >
-            <option value="" disabled>Select Role</option>
-            <option value="member">Member</option>
-            <option value="trainer">Trainer</option>
-          </select>
-
-          <h2 className="text-xl font-bold mb-4 text-center">
-            CREATE Your New Account
-          </h2>
-
-          <form onSubmit={handleSubmit} className="space-y-3 w-full">
-            <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500">
-              <FaUser className="mr-2" />
+            <label className="mb-4 cursor-pointer relative w-20 h-20">
+              {signUpData.profileImage ? (
+                <img
+                  src={URL.createObjectURL(signUpData.profileImage)}
+                  alt="Profile"
+                  className="w-full h-full object-cover rounded-full border-2 border-red-500"
+                />
+              ) : (
+                <div className="bg-gray-700 p-4 rounded-full border-2 border-red-500 flex items-center justify-center w-full h-full">
+                  <FaCamera className="text-3xl text-white" />
+                </div>
+              )}
               <input
-                type="text"
-                name="name"
-                placeholder="Name"
-                className="bg-transparent w-full outline-none"
-                value={signUpData.name}
+                type="file"
+                accept="image/*"
+                name="profileImage"
+                className="hidden"
                 onChange={handleSignUpChange}
-                required
               />
-            </div>
+            </label>
 
-            <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500">
-              <FaEnvelope className="mr-2" />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                className="bg-transparent w-full outline-none"
-                value={signUpData.email}
-                onChange={handleSignUpChange}
-                required
-              />
-            </div>
+            <select
+              name="role"
+              value={signUpData.role}
+              onChange={handleSignUpChange}
+              className="bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 mb-4 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition"
+              required
+            >
+              <option value="" disabled>
+                Select Role
+              </option>
+              <option value="member">Member</option>
+              <option value="trainer">Trainer</option>
+            </select>
 
-            {["password", "confirmPassword"].map((field) => (
-              <div
-                key={field}
-                className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500 relative"
-              >
-                <FaLock className="mr-2" />
+            <h2 className="text-xl font-bold mb-4 text-center text-gray-800">
+              CREATE Your New Account
+            </h2>
+
+            <form onSubmit={handleSubmit} className="space-y-3 w-full">
+              <div className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition">
+                <FaUser className="mr-2" />
                 <input
-                  type={showPassword[field] ? "text" : "password"}
-                  name={field}
-                  placeholder={field === "password" ? "Enter Password" : "Confirm Password"}
+                  type="text"
+                  name="name"
+                  placeholder="Name"
                   className="bg-transparent w-full outline-none"
-                  value={signUpData[field as keyof SignUpData] as string}
+                  value={signUpData.name}
                   onChange={handleSignUpChange}
                   required
+                />
+              </div>
+
+              <div className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition">
+                <FaEnvelope className="mr-2" />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  className="bg-transparent w-full outline-none"
+                  value={signUpData.email}
+                  onChange={handleSignUpChange}
+                  required
+                />
+              </div>
+
+              {["password", "confirmPassword"].map((field) => (
+                <div
+                  key={field}
+                  className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition relative"
+                >
+                  <FaLock className="mr-2" />
+                  <input
+                    type={showPassword[field] ? "text" : "password"}
+                    name={field}
+                    placeholder={
+                      field === "password" ? "Password" : "Confirm Password"
+                    }
+                    className="bg-transparent w-full outline-none"
+                    value={signUpData[field as keyof SignUpData] as string}
+                    onChange={handleSignUpChange}
+                    required
+                  />
+                  <div
+                    className="cursor-pointer"
+                    onClick={() =>
+                      setShowPassword((prev) => ({
+                        ...prev,
+                        [field]: !prev[field],
+                      }))
+                    }
+                  >
+                    {showPassword[field] ? <FaEyeSlash /> : <FaEye />}
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex w-full gap-2 mt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg px-4 py-3 text-lg transition disabled:opacity-50"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Processing..." : "Proceed"}
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold rounded-lg px-4 py-3 text-lg transition"
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Login Section */}
+          <div
+            className="w-1/2 bg-white/90 backdrop-blur-md p-6 flex flex-col justify-center items-center rounded-r-lg border border-white/30 shadow-lg"
+            style={{ boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.37)" }}
+          >
+            <h2 className="text-xl font-bold mb-6 text-gray-800 text-center">
+              Log In to Your Account
+            </h2>
+
+            <div className="space-y-3 w-full">
+              <div className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition">
+                <FaEnvelope className="mr-2" />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email"
+                  className="bg-transparent w-full outline-none"
+                  value={loginData.email}
+                  onChange={handleLoginChange}
+                />
+              </div>
+
+              <div className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition">
+                <FaLock className="mr-2" />
+                <input
+                  type={showPassword["loginPassword"] ? "text" : "password"}
+                  name="password"
+                  placeholder="Password"
+                  className="bg-transparent w-full outline-none"
+                  value={loginData.password}
+                  onChange={handleLoginChange}
                 />
                 <div
                   className="cursor-pointer"
                   onClick={() =>
                     setShowPassword((prev) => ({
                       ...prev,
-                      [field]: !prev[field],
+                      loginPassword: !prev.loginPassword,
                     }))
                   }
                 >
-                  {showPassword[field] ? <FaEyeSlash /> : <FaEye />}
+                  {showPassword["loginPassword"] ? <FaEyeSlash /> : <FaEye />}
                 </div>
               </div>
-            ))}
 
-            <div className="flex justify-between mt-4">
               <button
                 type="submit"
-                className="bg-red-600 px-4 py-2 rounded-lg w-[48%]"
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg px-4 py-3 text-lg transition disabled:opacity-50"
+                onClick={handleLogin}
+                disabled={isLoading}
               >
-                Proceed
-              </button>
-              <button
-                type="button"
-                className="bg-gray-500 px-4 py-2 rounded-lg w-[48%]"
-                onClick={handleCancel}
-              >
-                Cancel
+                {isLoading ? "Logging in..." : "Login"}
               </button>
             </div>
-          </form>
-        </div>
-
-        {/* Login Section */}
-        <div className="w-1/2 bg-gray-800 p-6 flex flex-col justify-center items-center rounded-r-lg">
-          <h2 className="text-xl font-bold mb-6">Log In to Your Account</h2>
-
-          <div className="space-y-3 w-full">
-            <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500">
-              <FaEnvelope className="mr-2" />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                className="bg-transparent w-full outline-none"
-                value={loginData.email}
-                onChange={handleLoginChange}
-              />
-            </div>
-
-            <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500">
-              <FaLock className="mr-2" />
-              <input
-                type={showPassword["loginPassword"] ? "text" : "password"}
-                name="password"
-                placeholder="Password"
-                className="bg-transparent w-full outline-none"
-                value={loginData.password}
-                onChange={handleLoginChange}
-              />
-              <div
-                className="cursor-pointer"
-                onClick={() =>
-                  setShowPassword((prev) => ({
-                    ...prev,
-                    loginPassword: !prev.loginPassword,
-                  }))
-                }
-              >
-                {showPassword["loginPassword"] ? <FaEyeSlash /> : <FaEye />}
-              </div>
-            </div>
-
-            <button
-              className="bg-red-600 px-4 py-2 rounded-lg w-full"
-              onClick={handleLogin}
-            >
-              Log In
-            </button>
           </div>
         </div>
       </div>
+      <Footer1 />
     </div>
   );
 };
