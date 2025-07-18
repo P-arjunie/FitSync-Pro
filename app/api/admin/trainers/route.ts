@@ -3,14 +3,16 @@ import { connectToDatabase } from "@/lib/mongodb"; // Import function to connect
 import ApprovedTrainer from "@/models/ApprovedTrainer"; // Import the ApprovedTrainer model
 import { NextResponse } from "next/server"; // Import Next.js response helper
 
-// GET handler to retrieve all approved trainers from the database
+// GET handler to retrieve all approved and suspended trainers from the database
 export async function GET() {
   try {
     // Establish a connection to the MongoDB database
     await connectToDatabase();
 
-    // Fetch all documents from the ApprovedTrainer collection
-    const trainers = await ApprovedTrainer.find();
+    // Fetch all documents from the ApprovedTrainer collection with status "approved" or "suspended"
+    const trainers = await ApprovedTrainer.find({ 
+      status: { $in: ["approved", "suspended"] } 
+    });
 
     // Return the list of trainers as a JSON response
     return NextResponse.json(trainers);

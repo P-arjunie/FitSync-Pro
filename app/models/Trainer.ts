@@ -16,14 +16,17 @@ export interface ITrainer extends Document {
   yearsOfExperience: string;
   availability: string;
   pricingPlan: string;
-  emergencyName: string;
-  emergencyPhone: string;
+  emergencyContact: {
+    name: string;
+    phone: string;
   relationship: string;
+  };
   startDate?: Date;
   termsAccepted: boolean;
   profileImage: string;
   status: "pending" | "approved";
   submittedAt: Date;
+  password: string;
 
 
   biography: string;
@@ -47,14 +50,17 @@ const TrainerSchema = new Schema<ITrainer>({
   yearsOfExperience: { type: String, required: true },
   availability: { type: String, required: true },
   pricingPlan: { type: String, required: true },
-  emergencyName: { type: String, required: true },
-  emergencyPhone: { type: String, required: true },
+  emergencyContact: {
+    name: { type: String, required: true },
+    phone: { type: String, required: true },
   relationship: { type: String, required: true },
+  },
   startDate: { type: Date },
   termsAccepted: { type: Boolean, required: true },
   profileImage: { type: String, required: true },
   status: { type: String, enum: ["pending", "approved"], default: "pending" },
   submittedAt: { type: Date, default: Date.now },
+  password: { type: String, required: true, select: false },
 
 
   biography: { type: String, default: "" },
@@ -68,26 +74,44 @@ const TrainerSchema = new Schema<ITrainer>({
   ],
 });
 
-<<<<<<< Updated upstream
-export default mongoose.models.Trainer || mongoose.model<ITrainer>("Trainer", TrainerSchema);
-=======
-trainerSchema.pre("save", async function(next) {
-  if (!this.isModified("password")) return next();
-  
+// Pre-save middleware to hash password
+TrainerSchema.pre('save', async function(next) {
+  const trainer = this as any;
+  if (!trainer.isModified('password')) {
+    return next();
+  }
   try {
-    const salt = await bcrypt.genSalt(12); // Use 12 rounds for consistency
-    const hash = await bcrypt.hash(this.password, salt);
-    this.password = hash;
+    if (!trainer.password || trainer.password.length < 6) {
+      throw new Error('Password must be at least 6 characters long');
+    }
+    // Only hash if not already a bcrypt hash (any salt rounds)
+    const bcryptRegex = /^\$2[abxy]?\$\d{2}\$[./A-Za-z0-9]{53}$/;
+    if (bcryptRegex.test(trainer.password)) {
+      console.log('[Trainer pre-save] Password already a bcrypt hash, skipping hash.');
+      return next();
+    }
+    console.log('[Trainer pre-save] Hashing password.');
+    // Use bcryptjs for hashing
+    const bcryptjs = require('bcryptjs');
+    trainer.password = await bcryptjs.hash(trainer.password, 12);
     next();
-  } catch (err) {
-    console.error("Hashing failed:", err);
-    next(new Error("Password hashing failed"));
+  } catch (error) {
+    next(error as any);
   }
 });
 
-// Critical Change 2: Force model recompilation
-delete models.Trainer;
-const Trainer = model("Trainer", trainerSchema);
+// Instance method to compare password
+TrainerSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
+  const bcryptjs = require('bcryptjs');
+  return await bcryptjs.compare(password, this.password);
+};
 
-export default Trainer;
->>>>>>> Stashed changes
+// Ensure password field is never returned in queries by default
+TrainerSchema.set('toJSON', {
+  transform: function(doc, ret) {
+    delete ret.password;
+    return ret;
+  }
+});
+
+export default mongoose.models.Trainer || mongoose.model<ITrainer>("Trainer", TrainerSchema);

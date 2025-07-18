@@ -16,20 +16,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     console.log(`📋 Member ID: ${id}`);
 
     // Find the pending member using the provided ID from the route parameters
-    const pending = await PendingMember.findById(id);
+    const pending = await PendingMember.findById(id).select('+password');
 
     // If no pending member is found, return a 404 response
     if (!pending) {
       console.log("❌ Member not found in database");
-      return NextResponse.json({ message: "Member not found" }, { status: 404 });
+      return NextResponse.json({ message: "Pending member not found" }, { status: 404 });
     }
 
-<<<<<<< Updated upstream
-    // Convert the pending member document to a plain object and create a new approved member
-    const approvedMember = new Member(pending.toObject());
-
-    // Save the new approved member to the Member collection
-=======
     console.log(`✅ Found pending member: ${pending.email}`);
 
     // Check if member with this email already exists in approved members
@@ -39,59 +33,65 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ message: "Member already exists in approved collection" }, { status: 409 });
     }
 
-    // Create approved member with all required fields
+    // Copy all required fields from pending member
     const approvedMemberData = {
       firstName: pending.firstName,
       lastName: pending.lastName,
       email: pending.email,
-      password: pending.password, // Transfer the hashed password
+      password: pending.password,
       contactNumber: pending.contactNumber,
       dob: pending.dob,
       gender: pending.gender,
-      nic: pending.nic || "", // Handle if NIC is not in pending schema
       address: pending.address,
-      emergencyContact: {
-        name: pending.emergencyContact?.name || "",
-        relationship: pending.emergencyContact?.relationship || "",
-        phone: pending.emergencyContact?.phone || "",
-      },
-      membershipInfo: {
-        plan: pending.membershipInfo?.plan || "",
-        startDate: pending.membershipInfo?.startDate || "",
-        paymentPlan: pending.membershipInfo?.paymentPlan || "",
-      },
+      emergencyContact: pending.emergencyContact,
+      membershipInfo: pending.membershipInfo,
       image: pending.image,
       currentWeight: pending.currentWeight,
       height: pending.height,
       bmi: pending.bmi,
       goalWeight: pending.goalWeight,
-      status: "approved", // Set status to approved
-      role: "member", // Ensure role is set
+      termsAccepted: pending.termsAccepted !== undefined ? pending.termsAccepted : true,
+      role: "member",
+      status: "approved"
     };
 
-    console.log("📝 Creating approved member with data:", {
-      firstName: approvedMemberData.firstName,
-      lastName: approvedMemberData.lastName,
-      email: approvedMemberData.email,
-      role: approvedMemberData.role,
-      status: approvedMemberData.status
-    });
+    // Log the full data object
+    console.log("📝 Creating approved member with data:", approvedMemberData);
 
-    // Create and save the new approved member
-    const approvedMember = new Member(approvedMemberData);
->>>>>>> Stashed changes
-    await approvedMember.save();
-    console.log(`✅ Approved member created with ID: ${approvedMember._id}`);
+    // Create the approved member with error handling
+    let approvedMember;
+    try {
+      // Use insertOne to avoid pre-save middleware that would double-hash the password
+      const result = await Member.collection.insertOne(approvedMemberData);
+      approvedMember = { _id: result.insertedId, ...approvedMemberData };
+      console.log("✅ Approved member created with ID:", approvedMember._id);
+      // Log the collection name
+      console.log("Member model collection name:", Member.collection.name);
+      // Log all members in the collection
+      const allMembers = await Member.find({});
+      console.log("All members in collection after creation:", allMembers);
+    } catch (err) {
+      console.error("❌ Error creating approved member:", err);
+      return NextResponse.json({ message: "Error creating approved member", error: err instanceof Error ? err.message : err }, { status: 500 });
+    }
 
-    // Remove the pending member from the PendingMember collection
+    // Delete the pending member
     await PendingMember.findByIdAndDelete(id);
-    console.log(`🗑️ Deleted pending member: ${pending.email}`);
+    console.log("🗑️ Deleted pending member:", pending.email);
 
-    // Return a success response
-    return NextResponse.json({ message: "Member approved" });
+    return NextResponse.json({ message: "Member approved", memberId: approvedMember._id });
   } catch (error) {
     // Handle any errors and return a 500 error response
-    return NextResponse.json({ message: "Error approving member", error }, { status: 500 });
+    console.error('❌ Error approving member:', error);
+    let errorMessage = 'Unknown error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      if ((error as any).errors) {
+        // If it's a Mongoose validation error, include details
+        errorMessage += ' | Validation errors: ' + JSON.stringify((error as any).errors);
+      }
+    }
+    return NextResponse.json({ message: "Error approving member", error: errorMessage }, { status: 500 });
   }
 }
 

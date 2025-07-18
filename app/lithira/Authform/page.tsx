@@ -9,11 +9,8 @@ import {
   FaEyeSlash,
   FaCamera,
 } from "react-icons/fa";
-<<<<<<< Updated upstream
-=======
 import Navbar from "@/Components/Navbar";
 import Footer1 from "@/Components/Footer_01";
->>>>>>> Stashed changes
 
 interface SignUpData {
   name: string;
@@ -44,19 +41,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     role: "",
     profileImage: null,
   });
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
   const [loginData, setLoginData] = useState<LoginData>({
     email: "",
     password: "",
   });
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignUpChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -86,21 +76,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-<<<<<<< Updated upstream
-=======
-  // Replace the handleLogin function in your AuthForm component
->>>>>>> Stashed changes
   const handleLogin = async () => {
     if (!loginData.email || !loginData.password) {
       alert("Please enter email and password to login.");
       return;
     }
 
-<<<<<<< Updated upstream
-    // Check for admin credentials
-    if (loginData.email === "admin@123.com" && loginData.password === "123456") {
-      alert("Admin login successful!");
-=======
     setIsLoading(true);
 
     // Admin login (if needed)
@@ -108,7 +89,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       loginData.email === "admin@123.com" &&
       loginData.password === "123456"
     ) {
->>>>>>> Stashed changes
       localStorage.setItem("userRole", "admin");
       localStorage.setItem("userEmail", "admin@123.com");
       localStorage.setItem("userName", "Admin");
@@ -127,13 +107,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       const data = await res.json();
 
       if (res.ok) {
-<<<<<<< Updated upstream
-        alert(data.message);
-        localStorage.setItem("userRole", data.user.role);
-        localStorage.setItem("userEmail", data.user.email);
-        localStorage.setItem("userName", data.user.name);
-        localStorage.setItem("userId", data.user.id);
-=======
         if (data.user.status === "suspended") {
           alert("Your account has been suspended. Please contact support.");
           return;
@@ -153,20 +126,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
         console.log("Login successful, stored role:", data.user.role); // Debug log
 
         alert("Login successful!");
->>>>>>> Stashed changes
         router.push("/");
       } else {
         alert(data.error || "Login failed");
       }
     } catch (error) {
-<<<<<<< Updated upstream
-      alert("Login failed");
-=======
       console.error("Login error:", error);
       alert("Login failed. Please try again.");
     } finally {
       setIsLoading(false);
->>>>>>> Stashed changes
     }
   };
 
@@ -201,50 +169,31 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     let imageUrl = "";
 
     try {
-      const toBase64 = (file: File): Promise<string> =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (error) => reject(error);
-        });
-
-      const base64Image = await toBase64(signUpData.profileImage);
+      const formData = new FormData();
+      formData.append("file", signUpData.profileImage);
 
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64Image }),
+        body: formData,
       });
 
       const uploadData = await uploadRes.json();
       if (!uploadRes.ok) throw new Error(uploadData.error || "Upload failed");
-
-<<<<<<< Updated upstream
       imageUrl = uploadData.url;
     } catch (err) {
       console.error("Image upload failed:", err);
       alert("Image upload failed.");
       return;
     }
-=======
-      // Register user
-      const userData = {
-        name: signUpData.name,
-        email: signUpData.email,
-        password: signUpData.password,
-        role: signUpData.role,
-        profileImage: imageUrl,
-        status: "pending", // New users are pending approval
-      };
->>>>>>> Stashed changes
 
+    // Register user
     const userData = {
       name: signUpData.name,
       email: signUpData.email,
       password: signUpData.password,
       role: signUpData.role,
       profileImage: imageUrl,
+      status: "pending", // New users are pending approval
     };
 
     try {
@@ -259,20 +208,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       if (res.ok) {
         alert(data.message);
         localStorage.setItem("userId", data.userId);
-<<<<<<< Updated upstream
-
-        if (onNewUser) {
-          onNewUser({ name: signUpData.name, role: signUpData.role });
-        }
-
-        if (signUpData.role === "trainer") {
-          localStorage.setItem("trainerProfileImage", imageUrl);
-          router.push("/lithira/trainerregform");
-        } else {
-          localStorage.setItem("memberProfileImage", imageUrl);
-          router.push("/lithira/memberregform");
-        }
-=======
         if (onNewUser)
           onNewUser({ name: signUpData.name, role: signUpData.role });
 
@@ -287,7 +222,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
             ? "/lithira/trainerregform"
             : "/lithira/memberregform"
         );
->>>>>>> Stashed changes
       } else {
         alert(data.error);
       }
@@ -362,15 +296,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
               <div className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition">
                 <FaUser className="mr-2" />
                 <input
-<<<<<<< Updated upstream
-                  type={showPassword[field] ? "text" : "password"}
-                  name={field}
-                  placeholder={field === "password" ? "Enter Password" : "Confirm Password"}
-=======
                   type="text"
                   name="name"
                   placeholder="Name"
->>>>>>> Stashed changes
                   className="bg-transparent w-full outline-none"
                   value={signUpData.name}
                   onChange={handleSignUpChange}
@@ -488,70 +416,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
               </div>
 
               <button
-<<<<<<< Updated upstream
                 type="submit"
-                className="bg-red-600 px-4 py-2 rounded-lg w-[48%]"
-              >
-                Proceed
-              </button>
-              <button
-                type="button"
-                className="bg-gray-500 px-4 py-2 rounded-lg w-[48%]"
-                onClick={handleCancel}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Login Section */}
-        <div className="w-1/2 bg-gray-800 p-6 flex flex-col justify-center items-center rounded-r-lg">
-          <h2 className="text-xl font-bold mb-6">Log In to Your Account</h2>
-
-          <div className="space-y-3 w-full">
-            <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500">
-              <FaEnvelope className="mr-2" />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email"
-                className="bg-transparent w-full outline-none"
-                value={loginData.email}
-                onChange={handleLoginChange}
-              />
-            </div>
-
-            <div className="flex items-center bg-gray-700 rounded-lg px-3 py-2 border border-red-500">
-              <FaLock className="mr-2" />
-              <input
-                type={showPassword["loginPassword"] ? "text" : "password"}
-                name="password"
-                placeholder="Password"
-                className="bg-transparent w-full outline-none"
-                value={loginData.password}
-                onChange={handleLoginChange}
-              />
-              <div
-                className="cursor-pointer"
-                onClick={() =>
-                  setShowPassword((prev) => ({
-                    ...prev,
-                    loginPassword: !prev.loginPassword,
-                  }))
-                }
-              >
-                {showPassword["loginPassword"] ? <FaEyeSlash /> : <FaEye />}
-              </div>
-            </div>
-
-            <button
-              className="bg-red-600 px-4 py-2 rounded-lg w-full"
-              onClick={handleLogin}
-            >
-              Log In
-            </button>
-=======
                 className="w-full bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg px-4 py-3 text-lg transition disabled:opacity-50"
                 onClick={handleLogin}
                 disabled={isLoading}
@@ -559,7 +424,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
                 {isLoading ? "Logging in..." : "Login"}
               </button>
             </div>
->>>>>>> Stashed changes
           </div>
         </div>
       </div>

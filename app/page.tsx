@@ -161,60 +161,12 @@ const HomePage: React.FC = () => {
   }, []);
 
   // In the HomePage component, update the renderHeroButtons function:
-<<<<<<< Updated upstream
-const renderHeroButtons = () => {
-  if (isLoading) {
-    return (
-      <div className="hero-button-container">
-        <button className="button" disabled>Loading...</button>
-      </div>
-    );
-  }
-
-  if (user) {
-    // User is authenticated
-    if (user.role === 'admin') {
-      // Admin user - show admin management buttons
-      return (
-        <div className="hero-button-container">
-          <button className="button" onClick={handleAdminUserManagement}>
-            Manage Members
-          </button>
-          <button className="button" onClick={handleUserInfo}>
-            Manage New Users
-          </button>
-          <button className="button" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      );
-    } else {
-      // Regular user (member/trainer) - show user-specific options
-      return (
-        <div className="hero-button-container">
-          <button 
-            className="button" 
-            onClick={() => {
-              if (user.role === 'member') {
-                router.push('/lithira/MemberProfilePage');
-              } else if (user.role === 'trainer') {
-                router.push('/lithira/TrainerProfilePage');
-              }
-            }}
-          >
-            Profile
-          </button>
-          <button className="button" onClick={handleLogout}>
-            Logout
-=======
-  // Replace the renderHeroButtons function in your HomePage component
   const renderHeroButtons = () => {
     if (isLoading) {
       return (
         <div className="hero-button-container">
           <button className="button" disabled>
             Loading...
->>>>>>> Stashed changes
           </button>
         </div>
       );

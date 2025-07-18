@@ -26,10 +26,11 @@ interface TrainerFormData {
   emergencyName: string;
   emergencyPhone: string;
   relationship: string;
-  
   termsAccepted: boolean;
   biography: string;
   skills: Skill[];
+  password: string;
+  confirmPassword: string;
 }
 
 export default function TrainerRegistrationForm() {
@@ -53,10 +54,11 @@ export default function TrainerRegistrationForm() {
     emergencyName: "",
     emergencyPhone: "",
     relationship: "",
-    
     termsAccepted: false,
     biography: "",
     skills: [],
+    password: "",
+    confirmPassword: "",
   });
 
   useEffect(() => {
@@ -65,7 +67,9 @@ export default function TrainerRegistrationForm() {
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const target = e.target;
     const { name, type, value } = target;
@@ -91,101 +95,123 @@ export default function TrainerRegistrationForm() {
     }
   };
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  // Basic field validation
-  const requiredFields = [
-    "firstName",
-    "lastName",
-    "email",
-    "phone",
-    "dob",
-    "gender",
-    "address",
-    "specialization",
-    "certifications",
-    "preferredTrainingHours",
-    "yearsOfExperience",
-    "availability",
-    "pricingPlan",
-    "emergencyName",
-    "emergencyPhone",
-    "relationship",
-    
-    "biography",
-  ];
+    // Password validation
+    if (formData.password.length < 6) {
+      alert("Password should be at least 6 characters.");
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
 
-  for (const field of requiredFields) {
-    const value = formData[field as keyof TrainerFormData];
+    // Basic field validation
+    const requiredFields = [
+      "firstName",
+      "lastName",
+      "email",
+      "phone",
+      "dob",
+      "gender",
+      "address",
+      "specialization",
+      "certifications",
+      "preferredTrainingHours",
+      "yearsOfExperience",
+      "availability",
+      "pricingPlan",
+      "emergencyName",
+      "emergencyPhone",
+      "relationship",
+
+      "biography",
+    ];
+
+    for (const field of requiredFields) {
+      const value = formData[field as keyof TrainerFormData];
+      if (typeof value === "string" && value.trim() === "") {
+        alert(`Please fill out the "${field}" field.`);
+        return;
+      }
+      if (Array.isArray(value) && value.length === 0) {
+        alert(`Please enter at least one value for "${field}".`);
+        return;
+      }
+    }
+
+    // Terms check
+    if (!formData.termsAccepted) {
+      alert("Please accept the terms and conditions.");
+      return;
+    }
+
+    // Email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    // Phone number format (simple numeric check)
+    const phoneRegex = /^[0-9]{7,15}$/;
     if (
-      typeof value === "string" &&
-      value.trim() === ""
+      !phoneRegex.test(formData.phone) ||
+      !phoneRegex.test(formData.emergencyPhone)
     ) {
-      alert(`Please fill out the "${field}" field.`);
+      alert("Please enter valid phone numbers (7–15 digits).");
       return;
     }
-    if (Array.isArray(value) && value.length === 0) {
-      alert(`Please enter at least one value for "${field}".`);
-      return;
+
+    // Skill validation
+    for (const skill of formData.skills) {
+      if (!skill.name.trim() || skill.level < 1 || skill.level > 5) {
+        alert("Each skill must have a name and a level between 1 and 5.");
+        return;
+      }
     }
-  }
 
-  // Terms check
-  if (!formData.termsAccepted) {
-    alert("Please accept the terms and conditions.");
-    return;
-  }
+    const {
+      emergencyName,
+      emergencyPhone,
+      relationship,
+      confirmPassword,
+      ...rest
+    } = formData;
+    const payload = {
+      ...rest,
+      profileImage,
+      status: "pending",
+      submittedAt: new Date(),
+      emergencyContact: {
+        name: emergencyName,
+        phone: emergencyPhone,
+        relationship: relationship,
+      },
+      password: formData.password,
+    };
 
-  // Email format check
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(formData.email)) {
-    alert("Please enter a valid email address.");
-    return;
-  }
+    try {
+      const res = await fetch("/api/pending-trainers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-  // Phone number format (simple numeric check)
-  const phoneRegex = /^[0-9]{7,15}$/;
-  if (!phoneRegex.test(formData.phone) || !phoneRegex.test(formData.emergencyPhone)) {
-    alert("Please enter valid phone numbers (7–15 digits).");
-    return;
-  }
-
-  // Skill validation
-  for (const skill of formData.skills) {
-    if (!skill.name.trim() || skill.level < 1 || skill.level > 5) {
-      alert("Each skill must have a name and a level between 1 and 5.");
-      return;
+      if (res.ok) {
+        alert("Trainer registration submitted for approval.");
+        router.push("/");
+      } else {
+        const err = await res.json();
+        alert("Submission failed: " + err.message);
+      }
+    } catch (err) {
+      console.error("Submission error:", err);
+      alert("Something went wrong. Please try again later.");
     }
-  }
-
-  const payload = {
-    ...formData,
-    profileImage,
-    status: "pending",
-    submittedAt: new Date(),
   };
-
-  try {
-    const res = await fetch("/api/pending-trainers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (res.ok) {
-      alert("Trainer registration submitted for approval.");
-      router.push("/thank-you");
-    } else {
-      const err = await res.json();
-      alert("Submission failed: " + err.message);
-    }
-  } catch (err) {
-    console.error("Submission error:", err);
-    alert("Something went wrong. Please try again later.");
-  }
-};
-
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-200 to-gray-300">
@@ -242,6 +268,33 @@ export default function TrainerRegistrationForm() {
                 />
               </div>
             ))}
+          </div>
+          {/* Password Fields */}
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Password</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                className="border border-red-500 p-2 rounded"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Confirm Password</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                className="border border-red-500 p-2 rounded"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
           <div className="flex gap-4 mt-4">
             <span className="font-semibold">Gender:</span>
@@ -322,20 +375,20 @@ export default function TrainerRegistrationForm() {
               </div>
             ))}
             <div className="flex flex-col">
-  <label className="text-sm font-semibold">Pricing Plan</label>
-  <select
-    name="pricingPlan"
-    value={formData.pricingPlan}
-    onChange={handleChange}
-    className="border border-red-500 p-2 rounded"
-    required
-  >
-    <option value="">Select a plan</option>
-    <option value="Basic">Basic - $30/month</option>
-    <option value="Standard">Standard - $50/month</option>
-    <option value="Premium">Premium - $80/month</option>
-  </select>
-</div>
+              <label className="text-sm font-semibold">Pricing Plan</label>
+              <select
+                name="pricingPlan"
+                value={formData.pricingPlan}
+                onChange={handleChange}
+                className="border border-red-500 p-2 rounded"
+                required
+              >
+                <option value="">Select a plan</option>
+                <option value="Basic">Basic - $30/month</option>
+                <option value="Standard">Standard - $50/month</option>
+                <option value="Premium">Premium - $80/month</option>
+              </select>
+            </div>
 
             <div className="col-span-2">
               <label className="text-sm font-semibold">

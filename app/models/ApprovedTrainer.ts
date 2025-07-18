@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { PasswordUtils } from "@/lib/password-utils";
 
 export interface IApprovedTrainer extends Document {
   firstName: string;
@@ -14,15 +15,19 @@ export interface IApprovedTrainer extends Document {
   yearsOfExperience: string;
   availability: string;
   pricingPlan: string;
-  emergencyName: string;
-  emergencyPhone: string;
+  emergencyContact: {
+    name: string;
+    phone: string;
   relationship: string;
+  };
   startDate?: Date;
   termsAccepted: boolean;
   profileImage: string;
   submittedAt: Date;
   biography?: string;
   skills?: { name: string; level: number }[];
+  password: string;
+  status?: string;
 }
 
 const approvedTrainerSchema = new Schema<IApprovedTrainer>({
@@ -39,9 +44,11 @@ const approvedTrainerSchema = new Schema<IApprovedTrainer>({
   yearsOfExperience: { type: String, required: true },
   availability: { type: String, required: true },
   pricingPlan: { type: String, required: true },
-  emergencyName: { type: String, required: true },
-  emergencyPhone: { type: String, required: true },
+  emergencyContact: {
+    name: { type: String, required: true },
+    phone: { type: String, required: true },
   relationship: { type: String, required: true },
+  },
   startDate: { type: Date },
   termsAccepted: { type: Boolean, required: true },
   profileImage: { type: String, required: true },
@@ -53,14 +60,12 @@ const approvedTrainerSchema = new Schema<IApprovedTrainer>({
       level: { type: Number, min: 0, max: 100 },
     },
   ],
+  password: { type: String, required: true },
+  status: { type: String, enum: ["approved", "suspended"], default: "approved" },
 });
 
-<<<<<<< Updated upstream
-export default mongoose.models.ApprovedTrainer ||
-  mongoose.model<IApprovedTrainer>("ApprovedTrainer", approvedTrainerSchema);
-=======
 // Pre-save middleware to hash password
-ApprovedTrainerSchema.pre('save', async function(next) {
+approvedTrainerSchema.pre('save', async function(next) {
   const trainer = this as unknown as IApprovedTrainer;
 
   if (!trainer.isModified('password')) {
@@ -92,17 +97,17 @@ ApprovedTrainerSchema.pre('save', async function(next) {
 });
 
 // Instance method to compare password
-ApprovedTrainerSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
+approvedTrainerSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
   return await PasswordUtils.comparePassword(password, this.password);
 };
 
 // Instance method to hash password manually
-ApprovedTrainerSchema.methods.hashPassword = async function(password: string): Promise<void> {
+approvedTrainerSchema.methods.hashPassword = async function(password: string): Promise<void> {
   this.password = await PasswordUtils.hashPassword(password);
 };
 
 // Ensure password field is never returned in queries by default
-ApprovedTrainerSchema.set('toJSON', {
+approvedTrainerSchema.set('toJSON', {
   transform: function(doc, ret) {
     delete ret.password;
     return ret;
@@ -110,5 +115,4 @@ ApprovedTrainerSchema.set('toJSON', {
 });
 
 export default mongoose.models.ApprovedTrainer || 
-  mongoose.model<IApprovedTrainer>('ApprovedTrainer', ApprovedTrainerSchema);
->>>>>>> Stashed changes
+  mongoose.model<IApprovedTrainer>('ApprovedTrainer', approvedTrainerSchema);

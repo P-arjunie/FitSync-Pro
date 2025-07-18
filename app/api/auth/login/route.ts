@@ -1,17 +1,10 @@
-<<<<<<< Updated upstream
-import { NextResponse } from "next/server"; // Import Next.js Response helper
-import { connectToDatabase } from "@/lib/mongodb"; // Import MongoDB connection utility
-import User from "@/models/User"; // Import User model
-import bcrypt from "bcryptjs"; // Import bcryptjs for password hashing and comparison
-=======
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from "@/lib/mongodb";
 import Member from '@/models/member';
 import ApprovedTrainer from '@/models/ApprovedTrainer';
-import User from '@/models/User'; // Add User model import
-import bcrypt from 'bcrypt'; // Direct bcrypt import
-import bcryptjs from 'bcryptjs'; // Add bcryptjs import for compatibility
->>>>>>> Stashed changes
+import User from '@/models/User';
+import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 
 // Define the POST handler function for login
 export async function POST(req: Request) {
@@ -27,15 +20,13 @@ export async function POST(req: Request) {
       );
     }
 
+    // Clean up email and password
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
     // Establish a connection to the MongoDB database
     await connectToDatabase();
 
-<<<<<<< Updated upstream
-    // Look up the user by email in the database
-    const user = await User.findOne({ email });
-    if (!user) {
-      // If user is not found, return an unauthorized error
-=======
     console.log(`\n=== LOGIN ATTEMPT ===`);
     console.log(`Email: ${cleanEmail}`);
     console.log(`Password length: ${cleanPassword.length}`);
@@ -75,17 +66,12 @@ export async function POST(req: Request) {
 
     if (!currentUser || !userRole) {
       console.log('No user found with this email');
->>>>>>> Stashed changes
       return NextResponse.json(
         { error: "Invalid email or password." },
         { status: 401 }
       );
     }
 
-<<<<<<< Updated upstream
-    // ❗️Block login if account is suspended
-    if (user.status === "suspended") {
-=======
     console.log(`User found. Role: ${userRole}`);
     console.log(`User status: ${currentUser.status || 'active'}`);
     console.log('User object for debug:', JSON.stringify(currentUser));
@@ -94,21 +80,12 @@ export async function POST(req: Request) {
     const status = (currentUser.status || '').toString().toLowerCase();
     if (status === 'suspended') {
       console.log('User account is suspended');
->>>>>>> Stashed changes
       return NextResponse.json(
         { error: "Your account is suspended. Please contact the admin." },
         { status: 403 }
       );
     }
 
-<<<<<<< Updated upstream
-    // Compare the provided password with the hashed password in the database
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      // If password doesn't match, return an unauthorized error
-      return NextResponse.json(
-        { error: "Invalid email or password." },
-=======
     // Password validation - TRY BOTH BCRYPT LIBRARIES
     console.log('\n=== PASSWORD VALIDATION ===');
     console.log(`Password field exists: ${!!currentUser.password}`);
@@ -140,13 +117,12 @@ export async function POST(req: Request) {
       const bcryptjsResult = await bcryptjs.compare(cleanPassword, currentUser.password);
       console.log("bcrypt.compare result:", bcryptResult);
       console.log("bcryptjs.compare result:", bcryptjsResult);
-      
+      isPasswordValid = bcryptResult || bcryptjsResult;
       // Test 2: If that doesn't work, try with bcryptjs
       if (!isPasswordValid) {
         isPasswordValid = await bcryptjs.compare(cleanPassword, currentUser.password);
         console.log(`Test 2 - bcryptjs.compare: ${isPasswordValid}`);
       }
-      
       // Test 3: Try with original password (no trim)
       if (!isPasswordValid && password !== cleanPassword) {
         const result1 = await bcrypt.compare(password, currentUser.password);
@@ -154,7 +130,6 @@ export async function POST(req: Request) {
         console.log(`Test 3 - Original password bcrypt: ${result1}, bcryptjs: ${result2}`);
         isPasswordValid = result1 || result2;
       }
-      
       // Test 4: Try some common variations if still not working
       if (!isPasswordValid) {
         const variations = [
@@ -164,7 +139,6 @@ export async function POST(req: Request) {
           cleanPassword.toUpperCase(),
           cleanPassword.charAt(0).toUpperCase() + cleanPassword.slice(1)
         ];
-        
         console.log('Testing password variations...');
         for (const variation of variations) {
           if (variation && variation !== cleanPassword) {
@@ -178,7 +152,6 @@ export async function POST(req: Request) {
           }
         }
       }
-      
     } catch (error) {
       console.error('Bcrypt comparison error:', error);
     }
@@ -188,13 +161,10 @@ export async function POST(req: Request) {
       console.log('\n=== CHECKING FOR PLAIN TEXT PASSWORD ===');
       const bcryptRegex = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
       const isHashFormat = bcryptRegex.test(currentUser.password);
-      
       console.log(`Password is in hash format: ${isHashFormat}`);
-      
       if (!isHashFormat) {
         console.log('Checking for plain text password match');
         isPasswordValid = cleanPassword === currentUser.password;
-        
         if (isPasswordValid) {
           console.log('Plain text match found - upgrading to hashed password');
           try {
@@ -215,14 +185,10 @@ export async function POST(req: Request) {
       console.log('❌ Password validation failed');
       return NextResponse.json(
         { error: "Invalid credentials" },
->>>>>>> Stashed changes
         { status: 401 }
       );
     }
 
-<<<<<<< Updated upstream
-    // If login is successful, return user details (excluding password)
-=======
     console.log('✅ Login successful');
 
     // Prepare user data for response
@@ -246,23 +212,6 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error("\n=== LOGIN ERROR ===", error);
->>>>>>> Stashed changes
-    return NextResponse.json(
-      {
-        message: "Login successful",
-        user: {
-          id: user._id,
-          name: user.name,
-          role: user.role,
-          email: user.email,
-          image: user.image, // Profile image URL
-        },
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    // Handle unexpected errors and return server error response
-    console.error("Login Error:", error);
     return NextResponse.json(
       { error: "Something went wrong. Please try again later." },
       { status: 500 }

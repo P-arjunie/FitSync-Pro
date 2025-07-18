@@ -30,6 +30,7 @@ export interface IMember extends Document {
       default: "approved",
     },
   role: string;
+  password: string;
 }
 
 
@@ -67,45 +68,45 @@ const memberSchema: Schema = new Schema(
       type: String,
       default: "member",
     },
+    password: {
+      type: String,
+      required: true,
+      select: false,
+    },
   },
   { timestamps: true }
 );
 
-<<<<<<< Updated upstream
-=======
 // Pre-save middleware to hash password
 memberSchema.pre('save', async function(next) {
-  const member = this as unknown as IMember;
-  
+  const member = this as any;
   if (!member.isModified('password')) {
     return next();
   }
-  
   try {
     if (!member.password || member.password.length < 6) {
       throw new Error('Password must be at least 6 characters long');
     }
-    
-    member.password = await PasswordUtils.hashPassword(member.password);
-    next();
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error('Password hashing error in pre-save:', error);
-      next(error);
-    } else {
-      next(new Error('Unknown error occurred during password hashing'));
+    // Only hash if not already a bcrypt hash (any salt rounds)
+    const bcryptRegex = /^\$2[abxy]?\$\d{2}\$[./A-Za-z0-9]{53}$/;
+    if (bcryptRegex.test(member.password)) {
+      console.log('[Member pre-save] Password already a bcrypt hash, skipping hash.');
+      return next();
     }
+    console.log('[Member pre-save] Hashing password.');
+    // Use bcryptjs for hashing
+    const bcryptjs = require('bcryptjs');
+    member.password = await bcryptjs.hash(member.password, 12);
+    next();
+  } catch (error) {
+    next(error as any);
   }
 });
 
 // Instance method to compare password
 memberSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
-  return await PasswordUtils.comparePassword(password, this.password);
-};
-
-// Instance method to hash password manually
-memberSchema.methods.hashPassword = async function(password: string): Promise<void> {
-  this.password = await PasswordUtils.hashPassword(password);
+  const bcryptjs = require('bcryptjs');
+  return await bcryptjs.compare(password, this.password);
 };
 
 // Ensure password field is never returned in queries by default
@@ -115,7 +116,6 @@ memberSchema.set('toJSON', {
     return ret;
   }
 });
->>>>>>> Stashed changes
 
 const Member = models.Member || model<IMember>("Member", memberSchema);
 export default Member;
