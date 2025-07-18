@@ -12,6 +12,8 @@ interface IOrder extends Document {
     category: string;
   }[];
   totalAmount: number;
+  orderNumber: string;  // <-- Add this field here
+  status: string; // <-- Add this field here
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,7 +31,18 @@ const orderSchema = new Schema<IOrder>(
         category: { type: String, required: true }
       }
     ],
-    totalAmount: { type: Number, required: true }
+    totalAmount: { type: Number, required: true },
+
+    orderNumber: {  // <-- Add this here
+      type: String,
+      required: true,
+      unique: true
+    },
+    status: {
+      type: String,
+      enum: ["pending", "paid", "shipped", "completed", "cancelled"],
+      default: "pending"
+    }
   },
   { timestamps: true } // Include timestamps for createdAt and updatedAt
 );

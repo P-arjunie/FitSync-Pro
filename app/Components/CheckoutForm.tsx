@@ -1,19 +1,45 @@
 import { useEffect, useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { StripeCardElement } from "@stripe/stripe-js";
-import styles from "./CheckoutForm.module.css";
+import styles from "./checkoutform.module.css";
+import Navbar from "./Navbar";
+import Footer_02 from "./Footer_02";
+import cartImg from "../../public/cart.png";
+import classImg from "../../public/classesb.png";
 
 interface OrderItem {
   title: string;
   price: number;
   quantity: number;
+  image?: string;
 }
 
 interface CheckoutFormProps {
   userId: string;
+  orderItems?: OrderItem[];
+  totalAmount?: number;
+  orderId?: string;
+  enrollmentData?: {
+    className: string;
+    totalAmount: number;
+    enrollmentId: string;
+  };
+   pricingPlanData?: {
+    planName: string;
+    amount: number;
+    pricingPlanId: string;
+  };
 }
 
-const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
+const CheckoutForm: React.FC<CheckoutFormProps> = ({
+  userId,
+  orderItems: orderItemsProp,
+  totalAmount: totalAmountProp,
+  orderId,
+  enrollmentData,
+  pricingPlanData,
+}) => {
+  
   const stripe = useStripe();
   const elements = useElements();
 
@@ -23,29 +49,42 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
   const [totalAmount, setTotalAmount] = useState<number>(0);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await fetch("/api/orders", {
-          headers: { userId },
-        });
-        const data = await res.json();
+    if (!userId) return;
 
-        if (data && Array.isArray(data) && data.length > 0) {
-          const latest = data[data.length - 1];
-          setOrderItems(latest.orderItems);
-          setTotalAmount(latest.totalAmount);
-        } else {
-          setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
-          setTotalAmount(10);
-        }
-      } catch (err) {
-        setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
-        setTotalAmount(10);
-      }
-    };
+    if (orderItemsProp && totalAmountProp !== undefined) {
+      setOrderItems(orderItemsProp);
+      setTotalAmount(totalAmountProp);
+      return;
+    }
+
+    const fetchOrders = async () => {
+  try {
+    if (!orderId) return; // Don't fetch unless it's an actual order
+
+    const res = await fetch("/api/orders", {
+      headers: {
+        userId,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+
+    if (Array.isArray(data) && data.length > 0) {
+      const latest = data[data.length - 1];
+      setOrderItems(latest.orderItems);
+      setTotalAmount(latest.totalAmount);
+    }
+  } catch (err) {
+    console.error("Order fetch error:", err);
+  }
+};
+
 
     fetchOrders();
-  }, [userId]);
+  }, [userId, orderItemsProp, totalAmountProp]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,62 +117,141 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ userId }) => {
       body: JSON.stringify({
         paymentMethodId: paymentMethod.id,
         userId,
+        
+        paymentFor: pricingPlanData
+  ? "pricing-plan"
+  : enrollmentData
+  ? "enrollment"
+  : "order",
+enrollmentId: enrollmentData?.enrollmentId || null,
+pricingPlanId: pricingPlanData?.pricingPlanId || null,
+
       }),
     });
 
     const data = await res.json();
 
-    if (data.error) {
-      setMessage(data.error);
-    } else if (data.success) {
-      setMessage("Payment succeeded!");
+    if (data.success) {
+      setMessage("✅ Payment succeeded!");
+    } else {
+      setMessage(`❌ Payment failed: ${data.error || "Unknown error"}`);
     }
 
     setLoading(false);
   };
 
+  // Map class names to their respective images
+  const classImageMap: Record<string, string> = {
+    meditation: "/meditation.jpg",
+    workout: "/workout.jpg",
+    mma: "/mma.jpg",
+    yoga: "/yoga.jpg",
+    cycling: "/cycling.jpg",
+    power_lifting: "/powerlifting.jpg",
+  };
+
   return (
     <div className={styles.pageWrapper}>
+      <Navbar />
       <form onSubmit={handleSubmit} className={styles.container}>
         <h2 className={styles.title}>Checkout Summary</h2>
-
-        {orderItems.length > 0 ? (
-          <div className={styles.grid}>
-            {orderItems.map((item, idx) => (
+        <div className={styles.grid}>
+          {/* Order Items */}
+          {orderItems.length > 0 &&
+            orderItems.map((item, idx) => (
               <div key={idx} className={styles.card}>
-                <p><strong>{item.title}</strong></p>
-                <p>Qty: {item.quantity}</p>
-                <p>Price: ${item.price}</p>
+                <img
+                  src={item.image || cartImg.src}
+                  alt={item.title}
+                  className={styles.itemImage}
+                />
+                <div className={styles.cardContent}>
+                  <p><strong>{item.title}</strong></p>
+                  <p>Qty: {item.quantity}</p>
+                  <p>Price: ${item.price}</p>
+                </div>
               </div>
             ))}
+
+          {/* Enrollment Summary */}
+          {enrollmentData && (
             <div className={styles.card}>
-              <p><strong>Total: ${totalAmount}</strong></p>
+              <img
+                src={classImageMap[enrollmentData.className.toLowerCase().replace(/ /g, "_")] || classImg.src}
+                alt={enrollmentData.className}
+                className={styles.itemImage}
+              />
+              <div className={styles.cardContent}>
+                <p><strong>{enrollmentData.className}</strong></p>
+                <p>Qty: 1</p>
+                <p>Price: ${enrollmentData.totalAmount}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Pricing Plan Summary */}
+          {pricingPlanData && (
+            <div className={styles.card}>
+              <img
+                src={cartImg.src}
+                alt="Plan"
+                className={styles.itemImage}
+              />
+              <div className={styles.cardContent}>
+                <p><strong>{pricingPlanData.planName}</strong></p>
+                <p>Qty: 1</p>
+                <p>Price: ${pricingPlanData.amount}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Total Summary */}
+          <div className={styles.card}>
+            <div className={styles.cardContent}>
+              <p>
+                <strong>
+                  Total: $
+                  {pricingPlanData
+                    ? pricingPlanData.amount
+                    : enrollmentData
+                    ? enrollmentData.totalAmount
+                    : totalAmount}
+                </strong>
+              </p>
             </div>
           </div>
-        ) : (
-          <p>No recent order found.</p>
-        )}
+        </div>
 
-        <CardElement
-          className={styles.card}
-          options={{
-            style: {
-              base: {
-                fontSize: "16px",
-                color: "#424770",
-                "::placeholder": { color: "#aab7c4" },
+        <div className={styles.paymentCard}>
+          <h3 className={styles.paymentTitle}>Enter Card Details</h3>
+          <CardElement
+            className={styles.cardElement}
+            options={{
+              style: {
+                base: {
+                  fontSize: "16px",
+                  color: "#222",
+                  '::placeholder': { color: "#bbb" },
+                  fontFamily: "inherit",
+                  backgroundColor: "#fff",
+                },
+                invalid: { color: "#e3342f" },
               },
-              invalid: { color: "#9e2146" },
-            },
-          }}
-        />
+            }}
+          />
+        </div>
 
-        <button type="submit" disabled={!stripe || loading} className={styles.button}>
+        <button
+          type="submit"
+          disabled={!stripe || loading}
+          className={styles.button}
+        >
           {loading ? "Processing..." : "Pay Now"}
         </button>
 
         {message && <p className={styles.error}>{message}</p>}
       </form>
+      <Footer_02 />
     </div>
   );
 };

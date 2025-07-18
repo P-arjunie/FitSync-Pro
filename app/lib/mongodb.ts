@@ -21,3 +21,6 @@ export const connectToDatabase = async () => {
     }
   }
 };
+
+export const connectDB = async () => { ... }
+

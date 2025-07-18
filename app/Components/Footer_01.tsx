@@ -1,26 +1,30 @@
 import React from 'react';
 import Image from 'next/image';
 
-const Footer1: React.FC = () => {
+const footer1: React.FC = () => {
   return (
     <footer style={styles.footer}>
       <div style={styles.footerContent}>
         <div style={styles.info}>
-          <h2>FITSYNC PRO</h2>
-          <p>ULTIMATE GYM CENTER</p>
-          <p>Privacy Policy | @ 2025 FitSyncPro</p>
+          <h1>FITSYNC PRO</h1>
+          <p>Ultimate Fitness Center</p>
+          <p style={styles.legal}>Privacy Policy | @ 2025 FitSyncPro</p>
           <br/>
-          <p>When an unknown printer took a galley of type and scrambled it to create a unique specimen book, it marked the beginning of a new era in printing, surviving centuries of evolution and adapting to modern advancements.</p>
+          <p>
+            FitSync Pro is where smart training meets real results. We blend expert coaching, modern equipment, and
+            a supportive community to help you reach your fitness goals, no matter your starting point.
+          </p>
         </div>
 
         <div style={styles.classes}>
           <h3 style={styles.redBar}>Our Classes</h3>
           <ul>
-            <li>Fitness Classes</li>
-            <li>Power Yoga</li>
-            <li>Full-Body Strength</li>
+            <li>Cycling</li>
             <li>Yoga</li>
-            <li>Aerobic & Zumba Classes</li>
+            <li>Power Lifting</li>
+            <li>Yoga</li>
+            <li>Meditation</li>
+            <li>Mixed Martial Arts</li>
           </ul>
         </div>
 
@@ -35,7 +39,7 @@ const Footer1: React.FC = () => {
           <h3 style={styles.redBar}>Contact Us</h3>
           <p>No 4/1, Sapumal Palace Colombo</p>
           <p>+94 71 278 1444</p>
-          <p>email@email.com</p>
+          <p>fitsyncpro.gym@gmail.com</p>
         </div>
 
         <div style={styles.socialIcons}>
@@ -63,6 +67,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'white',
     padding: '40px 20px',
     fontFamily: 'Arial, sans-serif',
+    fontSize: '0.875rem',
+    
   },
   footerContent: {
     display: 'flex',
@@ -73,6 +79,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   info: {
     flex: 1,
     minWidth: '250px',
+    textAlign: 'left',
+    fontSize: '1rem',
   },
   classes: {
     flex: 1,
@@ -101,6 +109,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   iconLink: {
     display: 'inline-block',
   },
+  legal: {
+  fontSize: '0.675rem',
+  fontWeight: 600,
+  marginTop: '0.5rem',
+},
 };
 
-export default Footer1;
+export default footer1;

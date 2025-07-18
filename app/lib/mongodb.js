@@ -14,7 +14,7 @@ export const connectToDatabase = async () => {
 
   try {
     await mongoose.connect(MONGODB_URI, {
-      dbName: "fit-sync", // ✅ Replace with your actual DB name
+      dbName: "fit-sync", 
     });
 
     isConnected = true;

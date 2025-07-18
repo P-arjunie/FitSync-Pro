@@ -1,3 +1,4 @@
+// app/models/Checkout.ts
 
 import mongoose from 'mongoose';
 

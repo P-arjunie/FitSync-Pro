@@ -1,262 +1,594 @@
-
+/* eslint-disable prefer-const */
 'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import AnalyticsDashboard from "../../Components/analytics/AnalyticsDashboard";
+import jsPDF from "jspdf";
+import * as XLSX from "xlsx";
+import AnalyticsSidebar from "../../Components/analytics/AnalyticsSidebar";
+import Link from 'next/link';
 
 interface AnalyticsData {
   labels: string[];
   bookings: number[];
   trainers: string[];
+  totalSessions: number;
+  averageSessionsPerDay: number;
+  trainerBreakdown: Record<string, number>;
+  busiestDays: Array<{
+    day: string;
+    count: number;
+  }>;
+}
+
+interface FilterState {
+  trainer: string;
+  startDate: string;
+  endDate: string;
 }
 
 const AnalyticsPage: React.FC = () => {
-  // State for analytics data
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
     labels: [],
     bookings: [],
-    trainers: []
+    trainers: [],
+    totalSessions: 0,
+    averageSessionsPerDay: 0,
+    trainerBreakdown: {},
+    busiestDays: []
   });
   
-  // State for filters
-  const [selectedTrainer, setSelectedTrainer] = useState<string>("all");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  const [filters, setFilters] = useState<FilterState>({
+    trainer: "all",
+    startDate: "",
+    endDate: ""
+  });
+  
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [reportFormat, setReportFormat] = useState<string>("pdf");
+  const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Function to fetch analytics data
-  const fetchAnalyticsData = async () => {
+  // Memoized date range helpers
+  const dateRangeHelpers = useMemo(() => ({
+    getCurrentMonth: () => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return {
+        startDate: firstDay.toISOString().split('T')[0],
+        endDate: lastDay.toISOString().split('T')[0]
+      };
+    },
+    getPreviousMonth: () => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+      return {
+        startDate: firstDay.toISOString().split('T')[0],
+        endDate: lastDay.toISOString().split('T')[0]
+      };
+    },
+    getLastMonths: (months: number) => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth() - months, 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      return {
+        startDate: firstDay.toISOString().split('T')[0],
+        endDate: lastDay.toISOString().split('T')[0]
+      };
+    },
+    getCurrentYear: () => {
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), 0, 1);
+      const lastDay = new Date(today.getFullYear(), 11, 31);
+      return {
+        startDate: firstDay.toISOString().split('T')[0],
+        endDate: lastDay.toISOString().split('T')[0]
+      };
+    }
+  }), []);
+
+  // Check authentication
+  useEffect(() => {
+    const userEmail = localStorage.getItem("userEmail");
+    const storedUsername = localStorage.getItem("userName");
+
+    if (userEmail && storedUsername) {
+      setIsLoggedIn(true);
+    }
+    setIsCheckingAuth(false);
+  }, []);
+
+  // Optimized API call with useCallback
+  const fetchAnalyticsData = useCallback(async () => {
+    if (!filters.startDate || !filters.endDate) return;
+    
     setIsLoading(true);
     setError(null);
     
     try {
-      // Build query string with filters
-      let queryParams = new URLSearchParams();
-      if (selectedTrainer !== "all") {
-        queryParams.append("trainer", selectedTrainer);
-      }
-      if (startDate) {
-        queryParams.append("startDate", startDate);
-      }
-      if (endDate) {
-        queryParams.append("endDate", endDate);
-      }
+      const queryParams = new URLSearchParams();
+      if (filters.trainer !== "all") queryParams.append("trainer", filters.trainer);
+      queryParams.append("startDate", filters.startDate);
+      queryParams.append("endDate", filters.endDate);
       
       const response = await fetch(`/api/analytics/sessions?${queryParams.toString()}`);
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch analytics data");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch analytics data`);
       }
       
       const result = await response.json();
       
       if (!result.success) {
-        throw new Error(result.error || "Failed to fetch analytics data");
+        throw new Error(result.error || "Failed to fetch session analytics data");
       }
       
-      setAnalyticsData(result.data);
+      // Enhanced data validation with better error handling
+      const data: AnalyticsData = {
+        labels: Array.isArray(result.data?.labels) ? result.data.labels : [],
+        bookings: Array.isArray(result.data?.bookings) ? 
+          result.data.bookings.map((count: any) => Number(count) || 0) : [],
+        trainers: Array.isArray(result.data?.trainers) ? result.data.trainers : [],
+        totalSessions: Number(result.data?.totalSessions) || 0,
+        averageSessionsPerDay: Number(result.data?.averageSessionsPerDay) || 0,
+        trainerBreakdown: result.data?.trainerBreakdown && typeof result.data.trainerBreakdown === "object" ? 
+          result.data.trainerBreakdown : {},
+        busiestDays: Array.isArray(result.data?.busiestDays) ? 
+          result.data.busiestDays.map((day: any) => ({
+            day: String(day?.day || ""),
+            count: Number(day?.count) || 0,
+          })) : [],
+      };
+      
+      setAnalyticsData(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error occurred");
-      console.error("Error fetching analytics data:", err);
-      // Set empty data to prevent UI errors
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError(errorMessage);
+      console.error("Error fetching session analytics data:", err);
+      
+      // Reset to empty state on error
       setAnalyticsData({
         labels: [],
         bookings: [],
-        trainers: []
+        trainers: [],
+        totalSessions: 0,
+        averageSessionsPerDay: 0,
+        trainerBreakdown: {},
+        busiestDays: []
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filters]);
 
-  // Fetch data on initial load
+  // Initialize with current month on mount
   useEffect(() => {
-    // Set default date range on initial load
-    setDefaultMonthRange();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const currentMonth = dateRangeHelpers.getCurrentMonth();
+    setFilters(prev => ({
+      ...prev,
+      startDate: currentMonth.startDate,
+      endDate: currentMonth.endDate
+    }));
+  }, [dateRangeHelpers]);
 
   // Fetch data when filters change
   useEffect(() => {
-    if (startDate && endDate) {
-      fetchAnalyticsData();
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
+
+  // Filter update handlers
+  const updateFilter = useCallback((key: keyof FilterState, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const setDateRange = useCallback((startDate: string, endDate: string) => {
+    setFilters(prev => ({ ...prev, startDate, endDate }));
+  }, []);
+
+  // Date range button handlers
+  const dateRangeButtons = useMemo(() => [
+    {
+      label: "This Month",
+      onClick: () => {
+        const range = dateRangeHelpers.getCurrentMonth();
+        setDateRange(range.startDate, range.endDate);
+      },
+      className: "bg-red-600 hover:bg-red-700 text-white"
+    },
+    {
+      label: "Last Month",
+      onClick: () => {
+        const range = dateRangeHelpers.getPreviousMonth();
+        setDateRange(range.startDate, range.endDate);
+      },
+      className: "bg-gray-800 hover:bg-gray-700 text-white"
+    },
+    {
+      label: "3 Months",
+      onClick: () => {
+        const range = dateRangeHelpers.getLastMonths(3);
+        setDateRange(range.startDate, range.endDate);
+      },
+      className: "bg-gray-800 hover:bg-gray-700 text-white"
+    },
+    {
+      label: "6 Months",
+      onClick: () => {
+        const range = dateRangeHelpers.getLastMonths(6);
+        setDateRange(range.startDate, range.endDate);
+      },
+      className: "bg-gray-800 hover:bg-gray-700 text-white"
+    },
+    {
+      label: "This Year",
+      onClick: () => {
+        const range = dateRangeHelpers.getCurrentYear();
+        setDateRange(range.startDate, range.endDate);
+      },
+      className: "bg-gray-800 hover:bg-gray-700 text-white"
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTrainer, startDate, endDate]);
+  ], [dateRangeHelpers, setDateRange]);
 
-  // Calculate current month range for default date filter
-  const setDefaultMonthRange = () => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
-    setStartDate(firstDay.toISOString().split('T')[0]);
-    setEndDate(lastDay.toISOString().split('T')[0]);
-  };
+  // Report generation functions
+  const generatePDFReport = useCallback(() => {
+    setIsGeneratingReport(true);
+    try {
+      const doc = new jsPDF();
+      const margin = 20;
+      let currentY = margin;
 
-  // Set previous month range
-  const setPreviousMonthRange = () => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
-    
-    setStartDate(firstDay.toISOString().split('T')[0]);
-    setEndDate(lastDay.toISOString().split('T')[0]);
-  };
+      // Title and metadata
+      doc.setFontSize(18);
+      doc.text("Session Analytics Report", margin, currentY);
+      currentY += 15;
+      
+      doc.setFontSize(12);
+      doc.text(`Date Range: ${filters.startDate} to ${filters.endDate}`, margin, currentY);
+      currentY += 10;
+      doc.text(`Trainer Filter: ${filters.trainer === "all" ? "All Trainers" : filters.trainer}`, margin, currentY);
+      currentY += 20;
 
-  // Set last 3 months range
-  const setLastThreeMonthsRange = () => {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth() - 3, 1);
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      // Summary section
+      doc.setFontSize(14);
+      doc.text("Summary", margin, currentY);
+      currentY += 15;
+      
+      doc.setFontSize(12);
+      const summaryData = [
+        `Total Sessions: ${analyticsData.totalSessions}`,
+        `Average Sessions Per Day: ${analyticsData.averageSessionsPerDay.toFixed(2)}`
+      ];
+      
+      summaryData.forEach(item => {
+        doc.text(item, margin, currentY);
+        currentY += 10;
+      });
+      currentY += 10;
+
+      // Trainer breakdown
+      if (Object.keys(analyticsData.trainerBreakdown).length > 0) {
+        doc.setFontSize(14);
+        doc.text("Trainer Breakdown", margin, currentY);
+        currentY += 15;
+        
+        doc.setFontSize(12);
+        Object.entries(analyticsData.trainerBreakdown).forEach(([trainer, count]) => {
+          doc.text(`${trainer}: ${count} sessions`, margin, currentY);
+          currentY += 10;
+        });
+        currentY += 10;
+      }
+
+      // Busiest days
+      if (analyticsData.busiestDays.length > 0) {
+        if (currentY > 200) { // Check if we need a new page
+          doc.addPage();
+          currentY = margin;
+        }
+        
+        doc.setFontSize(14);
+        doc.text("Busiest Days", margin, currentY);
+        currentY += 15;
+        
+        doc.setFontSize(12);
+        analyticsData.busiestDays.forEach((day, index) => {
+          if (currentY > 270) { // Check if we need a new page
+            doc.addPage();
+            currentY = margin;
+          }
+          doc.text(`${index + 1}. ${day.day}: ${day.count} sessions`, margin, currentY);
+          currentY += 10;
+        });
+      }
+
+      doc.save(`session_analytics_${filters.startDate}_to_${filters.endDate}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF report:", error);
+      setError("Failed to generate PDF report");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }, [analyticsData, filters]);
+
+  const generateExcelReport = useCallback(() => {
+    setIsGeneratingReport(true);
+    try {
+      const workbook = XLSX.utils.book_new();
+      
+      // Summary sheet
+      const summaryData = [
+        ["Session Analytics Report", ""],
+        ["Date Range", `${filters.startDate} to ${filters.endDate}`],
+        ["Trainer Filter", filters.trainer === "all" ? "All Trainers" : filters.trainer],
+        [""],
+        ["Summary"],
+        ["Total Sessions", analyticsData.totalSessions],
+        ["Average Sessions Per Day", analyticsData.averageSessionsPerDay],
+      ];
+
+      // Trainer breakdown sheet
+      const trainerData = [["Trainer", "Session Count"], ...Object.entries(analyticsData.trainerBreakdown)];
+      
+      // Busiest days sheet
+      const busiestDaysData = [
+        ["Day", "Session Count"],
+        ...analyticsData.busiestDays.map(day => [day.day, day.count])
+      ];
+
+      // Create sheets
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(summaryData), "Summary");
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(trainerData), "Trainer Breakdown");
+      XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(busiestDaysData), "Busiest Days");
+
+      XLSX.writeFile(workbook, `session_analytics_${filters.startDate}_to_${filters.endDate}.xlsx`);
+    } catch (error) {
+      console.error("Error generating Excel report:", error);
+      setError("Failed to generate Excel report");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }, [analyticsData, filters]);
+
+  const generateCSVReport = useCallback(() => {
+    setIsGeneratingReport(true);
+    try {
+      const csvData = [
+        ["Session Analytics Report"],
+        ["Date Range", `${filters.startDate} to ${filters.endDate}`],
+        ["Trainer Filter", filters.trainer === "all" ? "All Trainers" : filters.trainer],
+        [""],
+        ["Summary"],
+        ["Total Sessions", analyticsData.totalSessions],
+        ["Average Sessions Per Day", analyticsData.averageSessionsPerDay],
+        [""],
+        ["Trainer Breakdown"],
+        ["Trainer", "Session Count"],
+        ...Object.entries(analyticsData.trainerBreakdown),
+        [""],
+        ["Busiest Days"],
+        ["Day", "Session Count"],
+        ...analyticsData.busiestDays.map(day => [day.day, day.count]),
+      ];
+
+      const csvContent = csvData.map(row => 
+        row.map(cell => typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell).join(",")
+      ).join("\n");
+      
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `session_analytics_${filters.startDate}_to_${filters.endDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error generating CSV report:", error);
+      setError("Failed to generate CSV report");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }, [analyticsData, filters]);
+
+  const generateReport = useCallback(() => {
+    const reportGenerators = {
+      pdf: generatePDFReport,
+      excel: generateExcelReport,
+      csv: generateCSVReport
+    };
     
-    setStartDate(firstDay.toISOString().split('T')[0]);
-    setEndDate(lastDay.toISOString().split('T')[0]);
-  };
+    const generator = reportGenerators[reportFormat as keyof typeof reportGenerators];
+    if (generator) {
+      generator();
+    }
+  }, [reportFormat, generatePDFReport, generateExcelReport, generateCSVReport]);
+
+  // Authentication checks
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-200 text-gray-800">
+        <div className="animate-pulse flex space-x-4">
+          <div className="rounded-full bg-red-600 h-12 w-12"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-200 text-gray-800 p-8 text-center">
+        <div className="bg-black p-8 rounded-lg shadow-xl max-w-md w-full">
+          <h2 className="text-3xl font-bold text-red-500 mb-4">Access Denied</h2>
+          <p className="text-lg mb-6 text-gray-300">You must be logged in to view analytics.</p>
+          <Link href="/login" className="inline-block bg-red-600 hover:bg-red-700 text-white py-3 px-6 font-bold rounded transition duration-200">
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-black text-white relative overflow-hidden">
-      {/* Skewed background */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-red-600 transform -skew-x-12 z-0"></div>
-      
-      <div className="relative z-10 flex-1 p-8 flex flex-col">
-        {/* Header */}
-        <div className="mb-6">
-          <span className="inline-block bg-red-600 text-white text-sm font-bold py-1 px-3 border border-red-600">
-            PERFORMANCE METRICS
-          </span>
-          <h2 className="text-3xl font-bold mt-2 mb-6">Session Analytics Dashboard</h2>
-        </div>
-
-        {/* Error message */}
-        {error && (
-          <div className="bg-red-900 border-l-4 border-red-500 text-red-100 p-4 mb-6 flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            {error}
+    <div className="min-h-screen flex">
+      <AnalyticsSidebar />
+      <div 
+        className="flex-1 flex flex-col relative overflow-hidden p-8"
+        style={{
+          background: 'linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 25%, #c0c0c0 50%, #b0b0b0 75%, #a0a0a0 100%)',
+          backgroundImage: `
+            radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(0,0,0,0.05) 0%, transparent 50%),
+            linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%)
+          `,
+          backgroundSize: '100px 100px, 150px 150px, 200px 200px'
+        }}
+      >
+        <div className="relative z-10 flex-1">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Session Analytics Dashboard</h1>
+            <p className="text-gray-700">Track training sessions and performance metrics</p>
           </div>
-        )}
 
-        {/* Filters */}
-        <div className="bg-gray-900 p-6 mb-6 shadow-lg border-l-2 border-red-600">
-          <h3 className="text-xl font-bold mb-4 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
-            </svg>
-            Filters
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-gray-300 font-semibold mb-2 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                </svg>
-                Trainer
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedTrainer}
-                  onChange={(e) => setSelectedTrainer(e.target.value)}
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
-                >
-                  <option value="all">All Trainers</option>
-                  {analyticsData.trainers.map((trainer) => (
-                    <option key={trainer} value={trainer}>{trainer}</option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
+          {/* Error message */}
+          {error && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {error}
+            </div>
+          )}
+
+          {/* Filters */}
+          <div className="bg-black bg-opacity-90 p-6 mb-6 rounded-lg shadow-lg">
+            <h3 className="text-xl font-semibold mb-4 text-white">Filters</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div>
+                <label className="block text-gray-300 font-medium mb-2">Trainer</label>
+                <div className="relative">
+                  <select
+                    value={filters.trainer}
+                    onChange={(e) => updateFilter('trainer', e.target.value)}
+                    className="w-full p-3 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
+                  >
+                    <option value="all">All Trainers</option>
+                    {analyticsData.trainers.map((trainer) => (
+                      <option key={trainer} value={trainer}>{trainer}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-gray-300 font-medium mb-2">Start Date</label>
+                <input
+                  type="date"
+                  value={filters.startDate}
+                  onChange={(e) => updateFilter('startDate', e.target.value)}
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-300 font-medium mb-2">End Date</label>
+                <input
+                  type="date"
+                  value={filters.endDate}
+                  onChange={(e) => updateFilter('endDate', e.target.value)}
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
+                />
+              </div>
+              
+              <div className="flex flex-col justify-end space-y-2">
+                {dateRangeButtons.map((button, index) => (
+                  <button
+                    key={index}
+                    onClick={button.onClick}
+                    className={`${button.className} py-2 px-4 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-red-500 transition duration-200 rounded`}
+                  >
+                    {button.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Report Generation Section */}
+            <div className="mt-6 pt-6 border-t border-gray-700">
+              <h3 className="text-xl font-semibold mb-4 text-white">Generate Report</h3>
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-1">
+                  <label className="block text-gray-300 font-medium mb-2">Report Format</label>
+                  <select
+                    value={reportFormat}
+                    onChange={(e) => setReportFormat(e.target.value)}
+                    className="w-full p-3 bg-gray-800 border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
+                  >
+                    <option value="pdf">PDF Document</option>
+                    <option value="excel">Excel Spreadsheet</option>
+                    <option value="csv">CSV File</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-gray-300 font-medium mb-2">Actions</label>
+                  <button
+                    onClick={generateReport}
+                    disabled={isLoading || isGeneratingReport}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-4 font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black transition duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed rounded"
+                  >
+                    {isGeneratingReport ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                        Generate Report
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
-            
-            <div>
-              <label className="block text-gray-300 font-semibold mb-2 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
-                Start Date
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-gray-300 font-semibold mb-2 flex items-center">
-                <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                </svg>
-                End Date
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-none focus:outline-none focus:ring-2 focus:ring-red-500 text-white"
-                />
-              </div>
-            </div>
-            
-            <div className="flex flex-col justify-end space-y-2">
-              <button
-                onClick={setDefaultMonthRange}
-                className="bg-red-600 text-white py-2 px-4 font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition duration-200 flex items-center justify-center"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
-                </svg>
-                THIS MONTH
-              </button>
-              <button
-                onClick={setPreviousMonthRange}
-                className="bg-gray-700 text-white py-2 px-4 font-bold hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200 flex items-center justify-center"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                LAST MONTH
-              </button>
-              <button
-                onClick={setLastThreeMonthsRange}
-                className="bg-gray-700 text-white py-2 px-4 font-bold hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200 flex items-center justify-center"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-                </svg>
-                LAST 3 MONTHS
-              </button>
-            </div>
           </div>
+        
+          {/* Loading state */}
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-center p-10 bg-white rounded-lg shadow">
+                <svg className="animate-spin h-12 w-12 text-red-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p className="mt-4 text-gray-700">Loading Session Analytics...</p>
+              </div>
+            </div>
+          ) : (
+            /* Analytics dashboard */
+            <AnalyticsDashboard 
+              bookingsData={analyticsData.bookings} 
+              bookingLabels={analyticsData.labels}
+              selectedTrainer={filters.trainer}
+            />
+          )}
         </div>
-      
-        {/* Loading state */}
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <svg className="animate-spin h-12 w-12 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </div>
-        ) : (
-          /* Analytics dashboard */
-          <AnalyticsDashboard 
-            bookingsData={analyticsData.bookings} 
-            bookingLabels={analyticsData.labels}
-            selectedTrainer={selectedTrainer}
-          />
-        )}
       </div>
     </div>
   );

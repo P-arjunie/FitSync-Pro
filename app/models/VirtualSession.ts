@@ -1,43 +1,60 @@
 import mongoose, { Schema } from 'mongoose';
 
 const virtualSessionSchema = new Schema({
+  title: {
+    type: String,
+    required: true,
+    minlength: 2,
+  },
   trainer: {
     type: String,
-    required: [true, 'Trainer name is required'],
-    minlength: [2, 'Trainer name must be at least 2 characters'],
-  },
-  sessionType: {
-    type: String,
-    required: [true, 'Session type is required'],
-    minlength: [2, 'Session type must be at least 2 characters'],
-  },
-  duration: {
-    type: String,
-    required: [true, 'Duration is required'],
+    required: true,
+    minlength: 2,
   },
   date: {
     type: Date,
-    required: [true, 'Date is required'],
+    required: true,
   },
-  comments: {
+  startTime: {
     type: String,
-    required: false,
+    required: true,
+  },
+  endTime: {
+    type: String,
+    required: true,
+  },
+  maxParticipants: {
+    type: Number,
+    required: true,
+    min: 1,
+  },
+  description: {
+    type: String,
   },
   onlineLink: {
     type: String,
-    required: [true, 'Online session link is required'],
+    required: true,
     validate: {
-      validator: function (v: string) {
-        return /^(https?:\/\/)/.test(v);
-      },
+      validator: (v: string) => /^(https?:\/\/)/.test(v),
       message: 'Please enter a valid URL',
     },
   },
+  participants: {
+  type: [
+    {
+      id: { type: String, required: true },
+      firstName: String,
+      lastName: String,
+      email: String,
+    }
+  ],
+  default: [],
+},
+
 }, {
   timestamps: true,
 });
 
-// Check if model already exists to prevent overwriting during hot reloads
 const VirtualSession = mongoose.models.VirtualSession || mongoose.model('VirtualSession', virtualSessionSchema);
 
 export default VirtualSession;

@@ -1,71 +1,235 @@
-/* Pricing page */
-// app/kalana/Pricing_Page/page.tsx
+'use client';
 
-import Navbar from "../../Components/Navbar"; // Adjust if Navbar is in a different folder
-import Footer from "../../Components/Footer_02"; // Adjust if Footer is in a different folder
-import styles from "../../Components/PricingPage.module.css";
+import Link from "next/link";
+import Navbar from "../../Components/Navbar";
+import Footer from "@/Components/Footer_02";
+import styles from "@/Components/pricingpage.module.css";
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { getAuthUser } from '@/lib/auth';
 
 export default function PricingPage() {
+  const router = useRouter();
+  const [authUser, setAuthUser] = useState(getAuthUser());
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const user = getAuthUser();
+      setAuthUser(user);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  const priceMap: Record<string, string> = {
+    Standard: "price_1Rl5CZ06dhrOhRKFNIRfbdY5",
+    Popular: "price_1Rl5Er06dhrOhRKFnptOwuQR",
+    Golden: "price_1Rl5GI06dhrOhRKFCjHsJuXQ",
+    Professional: "price_1Rl40106dhrOhRKFEAb72IQ0",
+  };
+
+  // Handle plan selection
+  const handleSelectPlan = async (planName: string, amount: number) => {
+    if (!authUser) {
+      router.push("/lithira/Authform");
+      return;
+    }
+
+    const priceId = priceMap[planName];
+    console.log('Sending to backend:', { userId: authUser.userId, planName, priceId, amount, email: authUser.userEmail });
+
+    try {
+      const res = await fetch("/api/pricing-plan-purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          userId: authUser.userId, 
+          planName, 
+          priceId, 
+          amount,
+          email: authUser.userEmail 
+        }),
+      });
+
+      const data = await res.json();
+      console.log('Backend response:', data);
+
+      if (res.ok && data.planId) {
+        router.push(
+          `/kalana/subscription-checkout?priceId=${priceId}&planName=${encodeURIComponent(planName)}&userId=${authUser.userId}&planId=${data.planId}&email=${encodeURIComponent(authUser.userEmail)}`
+        );
+      } else {
+        alert("Failed to start payment. Try again.");
+      }
+    } catch (error) {
+      console.error('Error enrolling:', error);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+
+
+/*
+  const handleSelectPlan = async (planName: string, amount: number) => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      router.push("/lithira/Authform");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/pricing-plan-purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, planName, amount }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.planId) {
+        //router.push(`/kalana/checkout?paymentFor=pricing-plan&pricingPlanId=${data.planId}`);
+        const priceId = priceIdMap[planName];
+        router.push(`/kalana/subscription-checkout?priceId=price_1OZRpPSC3pKhslfWiq7H1JYk&planName=${planName}&userId=${userId}&planId=${data.planId}`);
+
+      } else {
+        alert("Failed to start payment. Try again.");
+      }
+    } catch (error) {
+      alert("Something went wrong. Please try again.");
+    }
+  };
+*/
   return (
     <>
       <Navbar />
       <div className={styles.pageWrapper}>
-        <h1 className={styles.pageTitle}>FitSyncPro - Pricing Page</h1>
+        <h1 className={styles.pageTitle}>Fitness Pricing Plans</h1>
+
         <section className={styles.pricingSection}>
-          <h2 className={styles.pricingTitle}>Exclusive Pricing Plan</h2>
-          <p className={styles.pricingDescription}>
-            FitSyncPro - Where Strength Meets Innovation <br />
-            Forging a path in fitness, FitSyncPro is dedicated to transforming lives through strength, endurance, and cutting-edge training.
-          </p>
-
           <div className={styles.pricingChart}>
+            {/* Standard Plan */}
             <div className={styles.pricingCard}>
-              <h3 className={styles.cardTitle}>Beginners</h3>
-              <p className={styles.cardPrice}>$10 per month</p>
-              <ul className={styles.cardFeatures}>
-                <li>Free Hand</li>
-                <li>Gym Fitness</li>
-                <li>Weight Loss</li>
-                <li>Cycling</li>
-              </ul>
-              <button className={styles.purchaseButton}>Purchase Now</button>
+              <div className={styles.cardHeader}>
+                <h3 className={styles.cardTitle}>Standard</h3>
+                <div className={styles.cardPrice}>
+                  <span className={styles.currency}>$</span>
+                  <span className={styles.amount}>15</span>
+                  <span className={styles.period}>/month</span>
+                </div>
+              </div>
+              <div className={styles.cardBody}>
+                <ul className={styles.cardFeatures}>
+                  <li className={styles.featureItem}>✓ Training Overview</li>
+                  <li className={styles.featureItem}>✗ Beginner Classes</li>
+                  <li className={styles.featureItem}>✗ Personal Training</li>
+                  <li className={styles.featureItem}>✗ Olympic Weightlifting</li>
+                  <li className={styles.featureItem}>✗ Foundation Training</li>
+                </ul>
+                <button 
+                  className={styles.purchaseButton} 
+                  onClick={() => handleSelectPlan("Standard", 15)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Loading..." : authUser ? "Select Plan" : "Login to Subscribe"}
+                </button>
+              </div>
             </div>
 
+            {/* Popular Plan */}
             <div className={styles.pricingCard}>
-              <h3 className={styles.cardTitle}>Basic</h3>
-              <p className={styles.cardPrice}>$15 per month</p>
-              <ul className={styles.cardFeatures}>
-                <li>Free Hand</li>
-                <li>Gym Fitness</li>
-                <li>Weight Loss</li>
-                <li>Personal Trainer</li>
-                <li>Cycling</li>
-                <li>Diet Plan</li>
-              </ul>
-              <button className={styles.purchaseButton}>Purchase Now</button>
+              <div className={styles.cardHeader}>
+                <h3 className={styles.cardTitle}>Popular</h3>
+                <div className={styles.cardPrice}>
+                  <span className={styles.currency}>$</span>
+                  <span className={styles.amount}>20</span>
+                  <span className={styles.period}>/month</span>
+                </div>
+              </div>
+              <div className={styles.cardBody}>
+                <ul className={styles.cardFeatures}>
+                  <li className={styles.featureItem}>✓ Training Overview</li>
+                  <li className={styles.featureItem}>✓ Beginner Classes</li>
+                  <li className={styles.featureItem}>✗ Personal Training</li>
+                  <li className={styles.featureItem}>✗ Olympic Weightlifting</li>
+                  <li className={styles.featureItem}>✗ Foundation Training</li>
+                </ul>
+                <button 
+                  className={styles.purchaseButton} 
+                  onClick={() => handleSelectPlan("Popular", 20)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Loading..." : authUser ? "Select Plan" : "Login to Subscribe"}
+                </button>
+              </div>
             </div>
 
+            {/* Golden Plan */}
             <div className={styles.pricingCard}>
-              <h3 className={styles.cardTitle}>Advanced</h3>
-              <p className={styles.cardPrice}>$25 per month</p>
-              <ul className={styles.cardFeatures}>
-                <li>Free Hand</li>
-                <li>Gym Fitness</li>
-                <li>Weight Loss</li>
-                <li>Personal Trainer</li>
-                <li>Cycling</li>
-                <li>Diet Plan</li>
-                <li>Sport Measure</li>
-              </ul>
-              <button className={styles.purchaseButton}>Purchase Now</button>
+              <div className={styles.cardHeader}>
+                <h3 className={styles.cardTitle}>Golden</h3>
+                <div className={styles.cardPrice}>
+                  <span className={styles.currency}>$</span>
+                  <span className={styles.amount}>35</span>
+                  <span className={styles.period}>/month</span>
+                </div>
+              </div>
+              <div className={styles.cardBody}>
+                <ul className={styles.cardFeatures}>
+                  <li className={styles.featureItem}>✓ Training Overview</li>
+                  <li className={styles.featureItem}>✓ Beginner Classes</li>
+                  <li className={styles.featureItem}>✓ Personal Training</li>
+                  <li className={styles.featureItem}>✓ Olympic Weightlifting</li>
+                  <li className={styles.featureItem}>✗ Foundation Training</li>
+                </ul>
+                <button 
+                  className={styles.purchaseButton} 
+                  onClick={() => handleSelectPlan("Golden", 35)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Loading..." : authUser ? "Select Plan" : "Login to Subscribe"}
+                </button>
+              </div>
+            </div>
+
+            {/* Professional Plan */}
+            <div className={styles.pricingCard}>
+              <div className={styles.cardHeader}>
+                <h3 className={styles.cardTitle}>Professional</h3>
+                <div className={styles.cardPrice}>
+                  <span className={styles.currency}>$</span>
+                  <span className={styles.amount}>50</span>
+                  <span className={styles.period}>/month</span>
+                </div>
+              </div>
+              <div className={styles.cardBody}>
+                <ul className={styles.cardFeatures}>
+                  <li className={styles.featureItem}>✓ Training Overview</li>
+                  <li className={styles.featureItem}>✓ Beginner Classes</li>
+                  <li className={styles.featureItem}>✓ Personal Training</li>
+                  <li className={styles.featureItem}>✓ Olympic Weightlifting</li>
+                  <li className={styles.featureItem}>✓ Foundation Training</li>
+                </ul>
+                <button 
+                  className={styles.purchaseButton} 
+                  onClick={() => handleSelectPlan("Professional", 50)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Loading..." : authUser ? "Select Plan" : "Login to Subscribe"}
+                </button>
+              </div>
             </div>
           </div>
         </section>
 
         <section className={styles.discountSection}>
-          <h2 className={styles.discountTitle}>FITNESS CLASSES THIS SUMMER</h2>
-          <p className={styles.discountText}>Get <strong>45% Discount</strong></p>
-          <button className={styles.contactButton}>Contact Us</button>
+          <h2 className={styles.discountTitle}>Summer Fitness Program</h2>
+          <p className={styles.discountText}>
+            Receive a <strong>45% Discount</strong> on all membership plans during our exclusive summer promotion.
+          </p>
+          <Link href="/hasini/Contact_Page" className={styles.contactButton}>
+            Contact Us
+          </Link>
         </section>
       </div>
 
