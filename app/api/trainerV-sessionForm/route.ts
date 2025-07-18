@@ -1,57 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import VirtualSession from '@/models/VirtualSession';
+import { sendEmail } from '@/lib/sendEmail';
+import dedent from 'dedent'; // <-- keep your original imports
 
-// POST: Create a new virtual session
 export async function POST(req: NextRequest) {
   try {
-    // Parse the request body as JSON
     const body = await req.json();
+    console.log("🔥 Incoming request body:", body);
 
-    // Connect to the MongoDB database
     await connectToDatabase();
+    console.log("✅ Connected to MongoDB");
 
-    // Validate required fields
-    if (!body.trainer || !body.sessionType || !body.duration || !body.date || !body.onlineLink) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const requiredFields = [
+      'title',
+      'trainer',
+      'date',
+      'startTime',
+      'endTime',
+      'onlineLink',
+      'maxParticipants'
+    ];
+
+    for (const field of requiredFields) {
+      if (!body[field]) {
+        console.log(`❌ Missing field: ${field}`);
+        return NextResponse.json({ error: `Missing field: ${field}` }, { status: 400 });
+      }
     }
 
-    // Create a new VirtualSession instance
+    // Add participants field here with fallback to empty array
     const newSession = new VirtualSession({
+      title: body.title,
       trainer: body.trainer,
-      sessionType: body.sessionType,
-      duration: body.duration,
       date: body.date,
-      comments: body.comments || '', // Optional comments field
+      startTime: body.startTime,
+      endTime: body.endTime,
+      maxParticipants: body.maxParticipants,
+      description: body.description || '',
       onlineLink: body.onlineLink,
+      participants: body.participants || [],  // <-- NEW addition here
     });
 
-    // Save the session to the database
+    console.log("📦 Prepared to save:", newSession);
     await newSession.save();
+    console.log("✅ Session saved!");
 
-    // Respond with success and the created session
-    return NextResponse.json({ message: 'Session created!', session: newSession }, { status: 201 });
+    if (body.trainer?.email) {
+      await sendEmail({
+        to: body.trainer.email,
+        subject: `📅 New Virtual Session Created: ${body.title}`,
+        text: `Hi ${body.trainer.name || 'Trainer'}, your session "${body.title}" is scheduled on ${body.date} from ${body.startTime} to ${body.endTime}. Meeting link: ${body.onlineLink}`,
+        html: dedent`
+          <p>Hello ${body.trainer.name || 'Trainer'},</p>
+          <p>Your new session <strong>${body.title}</strong> has been scheduled for <strong>${body.date}</strong> from <strong>${body.startTime}</strong> to <strong>${body.endTime}</strong>.</p>
+          <p>Meeting Link: <a href="${body.onlineLink}" target="_blank">${body.onlineLink}</a></p>
+          <p>Max Participants: ${body.maxParticipants}</p>
+          <br/>
+          <p>Thank you,<br/>FitSync Pro Team</p>
+        `
+      });
+    } else {
+      console.warn("⚠️ Trainer email missing. Email not sent.");
+    }
+
+    return NextResponse.json({ message: 'Session created & email sent!', session: newSession }, { status: 201 });
   } catch (error) {
-    // Log and respond with an error if anything goes wrong
-    console.error('Error creating session:', error);
+    console.error('❌ Error creating session:', error);
     return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
-  }
-}
-
-// GET: Fetch all virtual sessions
-export async function GET() {
-  try {
-    // Connect to the MongoDB database
-    await connectToDatabase();
-
-    // Retrieve all sessions from the database
-    const sessions = await VirtualSession.find();
-
-    // Respond with the list of sessions
-    return NextResponse.json(sessions, { status: 200 });
-  } catch (error) {
-    // Log and respond with an error if fetching fails
-    console.error('Error fetching sessions:', error);
-    return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
   }
 }

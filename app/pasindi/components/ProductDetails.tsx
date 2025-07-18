@@ -41,14 +41,14 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ item }) => {
   };
 
   return (
-    <div className="w-full max-w-[300px] mx-auto">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden h-full transition-transform duration-300 hover:shadow-lg">
+    <div className="w-full">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col hover:scale-105 hover:z-10 relative">
         <div
-          className="relative group"
+          className="relative group flex-1 flex flex-col"
           onMouseOver={handleMouseOver}
           onMouseOut={handleMouseOut}
         >
-          <div className="aspect-square relative overflow-hidden">
+          <div className="product-card-image relative overflow-hidden flex-shrink-0">
             <Image
               src={item.image}
               alt={item.title}
@@ -62,28 +62,30 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ item }) => {
             )}
           </div>
 
-          <div className="p-4">
-            <h4 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
-              {item.title}
-            </h4>
-            <p className="text-xl font-bold text-red-600 mb-4">
-              ${item.price.toFixed(2)}
-            </p>
+          <div className="p-4 flex-1 flex flex-col">
+            <div className="flex-1">
+              <h4 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
+                {item.title}
+              </h4>
+              <p className="text-xl font-bold text-red-600 mb-4">
+                ${item.price.toFixed(2)}
+              </p>
 
-            {isHovering && (
-              <div className="mt-2 space-y-2 animate-fadeIn">
-                <p className="text-sm text-gray-600 font-medium">{item.category}</p>
-                <p className="text-sm text-gray-600 line-clamp-3">{item.description}</p>
-                <p className="text-sm text-gray-600">
-                  <strong>In Stock: </strong>
-                  <span className={item.countInStock > 0 ? "text-green-600" : "text-red-600"}>
-                    {item.countInStock}
-                  </span>
-                </p>
-              </div>
-            )}
+              {isHovering && (
+                <div className="mt-2 space-y-2 animate-fadeIn">
+                  <p className="text-sm text-gray-600 font-medium">{item.category}</p>
+                  <p className="text-sm text-gray-600 line-clamp-3">{item.description}</p>
+                  <p className="text-sm text-gray-600">
+                    <strong>In Stock: </strong>
+                    <span className={item.countInStock > 0 ? "text-green-600" : "text-red-600"}>
+                      {item.countInStock}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </div>
 
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-auto pt-4 flex items-center gap-2">
               <input
                 type="number"
                 value={quantity}

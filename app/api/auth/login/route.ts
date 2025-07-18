@@ -1,26 +1,39 @@
-import { NextResponse } from 'next/server';
+
+import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
+import User from "@/models/User";
+import bcryptjs from "bcryptjs";
 import Member from '@/models/member';
 import ApprovedTrainer from '@/models/ApprovedTrainer';
-import User from '@/models/User';
 import bcrypt from 'bcrypt';
-import bcryptjs from 'bcryptjs';
 
-// Define the POST handler function for login
+// A helper function to call the logging API without waiting for it to finish.
+// It constructs the full URL to ensure it works in all environments (dev, prod).
+const logAttempt = (data: object) => {
+  const url = new URL("/api/analytics/log-login-attempt", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000");
+  fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(error => {
+    // Log fetch errors, but don't let them crash the main application
+    console.error("Fire-and-forget log failed:", error);
+  });
+};
+
+
 export async function POST(req: Request) {
+  const ipAddress = req.headers.get("x-forwarded-for") || req.headers.get("remote-addr");
+  const userAgent = req.headers.get("user-agent");
+
   try {
-    // Extract email and password from the request body
     const { email, password } = await req.json();
 
-    // Basic input validation: ensure both fields are provided
     if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
     }
 
-    // Clean up email and password
+// Clean up email and password
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password.trim();
 

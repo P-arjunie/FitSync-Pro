@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
-
 import { Button } from "../../Components/ui/button"
 import { Calendar } from "../../Components/ui/calendar"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../../Components/ui/form"
@@ -17,9 +16,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../Components/ui/pop
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../Components/ui/select"
 import { useToast } from "../components/ui/use-toast"
 import { cn } from "@/lib/utils"
+import React from "react"
 
 //validation with zod - min length field + valid format
-const formSchema = z.object({ 
+const formSchema = z.object({
   title: z.string().min(2, {
     message: "Session title must be at least 2 characters.",
   }),
@@ -49,11 +49,20 @@ export default function SessionForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
+  // Get trainer name from localStorage
+  const trainerName = typeof window !== "undefined" ? localStorage.getItem("userName") || "" : ""
+  // Use ApprovedTrainer ID instead of old user table ID
+  const trainerId = typeof window !== "undefined" ? localStorage.getItem("approvedTrainerId") || localStorage.getItem("userId") || "" : ""
+
+  console.log("SessionForm: Using trainerId:", trainerId)
+  console.log("SessionForm: Using trainerName:", trainerName)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { //default values for form
+    defaultValues: {
+      //default values for form
       title: "",
-      trainerName: "",
+      trainerName: trainerName, // Auto-fill trainer name
       location: "",
       maxParticipants: "10",
       description: "",
@@ -62,7 +71,6 @@ export default function SessionForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
-
     try {
       // Create session object with start and end dates
       const formattedDate = format(values.date, "yyyy-MM-dd")
@@ -73,7 +81,10 @@ export default function SessionForm() {
         ...values,
         start,
         end,
+        trainerId, // <-- Make sure this is present
       }
+
+      console.log("Submitting sessionData:", sessionData) // <-- Add this log
 
       // Send data to API
       const response = await fetch("/api/sessions", {
@@ -84,21 +95,33 @@ export default function SessionForm() {
         body: JSON.stringify(sessionData),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to create session")
+      const data = await response.json()
+
+      if (response.ok) {
+        toast({
+          title: "Session scheduled",
+          description: "Your session has been successfully scheduled.",
+        })
+        form.reset()
+        router.refresh()
+        // Switch to calendar tab
+        const calendarTab = document.querySelector('[value="calendar"]') as HTMLElement
+        if (calendarTab) calendarTab.click()
+      } else if (response.status === 409) {
+        // Scheduling conflict
+        toast({
+          title: "Scheduling Conflict",
+          description: data.error || "The trainer is already booked during this time.",
+          variant: "destructive",
+        })
+      } else {
+        // Other errors
+        toast({
+          title: "Error",
+          description: data.error || "There was a problem scheduling your session.",
+          variant: "destructive",
+        })
       }
-
-      toast({
-        title: "Session scheduled",
-        description: "Your session has been successfully scheduled.",
-      })
-
-      form.reset()
-      router.refresh()
-
-      // Switch to calendar tab
-      const calendarTab = document.querySelector('[value="calendar"]') as HTMLElement
-      if (calendarTab) calendarTab.click()
     } catch (error) {
       console.error("Error creating session:", error)
       toast({
@@ -113,195 +136,224 @@ export default function SessionForm() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="rounded-lg border p-6 shadow-sm">
-        <h2 className="text-2xl font-semibold mb-6">Schedule a New Session</h2>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-lg">
+          <h2 className="text-2xl font-bold text-black">Schedule a New Physical Session</h2>
+          <p className="text-gray-600 mt-1">Fill out the details below to create a new training session</p>
+        </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Session Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., HIIT Workout, Yoga Class" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="trainerName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Trainer Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                          >
-                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
+        <div className="p-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-black font-semibold">Session Title</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., HIIT Workout, Yoga Class"
+                          className="border-gray-300 focus:border-red-500 focus:ring-red-500"
+                          {...field}
                         />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Time</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select start time" />
-                        </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        {Array.from({ length: 24 }).map((_, i) => {
-                          const hour = i.toString().padStart(2, "0")
-                          return (
-                            <>
-                              <SelectItem key={`${hour}:00`} value={`${hour}:00`}>
-                                {`${hour}:00`}
-                              </SelectItem>
-                              <SelectItem key={`${hour}:30`} value={`${hour}:30`}>
-                                {`${hour}:30`}
-                              </SelectItem>
-                            </>
-                          )
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="endTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Time</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormMessage className="text-red-600" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="trainerName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-black font-semibold">Trainer Name</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select end time" />
-                        </SelectTrigger>
+                        <Input className="border-gray-300 bg-gray-50 text-gray-700" {...field} readOnly />
                       </FormControl>
-                      <SelectContent>
-                        {Array.from({ length: 24 }).map((_, i) => {
-                          const hour = i.toString().padStart(2, "0")
-                          return (
-                            <>
-                              <SelectItem key={`${hour}:00`} value={`${hour}:00`}>
-                                {`${hour}:00`}
-                              </SelectItem>
-                              <SelectItem key={`${hour}:30`} value={`${hour}:30`}>
-                                {`${hour}:30`}
-                              </SelectItem>
-                            </>
-                          )
-                        })}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                      <FormMessage className="text-red-600" />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-black font-semibold">Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "pl-3 text-left font-normal border-gray-300 hover:bg-gray-50",
+                                !field.value && "text-gray-500",
+                              )}
+                            >
+                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              <CalendarIcon className="ml-auto h-4 w-4 text-gray-500" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-white border-gray-200" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                            className="bg-white"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage className="text-red-600" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="startTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-black font-semibold">Start Time</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="border-gray-300 focus:border-red-500 focus:ring-red-500">
+                            <SelectValue placeholder="Select start time" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-white border-gray-200">
+                          {Array.from({ length: 24 }).map((_, i) => {
+                            const hour = i.toString().padStart(2, "0")
+                            return (
+                              <React.Fragment key={hour}>
+                                <SelectItem key={`${hour}:00`} value={`${hour}:00`} className="hover:bg-gray-50">
+                                  {`${hour}:00`}
+                                </SelectItem>
+                                <SelectItem key={`${hour}:30`} value={`${hour}:30`} className="hover:bg-gray-50">
+                                  {`${hour}:30`}
+                                </SelectItem>
+                              </React.Fragment>
+                            )
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-red-600" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="endTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-black font-semibold">End Time</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="border-gray-300 focus:border-red-500 focus:ring-red-500">
+                            <SelectValue placeholder="Select end time" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-white border-gray-200">
+                          {Array.from({ length: 24 }).map((_, i) => {
+                            const hour = i.toString().padStart(2, "0")
+                            return (
+                              <React.Fragment key={hour}>
+                                <SelectItem key={`${hour}:00`} value={`${hour}:00`} className="hover:bg-gray-50">
+                                  {`${hour}:00`}
+                                </SelectItem>
+                                <SelectItem key={`${hour}:30`} value={`${hour}:30`} className="hover:bg-gray-50">
+                                  {`${hour}:30`}
+                                </SelectItem>
+                              </React.Fragment>
+                            )
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-red-600" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-black font-semibold">Location</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Studio 1, Main Gym Floor"
+                          className="border-gray-300 focus:border-red-500 focus:ring-red-500"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-600" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="maxParticipants"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-black font-semibold">Maximum Participants</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          className="border-gray-300 focus:border-red-500 focus:ring-red-500"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-600" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
-                name="location"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel className="text-black font-semibold">Description (Optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Studio 1, Main Gym Floor" {...field} />
+                      <Textarea
+                        placeholder="Add any additional details about the session"
+                        className="min-h-[100px] border-gray-300 focus:border-red-500 focus:ring-red-500"
+                        {...field}
+                      />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-600" />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="maxParticipants"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Maximum Participants</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="1" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              <Button
+                type="submit"
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    Scheduling...
+                  </div>
+                ) : (
+                  "Schedule Session"
                 )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Add any additional details about the session"
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Scheduling..." : "Schedule Session"}
-            </Button>
-          </form>
-        </Form>
+              </Button>
+            </form>
+          </Form>
+        </div>
       </div>
     </div>
   )

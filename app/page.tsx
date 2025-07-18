@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import "./Components/HomePage.css";
-import Navbar from "./Components/Navbar";
-import Footer1 from "./Components/Footer_01";
-import GaugeChart from "react-gauge-chart";
-import StripeProvider from "./Components/StripeProvider";
-{
-  /*import CheckoutForm from "./Components/CheckoutForm"; */
-}
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import './Components/HomePage.css';
+import Navbar from './Components/Navbar';
+import Footer1 from './Components/Footer_01';
+import GaugeChart from 'react-gauge-chart';
+import Link from 'next/link';
+
+{/*import CheckoutForm from "./Components/CheckoutForm"; */}
 
 interface UserInfo {
   role: string;
@@ -26,8 +25,9 @@ const HomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // BMI State hooks
-  const [weight, setWeight] = useState("");
-  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
+  const [unit, setUnit] = useState<'metric' | 'imperial'>('metric');
   const [bmi, setBmi] = useState<number | null>(null);
   const [message, setMessage] = useState("");
 
@@ -80,39 +80,55 @@ const HomePage: React.FC = () => {
     router.push("/");
   };
 
-  // BMI Calculation function
+  // BMI Calculation
   const calculateBMI = () => {
-    if (!weight || !height) {
-      setMessage("Please enter both weight and height");
-      setBmi(null);
-      return;
-    }
+  const weightNum = parseFloat(weight);
+  const heightNum = parseFloat(height);
 
-    const weightNum = parseFloat(weight);
-    const heightMeters = parseFloat(height) / 100; // convert cm to meters
+  if (!weight || !height) {
+    setMessage("⚠️ Please enter both weight and height");
+    setBmi(null);
+    return;
+  }
 
-    if (isNaN(weightNum) || isNaN(heightMeters) || heightMeters === 0) {
-      setMessage("Invalid input");
-      setBmi(null);
-      return;
-    }
+  if (isNaN(weightNum) || isNaN(heightNum)) {
+    setMessage("⚠️ Please enter valid numbers");
+    setBmi(null);
+    return;
+  }
 
-    const bmiValue = weightNum / (heightMeters * heightMeters);
-    const roundedBMI = parseFloat(bmiValue.toFixed(2));
-    setBmi(roundedBMI);
+  if (weightNum <= 0 || heightNum <= 0) {
+    setMessage("⚠️ Please enter positive values only");
+    setBmi(null);
+    return;
+  }
 
-    if (bmiValue < 18.5) {
-      setMessage("Underweight");
-    } else if (bmiValue < 25) {
-      setMessage("Normal weight");
-    } else if (bmiValue < 30) {
-      setMessage("Overweight");
-    } else if (bmiValue < 35) {
-      setMessage("Obese");
-    } else {
-      setMessage("Severely Obese");
-    }
-  };
+  let bmiValue = 0;
+
+  if (unit === 'metric') {
+    const heightMeters = heightNum / 100;
+    bmiValue = weightNum / (heightMeters * heightMeters);
+  } else {
+    // Imperial formula
+    bmiValue = (weightNum / (heightNum * heightNum)) * 703;
+  }
+
+  const roundedBMI = parseFloat(bmiValue.toFixed(2));
+  setBmi(roundedBMI);
+
+  if (roundedBMI < 18.5) {
+    setMessage("Underweight");
+  } else if (roundedBMI < 25) {
+    setMessage("Normal weight");
+  } else if (roundedBMI < 30) {
+    setMessage("Overweight");
+  } else if (roundedBMI < 35) {
+    setMessage("Obese");
+  } else {
+    setMessage("Severely Obese");
+  }
+};
+
 
   // Define gauge arcs
   const range = 40 - 15; // 25
@@ -269,57 +285,40 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Progression, Workout, Nutrition Section */}
-        <section className="three-card-section">
-          <div
-            className="progression-card hidden-left"
-            style={{ transitionDelay: "0s" }}
-          >
-            <img
-              src="/progressionicon.png"
-              alt="Progression"
-              className="icon-image"
-            />
-            <p className="card-title">Progression</p>
-            <p className="card-text">
-              Tracking your progress is key to reaching your fitness goals.
-              Whether you're building strength, losing weight, or improving
-              endurance, seeing measurable progress keeps you motivated and
-              focused on your journey. Celebrate each milestone along the way!
-            </p>
-          </div>
-          <div
-            className="workout-card hidden-left"
-            style={{ transitionDelay: "0.2s" }}
-          >
-            <img src="/workouticon.png" alt="Workout" className="icon-image" />
-            <p className="card-title">Workout</p>
-            <p className="card-text">
-              Our expertly designed workouts are tailored to meet your specific
-              fitness level and goals. Whether you're a beginner or an advanced
-              athlete, we provide diverse routines that target all aspects of
-              fitness, from strength training to cardiovascular endurance.
-            </p>
-          </div>
-          <div
-            className="nutrition-card hidden-left"
-            style={{ transitionDelay: "0.4s" }}
-          >
-            <img
-              src="/nutritionicon.png"
-              alt="Nutrition"
-              className="icon-image"
-            />
-            <p className="card-title">Nutrition</p>
-            <p className="card-text">
-              Nutrition plays a crucial role in your fitness success. We offer
-              personalized meal plans that help you fuel your body for maximum
-              performance. Learn how to nourish your body with the right balance
-              of protein, carbohydrates, and healthy fats to support muscle
-              growth and recovery.
-            </p>
-            <button className="read-more-button">Read More</button>
-          </div>
-        </section>
+          <section className="three-card-section">
+  <div className="progression-card hidden-left" style={{ transitionDelay: "0s" }}>
+    <img src="/progressionicon.png" alt="Progression" className="icon-image" />
+    <p className="card-title">Progression</p>
+    <p className="card-text">
+      Tracking your progress is key to reaching your fitness goals. Whether you're building strength, losing weight, or improving endurance, seeing measurable progress keeps you motivated and focused on your journey. Celebrate each milestone along the way!
+    </p>
+    <Link href="/lithira/Authform">
+      <button className="read-more-button">Sign Up</button>
+    </Link>
+  </div>
+
+  <div className="workout-card hidden-left" style={{ transitionDelay: "0.2s" }}>
+    <img src="/workouticon.png" alt="Workout" className="icon-image" />
+    <p className="card-title">Workout</p>
+    <p className="card-text">
+      Our expertly designed workouts are tailored to meet your specific fitness level and goals. Whether you're a beginner or an advanced athlete, we provide diverse routines that target all aspects of fitness, from strength training to cardiovascular endurance.
+    </p>
+    <Link href="/kalana/pricing_page">
+      <button className="read-more-button">Pricing Plans</button>
+    </Link>
+  </div>
+
+  <div className="nutrition-card hidden-left" style={{ transitionDelay: "0.4s" }}>
+    <img src="/nutritionicon.png" alt="Nutrition" className="icon-image" />
+    <p className="card-title">Nutrition</p>
+    <p className="card-text">
+      Nutrition plays a crucial role in your fitness. We offer personalized meal plans that help you fuel your body for maximum performance. Learn how to nourish your body with the right balance of protein, carbohydrates, and healthy fats to support muscle growth and recovery.
+    </p>
+    <Link href="/pasindi/products">
+      <button className="read-more-button">Shop</button>
+    </Link>
+  </div>
+</section>
 
         {/* Who We Are Section */}
         <section className="who-we-are">
@@ -337,35 +336,33 @@ const HomePage: React.FC = () => {
                 a powerful transformation.
               </p>
 
-              {/* Icon Box Section */}
-              <div className="icon-box">
-                <div className="icon-item">
-                  <img
-                    src="/trainericon.png"
-                    alt="Professional Trainers"
-                    className="icon-image2"
-                  />
-                  <p className="icon-text">Professional Trainers</p>
-                </div>
-                <div className="icon-divider" />
-                <div className="icon-item">
-                  <img
-                    src="/equipmenticon.png"
-                    alt="Modern Equipment"
-                    className="icon-image2"
-                  />
-                  <p className="icon-text">Modern Equipment</p>
-                </div>
-                <div className="icon-divider" />
-                <div className="icon-item">
-                  <img
-                    src="/machineicon.png"
-                    alt="Body Building Machine"
-                    className="icon-image2"
-                  />
-                  <p className="icon-text">Body Building</p>
-                </div>
-              </div>
+{/* Icon Box Section */}
+<div className="icon-box">
+  <div className="icon-item">
+    <img src="/trainericon.png" alt="Professional Trainers" className="icon-image2" />
+    <Link href="/sathya/trainerDetails">
+      <p className="icon-text cursor-pointer hover:underline">Professional Trainers</p>
+    </Link>
+  </div>
+
+  <div className="icon-divider" />
+
+  <div className="icon-item">
+    <img src="/equipmenticon.png" alt="Modern Equipment" className="icon-image2" />
+    <Link href="/pasindi/products">
+      <p className="icon-text cursor-pointer hover:underline">Modern Equipment</p>
+    </Link>
+  </div>
+
+  <div className="icon-divider" />
+
+  <div className="icon-item">
+    <img src="/machineicon.png" alt="Body Building Machine" className="icon-image2" />
+    <Link href="/kalana/pricing_page">
+      <p className="icon-text cursor-pointer hover:underline">Body Building</p>
+    </Link>
+  </div>
+</div>
             </div>
 
             <div className="who-we-are-image">
@@ -379,7 +376,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Featured Classes Section */}
-        <section className="featured-classes">
+        <section id="featured-classes"className="featured-classes">
           <h1 className="red-titles2">OUR FEATURED CLASSES</h1>
           <h2 className="section-title2">
             We Are Offering Best Flexible Classes
@@ -390,8 +387,8 @@ const HomePage: React.FC = () => {
               <div className="class-overlay">
                 <img src="/cycling.png" alt="Cycling" className="class-image" />
                 <div className="overlay-content">
-                  <p className="class-text">Cycling</p>
-                  <button className="date-button">Monday | 7:00 AM</button>
+                  <p className="class-text" >Cycling</p>
+                  <button className="date-button" onClick={() => router.push('/kalana/cycling')}>Monday | 7:00 AM</button>
                 </div>
               </div>
               <p className="class-name">Cycling</p>
@@ -406,7 +403,7 @@ const HomePage: React.FC = () => {
                 />
                 <div className="overlay-content">
                   <p className="class-text">Workout</p>
-                  <button className="date-button">Tuesday | 6:00 PM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/workout')}>Tuesday | 6:00 PM</button>
                 </div>
               </div>
               <p className="class-name">Workout</p>
@@ -421,7 +418,7 @@ const HomePage: React.FC = () => {
                 />
                 <div className="overlay-content">
                   <p className="class-text">Power Lifting</p>
-                  <button className="date-button">Wednesday | 8:00 PM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/power_lifting')}>Wednesday | 8:00 PM</button>
                 </div>
               </div>
               <p className="class-name">Power Lifting</p>
@@ -436,7 +433,7 @@ const HomePage: React.FC = () => {
                 />
                 <div className="overlay-content">
                   <p className="class-text">Meditation</p>
-                  <button className="date-button">Thursday | 7:00 AM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/meditation')}>Thursday | 7:00 AM</button>
                 </div>
               </div>
               <p className="class-name">Meditation</p>
@@ -447,7 +444,7 @@ const HomePage: React.FC = () => {
                 <img src="/yoga.jpg" alt="Yoga" className="class-image" />
                 <div className="overlay-content">
                   <p className="class-text">Yoga</p>
-                  <button className="date-button">Friday | 7:30 AM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/yoga')}>Friday | 7:30 AM</button>
                 </div>
               </div>
               <p className="class-name">Yoga</p>
@@ -458,41 +455,38 @@ const HomePage: React.FC = () => {
                 <img src="/mma.jpg" alt="MMA" className="class-image" />
                 <div className="overlay-content">
                   <p className="class-text">MMA</p>
-                  <button className="date-button">Saturday | 5:00 PM</button>
+                  <button className="date-button" onClick={() => router.push('/kalana/mma')}>Saturday | 5:00 PM</button>
                 </div>
               </div>
-              <p className="class-name">MMA</p>
+              <p className="class-name">Mixed Martial Arts</p>
             </div>
           </div>
         </section>
 
-        {/* Fitness Service Section */}
-        <section className="fitness-service">
-          <h2 className="section-title3">
-            We Are Always Provide Best Fitness Service For You
-          </h2>
-          <div className="service-content">
-            <div className="service-item">
-              <h3 className="service-title">
-                Sculpt Your Perfect Body With Us!
-              </h3>
-              <p className="service-description">
-                A fitness legacy evolving with time, blending strength and
-                innovation for modern excellence. It continues to inspire and
-                transform, adapting seamlessly to modern needs while maintaining
-                its core essence of strength and endurance.
-              </p>
-              <button className="button">Our Classes</button>
-            </div>
-            <div className="service-image">
-              <img
-                src="/fitnessservice.jpg"
-                alt="Fitness Service"
-                className="service-image-style"
-              />
-            </div>
-          </div>
-        </section>
+{/* Fitness Service Section */}
+<section id="fitness-service" className="fitness-service">
+  <h2 className="section-title3">
+    Choose the Right Fitness Plan to Match Your Goals
+  </h2>
+  <div className="service-content">
+    <div className="service-item">
+      <h3 className="service-title">Affordable Monthly Plans for Every Lifestyle !</h3>
+      <p className="service-description">
+        Whether you're just starting your fitness journey or you're a seasoned athlete, we offer flexible monthly pricing plans designed to suit your needs. From basic access to full-featured memberships, select the plan that empowers your transformation.
+      </p>
+      <a href="/kalana/pricing_page">
+        <button className="button">VIEW PRICING PLANS</button>
+      </a>
+    </div>
+    <div className="service-image">
+      <img
+        src="/fitnessservice.png"
+        alt="Fitness Plans"
+        className="service-image-style"
+      />
+    </div>
+  </div>
+</section>
 
         {/* BMI Section */}
         <section className="bmi-wrapper">
@@ -504,49 +498,61 @@ const HomePage: React.FC = () => {
                 ultimate fitness experience.
               </p>
 
-              <div className="unit-selector">
-                <label className="unit-option">
-                  <input
-                    type="radio"
-                    name="unit"
-                    value="metric"
-                    defaultChecked
-                  />
-                  <span>Metric Units</span>
-                </label>
-                <label className="unit-option">
-                  <input type="radio" name="unit" value="imperial" />
-                  <span>Imperial Units</span>
-                </label>
-              </div>
+<div className="unit-selector">
+  <label className="unit-option">
+    <input
+      type="radio"
+      name="unit"
+      value="metric"
+      checked={unit === 'metric'}
+      onChange={() => setUnit('metric')}
+    />
+    <span>Metric Units</span>
+  </label>
+  <label className="unit-option">
+    <input
+      type="radio"
+      name="unit"
+      value="imperial"
+      checked={unit === 'imperial'}
+      onChange={() => setUnit('imperial')}
+    />
+    <span>Imperial Units</span>
+  </label>
+</div>
 
-              <div className="bmi-form">
-                <input
-                  type="number"
-                  placeholder="Weight / kg"
-                  className="input"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                />
-                <input
-                  type="number"
-                  placeholder="Height / cm"
-                  className="input"
-                  value={height}
-                  onChange={(e) => setHeight(e.target.value)}
-                />
-              </div>
+<div className="bmi-form">
+  <input
+    type="number"
+    placeholder={unit === 'metric' ? "Weight (kg)" : "Weight (lbs)"}
+    className="input"
+    value={weight}
+    onChange={(e) => setWeight(e.target.value)}
+  />
+  <input
+    type="number"
+    placeholder={unit === 'metric' ? "Height (cm)" : "Height (inches)"}
+    className="input"
+    value={height}
+    onChange={(e) => setHeight(e.target.value)}
+  />
+</div>
 
               <button className="calculate-button" onClick={calculateBMI}>
                 Calculate
               </button>
 
-              {bmi !== null && (
-                <div className="bmi-result">
-                  <p>Your BMI is: {bmi}</p>
-                  <p>Status: {message}</p>
-                </div>
-              )}
+<div className="bmi-result">
+  {bmi !== null ? (
+    <>
+      <p>Your BMI is: {bmi}</p>
+      <p>Status: {message}</p>
+    </>
+  ) : (
+    message && <p style={{ color: "red" }}>{message}</p>
+  )}
+</div>
+
             </div>
 
             <div className="bmi-right">
@@ -603,13 +609,6 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/*Stripe Checkout Section 
-        <section className="checkout-section">
-          <StripeProvider>
-            <h1>Checkout</h1>
-            <CheckoutForm/>
-          </StripeProvider>
-        </section>   */}
       </main>
       <Footer1 />
     </div>
