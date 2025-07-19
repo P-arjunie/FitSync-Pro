@@ -26,6 +26,10 @@ interface LoginData {
   password: string;
 }
 
+interface ForgotPasswordData {
+  email: string;
+}
+
 interface AuthFormProps {
   onNewUser?: (user: { name: string; role: "member" | "trainer" }) => void;
 }
@@ -45,8 +49,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     email: "",
     password: "",
   });
+  const [forgotPasswordData, setForgotPasswordData] =
+    useState<ForgotPasswordData>({
+      email: "",
+    });
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
 
   const handleSignUpChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -71,6 +81,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setLoginData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleForgotPasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setForgotPasswordData((prev) => ({ ...prev, [name]: value }));
   };
 
   const isValidEmail = (email: string) =>
@@ -133,6 +150,45 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
     } catch (error) {
       console.error("Login error:", error);
       alert("Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotPasswordData.email) {
+      alert("Please enter your email address.");
+      return;
+    }
+
+    if (!isValidEmail(forgotPasswordData.email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    setIsLoading(true);
+    setForgotPasswordMessage("");
+
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotPasswordData.email }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setForgotPasswordMessage(
+          "Password reset link has been sent to your email."
+        );
+        setForgotPasswordData({ email: "" });
+      } else {
+        setForgotPasswordMessage(data.error || "Failed to send reset email.");
+      }
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      setForgotPasswordMessage("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -379,51 +435,115 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
               Log In to Your Account
             </h2>
 
-            <div className="space-y-3 w-full">
-              <div className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition">
-                <FaEnvelope className="mr-2" />
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  className="bg-transparent w-full outline-none"
-                  value={loginData.email}
-                  onChange={handleLoginChange}
-                />
-              </div>
+            {!showForgotPassword ? (
+              <div className="space-y-3 w-full">
+                <div className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition">
+                  <FaEnvelope className="mr-2" />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email"
+                    className="bg-transparent w-full outline-none"
+                    value={loginData.email}
+                    onChange={handleLoginChange}
+                  />
+                </div>
 
-              <div className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition">
-                <FaLock className="mr-2" />
-                <input
-                  type={showPassword["loginPassword"] ? "text" : "password"}
-                  name="password"
-                  placeholder="Password"
-                  className="bg-transparent w-full outline-none"
-                  value={loginData.password}
-                  onChange={handleLoginChange}
-                />
-                <div
-                  className="cursor-pointer"
-                  onClick={() =>
-                    setShowPassword((prev) => ({
-                      ...prev,
-                      loginPassword: !prev.loginPassword,
-                    }))
-                  }
+                <div className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition">
+                  <FaLock className="mr-2" />
+                  <input
+                    type={showPassword["loginPassword"] ? "text" : "password"}
+                    name="password"
+                    placeholder="Password"
+                    className="bg-transparent w-full outline-none"
+                    value={loginData.password}
+                    onChange={handleLoginChange}
+                  />
+                  <div
+                    className="cursor-pointer"
+                    onClick={() =>
+                      setShowPassword((prev) => ({
+                        ...prev,
+                        loginPassword: !prev.loginPassword,
+                      }))
+                    }
+                  >
+                    {showPassword["loginPassword"] ? <FaEyeSlash /> : <FaEye />}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg px-4 py-3 text-lg transition disabled:opacity-50"
+                  onClick={handleLogin}
+                  disabled={isLoading}
                 >
-                  {showPassword["loginPassword"] ? <FaEyeSlash /> : <FaEye />}
+                  {isLoading ? "Logging in..." : "Login"}
+                </button>
+
+                <button
+                  type="button"
+                  className="w-full text-red-600 hover:text-red-700 text-sm font-medium transition underline"
+                  onClick={() => setShowForgotPassword(true)}
+                  disabled={isLoading}
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3 w-full">
+                <h3 className="text-lg font-semibold text-gray-800 text-center mb-4">
+                  Reset Your Password
+                </h3>
+
+                <div className="flex items-center bg-white/70 border border-gray-300 text-gray-800 rounded-lg px-3 py-2 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none transition">
+                  <FaEnvelope className="mr-2" />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    className="bg-transparent w-full outline-none"
+                    value={forgotPasswordData.email}
+                    onChange={handleForgotPasswordChange}
+                  />
+                </div>
+
+                {forgotPasswordMessage && (
+                  <div
+                    className={`text-sm p-2 rounded ${
+                      forgotPasswordMessage.includes("sent")
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {forgotPasswordMessage}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg px-4 py-3 text-lg transition disabled:opacity-50"
+                    onClick={handleForgotPassword}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Sending..." : "Send Reset Link"}
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold rounded-lg px-4 py-3 text-lg transition"
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setForgotPasswordMessage("");
+                      setForgotPasswordData({ email: "" });
+                    }}
+                    disabled={isLoading}
+                  >
+                    Back to Login
+                  </button>
                 </div>
               </div>
-
-              <button
-                type="submit"
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg px-4 py-3 text-lg transition disabled:opacity-50"
-                onClick={handleLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? "Logging in..." : "Login"}
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
