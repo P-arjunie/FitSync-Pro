@@ -26,8 +26,8 @@ export interface IApprovedTrainer extends Document {
   submittedAt: Date;
   biography?: string;
   skills?: { name: string; level: number }[];
+  status: "pending" | "approved" | "suspended";
   password: string;
-  status?: string;
 }
 
 const approvedTrainerSchema = new Schema<IApprovedTrainer>({
@@ -60,8 +60,12 @@ const approvedTrainerSchema = new Schema<IApprovedTrainer>({
       level: { type: Number, min: 0, max: 100 },
     },
   ],
+  status: { 
+    type: String, 
+    enum: ["pending", "approved", "suspended"], 
+    default: "approved" 
+  },
   password: { type: String, required: true },
-  status: { type: String, enum: ["approved", "suspended"], default: "approved" },
 });
 
 // Pre-save middleware to hash password

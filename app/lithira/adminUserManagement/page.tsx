@@ -115,7 +115,9 @@ export default function AdminUserManagement() {
 
   const handleSuspend = async (id: string, role: "member" | "trainer") => {
     try {
-      await axios.put(`/api/admin/suspend`, { id, role });
+      const response = await axios.put(`/api/admin/suspend`, { id, role });
+      console.log("Suspend response:", response.data);
+
       if (role === "member") {
         setMembers((prev) =>
           prev.map((m) => {
@@ -135,15 +137,22 @@ export default function AdminUserManagement() {
           })
         );
       }
-      alert(`User ${id} has been suspended.`);
-    } catch (error) {
+      alert(`User has been suspended successfully.`);
+    } catch (error: any) {
       console.error("Error suspending user:", error);
+      const errorMessage =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to suspend user";
+      alert(`Error: ${errorMessage}`);
     }
   };
 
   const handleUnsuspend = async (id: string, role: "member" | "trainer") => {
     try {
-      await axios.put(`/api/admin/unsuspend`, { id, role });
+      const response = await axios.put(`/api/admin/unsuspend`, { id, role });
+      console.log("Unsuspend response:", response.data);
+
       if (role === "member") {
         setMembers((prev) =>
           prev.map((m) => {
@@ -163,9 +172,14 @@ export default function AdminUserManagement() {
           })
         );
       }
-      alert(`User ${id} has been unsuspended.`);
-    } catch (error) {
+      alert(`User has been unsuspended successfully.`);
+    } catch (error: any) {
       console.error("Error unsuspending user:", error);
+      const errorMessage =
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to unsuspend user";
+      alert(`Error: ${errorMessage}`);
     }
   };
 
