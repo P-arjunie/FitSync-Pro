@@ -1,7 +1,6 @@
 
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
-import User from "@/models/User";
 import bcryptjs from "bcryptjs";
 import Member from '@/models/member';
 import ApprovedTrainer from '@/models/ApprovedTrainer';
@@ -45,51 +44,48 @@ export async function POST(req: Request) {
     console.log(`Password length: ${cleanPassword.length}`);
     console.log(`Raw password received for login:`, cleanPassword);
 
-    // Find user in all collections (User, Member, ApprovedTrainer)
-    const [user, member, approvedTrainer] = await Promise.all([
-      User.findOne({ email: cleanEmail }).select('+password'),
-      Member.findOne({ email: cleanEmail }).select('+password'),
-      ApprovedTrainer.findOne({ email: cleanEmail }).select('+password')
+    // Find user in approved collections only (Member, ApprovedTrainer)
+    // Only check for users with status "approved"
+    const [approvedMember, approvedTrainer] = await Promise.all([
+      Member.findOne({ 
+        email: cleanEmail, 
+        status: "approved" 
+      }).select('+password'),
+      ApprovedTrainer.findOne({ 
+        email: cleanEmail, 
+        status: "approved" 
+      }).select('+password')
     ]);
 
-    // Log all approved trainers with this email
-    const allApproved = await ApprovedTrainer.find({ email: cleanEmail });
-    console.log("📋 All approved trainers with this email (login):");
-    allApproved.forEach(t => console.log(`ID: ${t._id}, Hash: ${t.password}`));
-
-    console.log(`User found: ${user ? 'Yes' : 'No'}`);
-    console.log(`Member found: ${member ? 'Yes' : 'No'}`);
-    console.log(`Trainer found: ${approvedTrainer ? 'Yes' : 'No'}`);
+    console.log(`Approved Member found: ${approvedMember ? 'Yes' : 'No'}`);
+    console.log(`Approved Trainer found: ${approvedTrainer ? 'Yes' : 'No'}`);
 
     // Determine which user to use and their role
     let currentUser = null;
     let userRole = null;
 
-    // Priority: ApprovedTrainer > Member > User
+    // Priority: ApprovedTrainer > Member
     if (approvedTrainer) {
       currentUser = approvedTrainer;
       userRole = 'trainer';
-    } else if (member) {
-      currentUser = member;
+    } else if (approvedMember) {
+      currentUser = approvedMember;
       userRole = 'member';
-    } else if (user) {
-      currentUser = user;
-      userRole = user.role;
     }
 
     if (!currentUser || !userRole) {
-      console.log('No user found with this email');
+      console.log('No approved user found with this email');
       return NextResponse.json(
-        { error: "Invalid email or password." },
+        { error: "Invalid email or password. Please ensure your account has been approved." },
         { status: 401 }
       );
     }
 
-    console.log(`User found. Role: ${userRole}`);
+    console.log(`Approved user found. Role: ${userRole}`);
     console.log(`User status: ${currentUser.status || 'active'}`);
     console.log('User object for debug:', JSON.stringify(currentUser));
 
-    // Block login for suspended users (robust check)
+    // Additional check for suspended users (should not happen since we filtered by approved)
     const status = (currentUser.status || '').toString().toLowerCase();
     if (status === 'suspended') {
       console.log('User account is suspended');
@@ -216,7 +212,7 @@ export async function POST(req: Request) {
         name: fullName,
         role: userRole,
         status: currentUser.status || 'active',
-        profileImage: currentUser.profileImage || null
+        profileImage: currentUser.profileImage || currentUser.image || null
       }
     };
 

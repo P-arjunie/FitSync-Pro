@@ -3,9 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Navbar from "../../Components/Navbar";
-import Footer from "@/Components/Footer_02";
-import StripeProvider from "../../Components/stripeprovider";
+import StripeProvider from "../../Components/StripeProvider";
 import CheckoutForm from "../../Components/CheckoutForm";
 
 const CheckoutPage: React.FC = () => {
