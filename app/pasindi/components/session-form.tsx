@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -51,12 +51,43 @@ export default function SessionForm() {
 
   const { toast } = useToast()
 
+  // Add state for ApprovedTrainer ID
+  const [approvedTrainerId, setApprovedTrainerId] = useState<string | null>(null)
+  const [loadingTrainerId, setLoadingTrainerId] = useState(true)
+
+  // Get trainer email from localStorage
+  const trainerEmail = typeof window !== "undefined" ? localStorage.getItem("userEmail") || "" : ""
+
+  // Fetch ApprovedTrainer ID on mount
+  useEffect(() => {
+    async function fetchApprovedTrainerId() {
+      if (!trainerEmail) {
+        setLoadingTrainerId(false)
+        return
+      }
+      try {
+        const res = await fetch(`/api/trainer/getByEmail?email=${trainerEmail}`)
+        const data = await res.json()
+        if (res.ok && data.data && data.data._id) {
+          setApprovedTrainerId(data.data._id)
+          localStorage.setItem("approvedTrainerId", data.data._id) // Optional: cache for later
+          console.log("Fetched ApprovedTrainer ID:", data.data._id) // <-- Log the fetched ID
+        } else {
+          setApprovedTrainerId(null)
+        }
+      } catch (err) {
+        setApprovedTrainerId(null)
+      } finally {
+        setLoadingTrainerId(false)
+      }
+    }
+    fetchApprovedTrainerId()
+  }, [trainerEmail])
+
   // Get trainer name from localStorage
   const trainerName = typeof window !== "undefined" ? localStorage.getItem("userName") || "" : ""
-  // Use ApprovedTrainer ID instead of old user table ID
-  const trainerId = typeof window !== "undefined" ? localStorage.getItem("approvedTrainerId") || localStorage.getItem("userId") || "" : ""
 
-  console.log("SessionForm: Using trainerId:", trainerId)
+  console.log("SessionForm: Using trainerId:", approvedTrainerId)
   console.log("SessionForm: Using trainerName:", trainerName)
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -79,11 +110,12 @@ export default function SessionForm() {
       const start = new Date(`${formattedDate}T${values.startTime}`)
       const end = new Date(`${formattedDate}T${values.endTime}`)
 
+      // Use approvedTrainerId from state
       const sessionData = {
         ...values,
         start,
         end,
-        trainerId, // <-- Make sure this is present
+        trainerId: approvedTrainerId, // <-- Use the fetched ID
       }
 
       console.log("Submitting sessionData:", sessionData) // <-- Add this log
@@ -134,6 +166,18 @@ export default function SessionForm() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (loadingTrainerId) {
+    return <div>Loading trainer information...</div>
+  }
+
+  if (!approvedTrainerId) {
+    return (
+      <div className="text-red-600">
+        Could not find your trainer profile. Please contact support.
+      </div>
+    )
   }
 
   return (

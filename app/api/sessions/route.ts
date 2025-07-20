@@ -10,6 +10,7 @@ import { sendEmail } from '@/lib/sendEmail';
 import dedent from 'dedent';
 // import bcrypt from 'bcrypt';
 import bcrypt from 'bcryptjs';
+import SessionParticipant from '@/models/SessionParticipant';
 
 
 // Cache to store sessions with timestamp
@@ -25,62 +26,49 @@ export async function GET(request: NextRequest) {
   try {
     // Check if we have a valid cache
     const now = Date.now();
-    if (sessionsCache && (now - sessionsCache.timestamp < CACHE_TTL)) {
+    // Only use cache if not filtering by joinedUserId
+    const { searchParams } = new URL(request.url);
+    const joinedUserId = searchParams.get("joinedUserId");
+    if (!joinedUserId && sessionsCache && (now - sessionsCache.timestamp < CACHE_TTL)) {
       // Set cache control headers
       const headers = new Headers();
       headers.set('Cache-Control', 'public, max-age=300'); // 5 minutes
       headers.set('X-Data-Source', 'cache');
-      
       return NextResponse.json(sessionsCache.data, { 
         status: 200,
         headers
       });
     }
-    
     // Cache miss or expired, fetch from database
     await connectToDatabase();
-
-    // --- ADDED: filter by trainerId if present ---
-    const { searchParams } = new URL(request.url);
+    // --- ADDED: filter by trainerId or joinedUserId if present ---
     const trainerId = searchParams.get("trainerId");
     const publicOnly = searchParams.get("public") === "true";
-    
-    console.log("API: Fetching sessions with trainerId:", trainerId, "publicOnly:", publicOnly);
-    
-    const query: any = {};
-    if (trainerId) {
-      // Only use ApprovedTrainer model for consistency
-      const ApprovedTrainer = (await import('@/models/ApprovedTrainer')).default;
-      
-      // Find the trainer in ApprovedTrainer model
-      let approvedTrainer = await ApprovedTrainer.findById(trainerId);
-      if (approvedTrainer) {
-        const fullName = `${approvedTrainer.firstName} ${approvedTrainer.lastName}`;
-        console.log("API: Found trainer in ApprovedTrainer model:", fullName);
-        query.trainerName = fullName;
-      } else {
-        console.log("API: Trainer not found in ApprovedTrainer model, using trainerId directly");
+    let sessions = [];
+    if (joinedUserId) {
+      // Find all sessionIds the user has joined (status approved or pending)
+      const joined = await SessionParticipant.find({ userId: joinedUserId, status: { $in: ["approved", "pending"] } });
+      const sessionIds = joined.map((p: any) => p.sessionId);
+      sessions = await Session.find({ _id: { $in: sessionIds } }).sort({ start: 1 });
+    } else {
+      const query: any = {};
+      if (trainerId) {
         query.trainerId = trainerId;
       }
+      if (!searchParams.get("includeCanceled")) {
+        query.canceled = { $ne: true };
+      }
+      sessions = await Session.find(query).sort({ start: 1 });
+      // Update cache only if not filtering by joinedUserId
+      sessionsCache = {
+        data: sessions,
+        timestamp: now
+      };
     }
-    
-    console.log("API: Final query:", query);
-    
-    const sessions = await Session.find(query).sort({ start: 1 });
-    console.log("API: Found sessions count:", sessions.length);
-    console.log("API: Sessions:", sessions.map(s => ({ id: s._id, title: s.title, trainerId: s.trainerId, trainerName: s.trainerName })));
-    
-    // Update cache
-    sessionsCache = {
-      data: sessions,
-      timestamp: now
-    };
-    
     // Set cache control headers
     const headers = new Headers();
     headers.set('Cache-Control', 'public, max-age=300'); // 5 minutes
-    headers.set('X-Data-Source', 'database');
-    
+    headers.set('X-Data-Source', joinedUserId ? 'database-joined' : 'database');
     return NextResponse.json(sessions, { 
       status: 200,
       headers

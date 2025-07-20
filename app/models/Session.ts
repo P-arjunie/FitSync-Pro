@@ -43,6 +43,14 @@ const sessionSchema = new Schema({
     type: String,
     required: false,
   },
+  canceled: {
+    type: Boolean,
+    default: false
+  },
+  cancellationReason: {
+    type: String,
+    default: null
+  },
 }, {
   timestamps: true,
 });

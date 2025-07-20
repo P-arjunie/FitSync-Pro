@@ -5,6 +5,7 @@
 import { useParams, useSearchParams } from 'next/navigation'
 import { User, Calendar as CalendarIcon, Plus } from "lucide-react"
 import SessionCalendar from '../../components/session-calendar'
+import JoinableSessionCalendar from '../../components/JoinableSessionCalendar'
 import { useState } from 'react'
 
 export default function TrainerDetailsPage() {
@@ -19,43 +20,6 @@ export default function TrainerDetailsPage() {
   console.log("TrainerPage: Trainer Name from URL:", trainerName)
   console.log("TrainerPage: Full URL params:", Object.fromEntries(searchParams.entries()))
 
-  const createSampleSession = async () => {
-    try {
-      setIsCreatingSession(true)
-      
-      const sessionData = {
-        title: "Sample Training Session",
-        trainerName: trainerName,
-        trainerId: trainerId,
-        start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
-        end: new Date(Date.now() + 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
-        location: "Main Gym Floor",
-        maxParticipants: 10,
-        description: "A sample training session for testing purposes"
-      }
-
-      const response = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(sessionData),
-      })
-
-      if (response.ok) {
-        alert('Sample session created successfully! Refresh the page to see it.')
-        window.location.reload()
-      } else {
-        const error = await response.json()
-        alert(`Failed to create session: ${error.error}`)
-      }
-    } catch (error) {
-      console.error('Error creating session:', error)
-      alert('Failed to create session')
-    } finally {
-      setIsCreatingSession(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -71,32 +35,19 @@ export default function TrainerDetailsPage() {
           <p className="text-gray-600">Professional Gym Trainer</p>
           
           {/* Create Sample Session Button */}
-          <div className="mt-4">
-            <button
-              onClick={createSampleSession}
-              disabled={isCreatingSession}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-            >
-              <Plus className="w-4 h-4" />
-              {isCreatingSession ? 'Creating...' : 'Create Sample Session'}
-            </button>
-            <p className="text-xs text-gray-500 mt-2">Click to create a test session for this trainer</p>
-          </div>
+          
         </div>
 
-        {/* Session Calendar */}
+        
+        {/* New: Joinable Session Calendar */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
-            <CalendarIcon className="h-6 w-6 text-red-600" />
-            <h2 className="text-xl font-semibold text-black">Available Sessions</h2>
+            <CalendarIcon className="h-6 w-6 text-green-600" />
+            <h2 className="text-xl font-semibold text-black">Join a Session</h2>
           </div>
-          <SessionCalendar 
+          <JoinableSessionCalendar 
             trainerId={trainerId}
-            mode="public"
-            showHeader={true}
-            height="600px"
-            title="Available Sessions"
-            description="View trainer's available sessions. Click on a session to see details and join."
+            height={600}
           />
         </div>
       </div>
