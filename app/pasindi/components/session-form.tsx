@@ -42,11 +42,13 @@ const formSchema = z.object({
     message: "Maximum participants must be a positive number.",
   }),
   description: z.string().optional(),
+
 })
 
 export default function SessionForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+
   const { toast } = useToast()
 
   // Get trainer name from localStorage
@@ -100,7 +102,7 @@ export default function SessionForm() {
       if (response.ok) {
         toast({
           title: "Session scheduled",
-          description: "Your session has been successfully scheduled.",
+          description: "Your session has been successfully scheduled. Email notifications have been sent to all approved members.",
         })
         form.reset()
         router.refresh()
@@ -336,6 +338,8 @@ export default function SessionForm() {
                   </FormItem>
                 )}
               />
+
+
 
               <Button
                 type="submit"

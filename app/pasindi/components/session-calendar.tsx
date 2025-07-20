@@ -97,10 +97,86 @@ export default function SessionCalendar({
       const response = await fetch(`/api/sessions/${sessionId}/participants`)
       if (response.ok) {
         const data = await response.json()
-        setParticipants(data)
+        setParticipants(data.all || data) // Handle both old and new format
       }
     } catch (error) {
       console.error("Error fetching participants:", error)
+    }
+  }
+
+  // Function to approve booking
+  const handleApproveBooking = async (participantId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/${selectedSession?._id}/approve-booking`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ participantId }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Booking approved successfully!",
+        })
+        // Refresh participants
+        if (selectedSession) {
+          fetchParticipants(selectedSession._id)
+        }
+      } else {
+        const errorData = await response.json()
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to approve booking.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error approving booking:", error)
+      toast({
+        title: "Error",
+        description: "Failed to approve booking. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Function to reject booking
+  const handleRejectBooking = async (participantId: string, rejectionReason?: string) => {
+    try {
+      const response = await fetch(`/api/sessions/${selectedSession?._id}/reject-booking`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ participantId, rejectionReason }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Booking rejected successfully!",
+        })
+        // Refresh participants
+        if (selectedSession) {
+          fetchParticipants(selectedSession._id)
+        }
+      } else {
+        const errorData = await response.json()
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to reject booking.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error rejecting booking:", error)
+      toast({
+        title: "Error",
+        description: "Failed to reject booking. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -455,8 +531,40 @@ export default function SessionCalendar({
                   key={participant._id}
                   className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg"
                 >
-                  <span className="font-medium text-black">{participant.userName}</span>
-                  <span className="text-xs text-gray-500">{new Date(participant.joinedAt).toLocaleDateString()}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-black">{participant.userName}</span>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        participant.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        participant.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {participant.status}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500">{new Date(participant.joinedAt).toLocaleDateString()}</span>
+                  </div>
+                  
+                  {/* Approval/Rejection buttons - only show for pending bookings */}
+                  {participant.status === 'pending' && mode === 'trainer' && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => handleApproveBooking(participant._id)}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-300 text-red-700 hover:bg-red-50"
+                        onClick={() => handleRejectBooking(participant._id)}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))
             )}
