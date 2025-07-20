@@ -12,7 +12,8 @@ mongoose
   .catch((err) => console.error("❌ MongoDB Error", err));
 
 // === ✅ Load Mongoose Models ===
-const User = require("./models/User");     // Adjust path if needed
+const ApprovedTrainer = require("../app/models/ApprovedTrainer").default; // Adjusted import for ApprovedTrainer
+const Member = require("../app/models/member").default; // Adjusted import for Member
 const Message = require("./models/Message"); // MongoDB model for messages
 
 // === 🧠 In-Memory WebSocket Users ===
@@ -67,25 +68,25 @@ async function handleRegister(ws, { userId, userType, userName }) {
 
   try {
     if (userType === "trainer") {
-      const members = await User.find({ role: "member" });
+      // Fetch all members
+      const members = await Member.find({});
       const membersWithStatus = members.map((m) => ({
         id: m._id.toString(),
-        name: m.name,
+        name: `${m.firstName} ${m.lastName}`.trim(),
         isOnline: users.has(m._id.toString()) && users.get(m._id.toString()).isOnline,
         unreadCount: 0,
       }));
-
       ws.send(JSON.stringify({ type: "members_list", members: membersWithStatus }));
     } else if (userType === "member") {
-      const trainers = await User.find({ role: "trainer" });
+      // Fetch all trainers
+      const trainers = await ApprovedTrainer.find({});
       const trainersWithStatus = trainers.map((t) => ({
         id: t._id.toString(),
-        name: t.name,
+        name: `${t.firstName} ${t.lastName}`.trim(),
         specialty: t.specialization || "Trainer",
         isOnline: users.has(t._id.toString()) && users.get(t._id.toString()).isOnline,
         unreadCount: 0,
       }));
-
       ws.send(JSON.stringify({ type: "trainers_list", trainers: trainersWithStatus }));
     }
   } catch (err) {
