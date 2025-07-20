@@ -1,3 +1,4 @@
+// app/api/analytics/revenue/route.ts
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import PricingPlanPurchase from '@/models/PricingPlanPurchase';
@@ -5,11 +6,37 @@ import Enrollment from '@/models/enrollment';
 import Payment from '@/models/Payment';
 import { RevenueAnalyticsData, RevenueAnalyticsResponse } from '@/types/analytics';
 
+// Helper function to format dates based on groupBy
+const getDateGroupFormat = (groupBy: string) => {
+  switch (groupBy) {
+    case 'month':
+      return '%Y-%m';
+    case 'week':
+      return '%Y-%U'; // Year-Week
+    default:
+      return '%Y-%m-%d';
+  }
+};
+
+// Helper function to format date labels
+const formatDateLabel = (date: string, groupBy: string) => {
+  if (groupBy === 'month') {
+    const [year, month] = date.split('-');
+    return new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  } else if (groupBy === 'week') {
+    const [year, week] = date.split('-');
+    return `Week ${week}, ${year}`;
+  }
+  return new Date(date).toLocaleDateString();
+};
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     
-    // Get query parameters
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const groupBy = searchParams.get('groupBy') || 'day';
@@ -21,46 +48,19 @@ export async function GET(request: Request) {
       );
     }
     
-    // Connect to MongoDB
     if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGODB_URI!);
+      if (!process.env.MONGODB_URI) {
+        throw new Error('MONGODB_URI environment variable is not defined');
+      }
+      await mongoose.connect(process.env.MONGODB_URI);
     }
     
     const start = new Date(startDate);
     const end = new Date(endDate);
-    // Ensure end date includes the full day
     end.setHours(23, 59, 59, 999);
-
-    // Helper function to format dates based on groupBy
-    const getDateGroupFormat = (groupBy: string) => {
-      switch (groupBy) {
-        case 'month':
-          return '%Y-%m';
-        case 'week':
-          return '%Y-%U'; // Year-Week
-        default:
-          return '%Y-%m-%d';
-      }
-    };
 
     const dateFormat = getDateGroupFormat(groupBy);
 
-    // Helper function to format date labels
-    const formatDateLabel = (date: string, groupBy: string) => {
-      if (groupBy === 'month') {
-        const [year, month] = date.split('-');
-        return new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { 
-          month: 'short', 
-          year: 'numeric' 
-        });
-      } else if (groupBy === 'week') {
-        const [year, week] = date.split('-');
-        return `Week ${week}, ${year}`;
-      }
-      return new Date(date).toLocaleDateString();
-    };
-
-    // Fetch data in parallel
     const [
       pricingPlanData,
       classData,
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
       enrollmentStatuses,
       prevPeriodData
     ] = await Promise.all([
-      // Current period pricing plan revenue data
+      // Pricing plan revenue data
       Payment.aggregate([
         {
           $match: {
@@ -89,7 +89,7 @@ export async function GET(request: Request) {
         { $sort: { '_id': 1 } }
       ]),
       
-      // Current period class enrollment revenue data
+      // Class enrollment revenue data
       Payment.aggregate([
         {
           $match: {
@@ -108,19 +108,18 @@ export async function GET(request: Request) {
         { $sort: { '_id': 1 } }
       ]),
       
-      // Pricing plan breakdown - Get revenue by plan name
+      // Pricing plan breakdown
       Payment.aggregate([
         {
           $match: {
             paymentFor: 'pricing-plan',
             createdAt: { $gte: start, $lte: end },
-            paymentStatus: 'succeeded',
-            relatedOrderId: { $ne: null }
+            paymentStatus: 'succeeded'
           }
         },
         {
           $lookup: {
-            from: 'pricing_plan', // Use the correct collection name
+            from: 'pricing_plan',
             localField: 'relatedOrderId',
             foreignField: '_id',
             as: 'planDetails'
@@ -137,7 +136,7 @@ export async function GET(request: Request) {
         { $sort: { revenue: -1 } }
       ]),
       
-      // Class enrollment breakdown - Get revenue by class name
+      // Class enrollment breakdown
       Payment.aggregate([
         {
           $match: {
@@ -149,7 +148,7 @@ export async function GET(request: Request) {
         },
         {
           $lookup: {
-            from: 'enrollments', // Default collection name for Enrollment model
+            from: 'enrollments',
             localField: 'relatedEnrollmentId',
             foreignField: '_id',
             as: 'enrollmentDetails'
@@ -166,7 +165,7 @@ export async function GET(request: Request) {
         { $sort: { revenue: -1 } }
       ]),
       
-      // Pricing plan statuses - Get from PricingPlanPurchase collection
+      // Pricing plan statuses
       PricingPlanPurchase.aggregate([
         { 
           $match: { 
@@ -181,7 +180,7 @@ export async function GET(request: Request) {
         }
       ]),
       
-      // Enrollment statuses - Get from Enrollment collection
+      // Enrollment statuses
       Enrollment.aggregate([
         { 
           $match: { 
@@ -284,7 +283,6 @@ export async function GET(request: Request) {
 
     // Format the response
     const responseData: RevenueAnalyticsData = {
-      // Required core metrics
       totalRevenue: overallTotalRevenue,
       totalPricingPlans,
       totalClassEnrollments,
@@ -297,7 +295,6 @@ export async function GET(request: Request) {
       
       dailyRevenue,
       
-      // Chart data for backward compatibility
       labels,
       pricingPlanRevenue,
       classRevenue,
@@ -306,7 +303,6 @@ export async function GET(request: Request) {
       totalClassRevenue,
       overallTotalRevenue,
       
-      // Breakdown data
       pricingPlanBreakdown: pricingPlanBreakdown.map(item => ({
         planName: item._id || 'Unknown Plan',
         purchases: item.purchases,
@@ -319,7 +315,6 @@ export async function GET(request: Request) {
         revenue: item.revenue
       })),
       
-      // Status data
       pricingPlanStatuses: pricingPlanStatuses.reduce((obj, item) => ({
         ...obj,
         [item._id]: item.count
@@ -330,7 +325,6 @@ export async function GET(request: Request) {
         [item._id]: item.count
       }), {} as Record<string, number>),
       
-      // Comparison data
       comparisonToPreviousPeriod: {
         pricingPlanRevenueChange: calculatePercentageChange(totalPricingPlanRevenue, prevPeriodData.pricing),
         classRevenueChange: calculatePercentageChange(totalClassRevenue, prevPeriodData.classes),
@@ -349,8 +343,46 @@ export async function GET(request: Request) {
       { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to fetch revenue analytics' 
-      } as RevenueAnalyticsResponse,
+      },
       { status: 500 }
     );
   }
+}
+
+// Example payment creation function
+export async function createPricingPlanPayment(userId: string, planDetails: {
+  planName: string;
+  priceId: string;
+  amount: number;
+}) {
+  // First create the purchase record
+  const purchase = await PricingPlanPurchase.create({
+    userId,
+    planName: planDetails.planName,
+    priceId: planDetails.priceId,
+    amount: planDetails.amount,
+    status: 'pending'
+  });
+
+  // Then create payment with reference
+  const payment = await Payment.create({
+    userId,
+    paymentFor: 'pricing-plan',
+    amount: planDetails.amount,
+    paymentStatus: 'pending',
+    relatedOrderId: purchase._id, // This links the payment to the purchase
+    billingAddress: {
+      street: '',
+      city: '',
+      country: '',
+      zip: ''
+    },
+    firstName: '',
+    lastName: '',
+    email: '',
+    company: '',
+    currency: 'usd'
+  });
+
+  return payment;
 }
