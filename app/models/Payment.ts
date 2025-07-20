@@ -17,10 +17,17 @@ export interface IPayment extends Document {
     street: string;
   };
   userId: string;
-  paymentFor: 'order' | 'enrollment' | 'pricing-plan';
+  paymentFor: 'order' | 'enrollment' | 'pricing-plan' | 'monthly-plan';
   relatedOrderId?: mongoose.Types.ObjectId | null;
   relatedEnrollmentId?: mongoose.Types.ObjectId | null;
   stripePaymentIntentId?: string;
+  refundStatus?: 'none' | 'requested' | 'refunded' | 'denied';
+  refundRequestedAt?: Date;
+  refundProcessedAt?: Date;
+  refundAmount?: number;
+  refundReason?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const paymentSchema = new Schema<IPayment>(
@@ -42,7 +49,7 @@ const paymentSchema = new Schema<IPayment>(
     userId: { type: String, required: true },
     paymentFor: {
       type: String,
-      enum: ['order', 'enrollment', 'pricing-plan'],
+      enum: ['order', 'enrollment', 'pricing-plan', 'monthly-plan'],
       required: true,
     },
     relatedOrderId: {
@@ -56,6 +63,23 @@ const paymentSchema = new Schema<IPayment>(
       default: null,
     },
     stripePaymentIntentId: {
+      type: String,
+    },
+    refundStatus: {
+      type: String,
+      enum: ['none', 'requested', 'refunded', 'denied'],
+      default: 'none',
+    },
+    refundRequestedAt: {
+      type: Date,
+    },
+    refundProcessedAt: {
+      type: Date,
+    },
+    refundAmount: {
+      type: Number,
+    },
+    refundReason: {
       type: String,
     },
   },

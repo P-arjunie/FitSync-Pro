@@ -6,6 +6,7 @@ import Payment from "@/models/Payment";
 import Order from "@/models/order";
 import Enrollment from "@/models/enrollment";
 import PricingPlanPurchase from "@/models/PricingPlanPurchase";
+import User from "@/models/User";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
@@ -31,6 +32,12 @@ export async function POST(req: NextRequest) {
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
+    }
+
+    // Get user email for customer creation
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     let amount = 0;
@@ -114,20 +121,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid paymentFor value" }, { status: 400 });
     }
 
-    // For enrollment and order, create normal payment intent
+    // Create or retrieve Stripe customer for enrollment and order payments
+    const customers = await stripe.customers.list({ email: user.email });
+    let customer = customers.data[0];
+    if (!customer) {
+      customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { userId },
+      });
+    }
+
+    // For enrollment and order, create payment intent with customer
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "usd",
+      customer: customer.id,
       payment_method: paymentMethodId,
       confirm: true,
       automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+      metadata: {
+        userId: userId,
+        paymentFor: paymentFor,
+        itemTitle: itemTitle,
+      },
     });
 
     if (paymentIntent.status === "succeeded") {
       const newPayment = new Payment({
         firstName: itemTitle,
         lastName: userId.toString(),
-        email: "placeholder@example.com",
+        email: user.email,
         company: "FitSyncPro",
         amount: amount / 100,
         currency: "usd",
