@@ -1,5 +1,20 @@
 import mongoose, { Schema } from 'mongoose';
 
+// Sub-schema for Trainer details
+const trainerSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+    minlength: 2,
+  },
+  email: {
+    type: String,
+    required: true,
+    minlength: 5,
+  },
+});
+
+// Main schema for VirtualSession
 const virtualSessionSchema = new Schema({
   title: {
     type: String,
@@ -7,9 +22,8 @@ const virtualSessionSchema = new Schema({
     minlength: 2,
   },
   trainer: {
-    type: String,
+    type: trainerSchema,
     required: true,
-    minlength: 2,
   },
   date: {
     type: Date,
@@ -40,17 +54,16 @@ const virtualSessionSchema = new Schema({
     },
   },
   participants: {
-  type: [
-    {
-      id: { type: String, required: true },
-      firstName: String,
-      lastName: String,
-      email: String,
-    }
-  ],
-  default: [],
-},
-
+    type: [
+      {
+        id: { type: String, required: true },
+        firstName: String,
+        lastName: String,
+        email: String,
+      }
+    ],
+    default: [],
+  },
 }, {
   timestamps: true,
 });
