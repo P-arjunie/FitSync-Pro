@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
       lastName: pendingMember.lastName,
       dob: pendingMember.dob,
       gender: pendingMember.gender,
+      nic: pendingMember.nic,
       contactNumber: pendingMember.contactNumber,
       email: pendingMember.email,
       currentWeight: pendingMember.currentWeight,
@@ -32,15 +33,11 @@ export async function POST(req: NextRequest) {
       bmi: pendingMember.bmi,
       goalWeight: pendingMember.goalWeight,
       address: pendingMember.address,
-      emergencyContactName: pendingMember.emergencyContactName,
-      emergencyContactRelation: pendingMember.emergencyContactRelation,
-      emergencyContactNumber: pendingMember.emergencyContactNumber,
-      membershipType: pendingMember.membershipType,
-      preferredWorkoutTime: pendingMember.preferredWorkoutTime,
-      termsAccepted: pendingMember.termsAccepted,
+      emergencyContact: pendingMember.emergencyContact, // nested object
+      membershipInfo: pendingMember.membershipInfo, // nested object
       image: pendingMember.image,
-      userId: pendingMember.userId,
       status: "approved", // Set the status to approved
+      role: pendingMember.role || "member",
     });
 
     // Save the approved member to the permanent collection
