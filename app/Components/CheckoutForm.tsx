@@ -4,11 +4,14 @@ import { StripeCardElement } from "@stripe/stripe-js";
 import styles from "./checkoutform.module.css";
 import Navbar from "./Navbar";
 import Footer_02 from "./Footer_02";
+import cartImg from "../../public/cart.png";
+import classImg from "../../public/classesb.png";
 
 interface OrderItem {
   title: string;
   price: number;
   quantity: number;
+  image?: string;
 }
 
 interface CheckoutFormProps {
@@ -137,76 +140,106 @@ pricingPlanId: pricingPlanData?.pricingPlanId || null,
     setLoading(false);
   };
 
+  // Map class names to their respective images
+  const classImageMap: Record<string, string> = {
+    meditation: "/meditation.jpg",
+    workout: "/workout.jpg",
+    mma: "/mma.jpg",
+    yoga: "/yoga.jpg",
+    cycling: "/cycling.jpg",
+    power_lifting: "/powerlifting.jpg",
+  };
+
   return (
     <div className={styles.pageWrapper}>
       <Navbar />
       <form onSubmit={handleSubmit} className={styles.container}>
         <h2 className={styles.title}>Checkout Summary</h2>
-
         <div className={styles.grid}>
-  {/* Order Items */}
-  {orderItems.length > 0 &&
-    orderItems.map((item, idx) => (
-      <div key={idx} className={styles.card}>
-        <p>
-          <strong>{item.title}</strong>
-        </p>
-        <p>Qty: {item.quantity}</p>
-        <p>Price: ${item.price}</p>
-      </div>
-    ))}
+          {/* Order Items */}
+          {orderItems.length > 0 &&
+            orderItems.map((item, idx) => (
+              <div key={idx} className={styles.card}>
+                <img
+                  src={item.image || cartImg.src}
+                  alt={item.title}
+                  className={styles.itemImage}
+                />
+                <div className={styles.cardContent}>
+                  <p><strong>{item.title}</strong></p>
+                  <p>Qty: {item.quantity}</p>
+                  <p>Price: ${item.price}</p>
+                </div>
+              </div>
+            ))}
 
-  {/* Enrollment Summary */}
-  {enrollmentData && (
-    <div className={styles.card}>
-      <p>
-        <strong>{enrollmentData.className}</strong>
-      </p>
-      <p>Qty: 1</p>
-      <p>Price: ${enrollmentData.totalAmount}</p>
-    </div>
-  )}
+          {/* Enrollment Summary */}
+          {enrollmentData && (
+            <div className={styles.card}>
+              <img
+                src={classImageMap[enrollmentData.className.toLowerCase().replace(/ /g, "_")] || classImg.src}
+                alt={enrollmentData.className}
+                className={styles.itemImage}
+              />
+              <div className={styles.cardContent}>
+                <p><strong>{enrollmentData.className}</strong></p>
+                <p>Qty: 1</p>
+                <p>Price: ${enrollmentData.totalAmount}</p>
+              </div>
+            </div>
+          )}
 
-  {/* Pricing Plan Summary */}
-  {pricingPlanData && (
-    <div className={styles.card}>
-      <p>
-        <strong>{pricingPlanData.planName}</strong>
-      </p>
-      <p>Qty: 1</p>
-      <p>Price: ${pricingPlanData.amount}</p>
-    </div>
-  )}
+          {/* Pricing Plan Summary */}
+          {pricingPlanData && (
+            <div className={styles.card}>
+              <img
+                src={cartImg.src}
+                alt="Plan"
+                className={styles.itemImage}
+              />
+              <div className={styles.cardContent}>
+                <p><strong>{pricingPlanData.planName}</strong></p>
+                <p>Qty: 1</p>
+                <p>Price: ${pricingPlanData.amount}</p>
+              </div>
+            </div>
+          )}
 
-  {/* Total Summary */}
-  <div className={styles.card}>
-    <p>
-      <strong>
-        Total: $
-        {pricingPlanData
-          ? pricingPlanData.amount
-          : enrollmentData
-          ? enrollmentData.totalAmount
-          : totalAmount}
-      </strong>
-    </p>
-  </div>
-</div>
+          {/* Total Summary */}
+          <div className={styles.card}>
+            <div className={styles.cardContent}>
+              <p>
+                <strong>
+                  Total: $
+                  {pricingPlanData
+                    ? pricingPlanData.amount
+                    : enrollmentData
+                    ? enrollmentData.totalAmount
+                    : totalAmount}
+                </strong>
+              </p>
+            </div>
+          </div>
+        </div>
 
-
-        <CardElement
-          className={styles.card}
-          options={{
-            style: {
-              base: {
-                fontSize: "16px",
-                color: "#424770",
-                "::placeholder": { color: "#aab7c4" },
+        <div className={styles.paymentCard}>
+          <h3 className={styles.paymentTitle}>Enter Card Details</h3>
+          <CardElement
+            className={styles.cardElement}
+            options={{
+              style: {
+                base: {
+                  fontSize: "16px",
+                  color: "#222",
+                  '::placeholder': { color: "#bbb" },
+                  fontFamily: "inherit",
+                  backgroundColor: "#fff",
+                },
+                invalid: { color: "#e3342f" },
               },
-              invalid: { color: "#9e2146" },
-            },
-          }}
-        />
+            }}
+          />
+        </div>
 
         <button
           type="submit"

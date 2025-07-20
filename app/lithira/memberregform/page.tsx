@@ -30,6 +30,8 @@ const MemberRegistrationForm: React.FC = () => {
       startDate: "",
     },
     termsAccepted: false,
+    password: "",
+    confirmPassword: "",
   });
 
   useEffect(() => {
@@ -92,6 +94,16 @@ const MemberRegistrationForm: React.FC = () => {
       return;
     }
 
+    // Password validation
+    if (formData.password.length < 6) {
+      alert("Password should be at least 6 characters.");
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match.");
+      return;
+    }
+
     // Validate email format
     if (!isValidEmail(formData.email)) {
       alert("Please enter a valid email address.");
@@ -106,12 +118,19 @@ const MemberRegistrationForm: React.FC = () => {
 
     // Validate emergency contact phone
     if (!isValidPhone(formData.emergencyContact.phone)) {
-      alert("Please enter a valid emergency contact phone number (digits only).");
+      alert(
+        "Please enter a valid emergency contact phone number (digits only)."
+      );
       return;
     }
 
     // Validate currentWeight, height, bmi, goalWeight as positive numbers if filled
-    const numericFields = ["currentWeight", "height", "bmi", "goalWeight"] as const;
+    const numericFields = [
+      "currentWeight",
+      "height",
+      "bmi",
+      "goalWeight",
+    ] as const;
     for (const field of numericFields) {
       const val = formData[field];
       if (val !== "" && (isNaN(Number(val)) || Number(val) <= 0)) {
@@ -121,11 +140,17 @@ const MemberRegistrationForm: React.FC = () => {
     }
 
     try {
+      // Prepare payload for backend
+      const payload = {
+        ...formData,
+      };
+      delete payload.confirmPassword;
+
       // Submit form data to backend API
       const res = await fetch("/api/member/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -135,7 +160,7 @@ const MemberRegistrationForm: React.FC = () => {
 
       alert("Registration submitted for admin approval.");
       localStorage.removeItem("memberProfileImage");
-      router.push("/some/confirmation-page");
+      router.push("/");
     } catch (error) {
       console.error("Error submitting form:", error);
       alert("Registration failed.");
@@ -201,6 +226,33 @@ const MemberRegistrationForm: React.FC = () => {
                 />
               </div>
             ))}
+          </div>
+          {/* Password Fields */}
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Password</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                className="border border-red-500 p-2 rounded"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Confirm Password</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                className="border border-red-500 p-2 rounded"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+              />
+            </div>
           </div>
 
           {/* Gender selection */}
@@ -330,4 +382,3 @@ const MemberRegistrationForm: React.FC = () => {
 };
 
 export default MemberRegistrationForm;
-

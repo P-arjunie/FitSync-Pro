@@ -6,6 +6,7 @@ import Payment from "@/models/Payment";
 import Order from "@/models/order";
 import Enrollment from "@/models/enrollment";
 import PricingPlanPurchase from "@/models/PricingPlanPurchase";
+import User from "@/models/User";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
@@ -31,6 +32,12 @@ export async function POST(req: NextRequest) {
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return NextResponse.json({ error: "Invalid userId" }, { status: 400 });
+    }
+
+    // Get user email for customer creation
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     let amount = 0;
@@ -72,28 +79,78 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Pricing plan not found" }, { status: 404 });
       }
 
-      amount = Math.round(plan.amount * 100);
+      const priceId = plan.priceId;
+      if (!priceId) {
+        return NextResponse.json({ error: "Missing priceId in pricing plan" }, { status: 400 });
+      }
+
+      if (!plan.stripeCustomerId) {
+        return NextResponse.json({ error: "Missing Stripe customer ID in pricing plan" }, { status: 400 });
+      }
+
+      // Optional: update status to pending before subscription creation
+      await PricingPlanPurchase.findByIdAndUpdate(pricingPlanId, { status: "pending" });
+
+      const subscription = await stripe.subscriptions.create({
+        customer: plan.stripeCustomerId,
+        items: [{ price: priceId }],
+        metadata: {
+          userId: userId,
+          pricingPlanId: pricingPlanId.toString(),
+        },
+        payment_behavior: "default_incomplete",
+        expand: ["latest_invoice.payment_intent"],
+      });
+
+      const invoice = subscription.latest_invoice;
+      let paymentIntent = null;
+      if (typeof invoice !== "string" && invoice && "payment_intent" in invoice && invoice.payment_intent) {
+        paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+      } else {
+        return NextResponse.json({ error: "Invoice.payment_intent missing" }, { status: 500 });
+      }
+
+      amount = paymentIntent.amount;
       itemTitle = plan.planName || "Pricing Plan";
 
+      return NextResponse.json({
+        clientSecret: paymentIntent.client_secret,
+        subscriptionId: subscription.id,
+      });
     } else {
       return NextResponse.json({ error: "Invalid paymentFor value" }, { status: 400 });
     }
 
-    // Create Stripe payment intent
+    // Create or retrieve Stripe customer for enrollment and order payments
+    const customers = await stripe.customers.list({ email: user.email });
+    let customer = customers.data[0];
+    if (!customer) {
+      customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { userId },
+      });
+    }
+
+    // For enrollment and order, create payment intent with customer
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "usd",
+      customer: customer.id,
       payment_method: paymentMethodId,
       confirm: true,
       automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+      metadata: {
+        userId: userId,
+        paymentFor: paymentFor,
+        itemTitle: itemTitle,
+      },
     });
 
     if (paymentIntent.status === "succeeded") {
-      // Save payment in kalana_paymentsses collection
       const newPayment = new Payment({
         firstName: itemTitle,
         lastName: userId.toString(),
-        email: "placeholder@example.com",
+        email: user.email,
         company: "FitSyncPro",
         amount: amount / 100,
         currency: "usd",
@@ -114,8 +171,7 @@ export async function POST(req: NextRequest) {
 
       await newPayment.save();
 
-      // Update respective document status
-      if (paymentFor === "pricing_plan") {
+      if (paymentFor === "pricing-plan") {
         await PricingPlanPurchase.findByIdAndUpdate(pricingPlanId, { status: "paid" });
       }
 

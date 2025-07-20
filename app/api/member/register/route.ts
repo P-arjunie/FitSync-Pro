@@ -30,6 +30,7 @@ export async function POST(req: Request) {
       bmi,
       goalWeight,
       termsAccepted,
+      password
     } = body;
 
     // Validate presence of all required fields including nested emergency contact and membership info
@@ -68,6 +69,7 @@ export async function POST(req: Request) {
       termsAccepted, // Confirm that the terms checkbox was accepted
       role: "member", // Default role is set to "member"
       status: "pending", // Status indicates admin approval is still required
+      password
     });
 
     // Respond with a success message and 201 Created status
