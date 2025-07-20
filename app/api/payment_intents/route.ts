@@ -72,14 +72,49 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Pricing plan not found" }, { status: 404 });
       }
 
-      amount = Math.round(plan.amount * 100);
+      const priceId = plan.priceId;
+      if (!priceId) {
+        return NextResponse.json({ error: "Missing priceId in pricing plan" }, { status: 400 });
+      }
+
+      if (!plan.stripeCustomerId) {
+        return NextResponse.json({ error: "Missing Stripe customer ID in pricing plan" }, { status: 400 });
+      }
+
+      // Optional: update status to pending before subscription creation
+      await PricingPlanPurchase.findByIdAndUpdate(pricingPlanId, { status: "pending" });
+
+      const subscription = await stripe.subscriptions.create({
+        customer: plan.stripeCustomerId,
+        items: [{ price: priceId }],
+        metadata: {
+          userId: userId,
+          pricingPlanId: pricingPlanId.toString(),
+        },
+        payment_behavior: "default_incomplete",
+        expand: ["latest_invoice.payment_intent"],
+      });
+
+      const invoice = subscription.latest_invoice;
+      let paymentIntent = null;
+      if (typeof invoice !== "string" && invoice && "payment_intent" in invoice && invoice.payment_intent) {
+        paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+      } else {
+        return NextResponse.json({ error: "Invoice.payment_intent missing" }, { status: 500 });
+      }
+
+      amount = paymentIntent.amount;
       itemTitle = plan.planName || "Pricing Plan";
 
+      return NextResponse.json({
+        clientSecret: paymentIntent.client_secret,
+        subscriptionId: subscription.id,
+      });
     } else {
       return NextResponse.json({ error: "Invalid paymentFor value" }, { status: 400 });
     }
 
-    // Create Stripe payment intent
+    // For enrollment and order, create normal payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "usd",
@@ -89,7 +124,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (paymentIntent.status === "succeeded") {
-      // Save payment in kalana_paymentsses collection
       const newPayment = new Payment({
         firstName: itemTitle,
         lastName: userId.toString(),
@@ -114,8 +148,7 @@ export async function POST(req: NextRequest) {
 
       await newPayment.save();
 
-      // Update respective document status
-      if (paymentFor === "pricing_plan") {
+      if (paymentFor === "pricing-plan") {
         await PricingPlanPurchase.findByIdAndUpdate(pricingPlanId, { status: "paid" });
       }
 
