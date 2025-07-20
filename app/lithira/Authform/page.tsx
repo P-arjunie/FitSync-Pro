@@ -110,7 +110,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       localStorage.setItem("userEmail", "admin@123.com");
       localStorage.setItem("userName", "Admin");
       localStorage.setItem("userId", "admin_001");
-      router.push("/");
+      localStorage.setItem("adminLoginTimestamp", Date.now().toString());
+      router.push("/lithira/admindashboard");
       return;
     }
 
@@ -138,6 +139,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 
         if (data.user.profileImage) {
           localStorage.setItem("profileImage", data.user.profileImage);
+        }
+
+        // Set login timestamp for admin users
+        if (data.user.role === "admin") {
+          localStorage.setItem("adminLoginTimestamp", Date.now().toString());
+        }
+
+        // Set login timestamp for member users
+        if (data.user.role === "member") {
+          localStorage.setItem("memberLoginTimestamp", Date.now().toString());
         }
 
         console.log("Login successful, stored role:", data.user.role); // Debug log
