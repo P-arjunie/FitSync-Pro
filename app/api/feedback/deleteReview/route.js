@@ -34,20 +34,20 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error deleting review:', error);
     return NextResponse.json({ 
-      success: false, 
+      success: false,
       message: 'Internal server error',
       error: error.message || 'Unknown error' 
     }, { status: 500 });
   }
 }
 
-// Optionally, you can also define a DELETE method handler
+// Fixed DELETE method handler
 export async function DELETE(request) {
-  // Extract reviewId from URL or request body
-  const url = new URL(request.url);
-  const reviewId = url.searchParams.get('reviewId');
-  
   try {
+    const url = new URL(request.url);
+    // Changed from 'reviewId' to 'id' to match frontend
+    const reviewId = url.searchParams.get('id');
+    
     await connectToDatabase();
     
     if (!reviewId) {
@@ -69,7 +69,7 @@ export async function DELETE(request) {
   } catch (error) {
     console.error('Error deleting review:', error);
     return NextResponse.json({ 
-      success: false, 
+      success: false,
       message: 'Internal server error',
       error: error.message || 'Unknown error' 
     }, { status: 500 });

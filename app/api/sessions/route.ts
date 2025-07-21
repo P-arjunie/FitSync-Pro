@@ -4,6 +4,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from "../../lib/mongodb";
 import Session from '@/models/Session';
+import Member from '@/models/member';
+import ApprovedTrainer from '@/models/ApprovedTrainer';
+import { sendEmail } from '@/lib/sendEmail';
+import dedent from 'dedent';
+// import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
+import SessionParticipant from '@/models/SessionParticipant';
+
 
 // Cache to store sessions with timestamp
 let sessionsCache: {
@@ -18,62 +26,49 @@ export async function GET(request: NextRequest) {
   try {
     // Check if we have a valid cache
     const now = Date.now();
-    if (sessionsCache && (now - sessionsCache.timestamp < CACHE_TTL)) {
+    // Only use cache if not filtering by joinedUserId
+    const { searchParams } = new URL(request.url);
+    const joinedUserId = searchParams.get("joinedUserId");
+    if (!joinedUserId && sessionsCache && (now - sessionsCache.timestamp < CACHE_TTL)) {
       // Set cache control headers
       const headers = new Headers();
       headers.set('Cache-Control', 'public, max-age=300'); // 5 minutes
       headers.set('X-Data-Source', 'cache');
-      
       return NextResponse.json(sessionsCache.data, { 
         status: 200,
         headers
       });
     }
-    
     // Cache miss or expired, fetch from database
     await connectToDatabase();
-
-    // --- ADDED: filter by trainerId if present ---
-    const { searchParams } = new URL(request.url);
+    // --- ADDED: filter by trainerId or joinedUserId if present ---
     const trainerId = searchParams.get("trainerId");
     const publicOnly = searchParams.get("public") === "true";
-    
-    console.log("API: Fetching sessions with trainerId:", trainerId, "publicOnly:", publicOnly);
-    
-    const query: any = {};
-    if (trainerId) {
-      // Only use ApprovedTrainer model for consistency
-      const ApprovedTrainer = (await import('@/models/ApprovedTrainer')).default;
-      
-      // Find the trainer in ApprovedTrainer model
-      let approvedTrainer = await ApprovedTrainer.findById(trainerId);
-      if (approvedTrainer) {
-        const fullName = `${approvedTrainer.firstName} ${approvedTrainer.lastName}`;
-        console.log("API: Found trainer in ApprovedTrainer model:", fullName);
-        query.trainerName = fullName;
-      } else {
-        console.log("API: Trainer not found in ApprovedTrainer model, using trainerId directly");
+    let sessions = [];
+    if (joinedUserId) {
+      // Find all sessionIds the user has joined (status approved or pending)
+      const joined = await SessionParticipant.find({ userId: joinedUserId, status: { $in: ["approved", "pending"] } });
+      const sessionIds = joined.map((p: any) => p.sessionId);
+      sessions = await Session.find({ _id: { $in: sessionIds } }).sort({ start: 1 });
+    } else {
+      const query: any = {};
+      if (trainerId) {
         query.trainerId = trainerId;
       }
+      if (!searchParams.get("includeCanceled")) {
+        query.canceled = { $ne: true };
+      }
+      sessions = await Session.find(query).sort({ start: 1 });
+      // Update cache only if not filtering by joinedUserId
+      sessionsCache = {
+        data: sessions,
+        timestamp: now
+      };
     }
-    
-    console.log("API: Final query:", query);
-    
-    const sessions = await Session.find(query).sort({ start: 1 });
-    console.log("API: Found sessions count:", sessions.length);
-    console.log("API: Sessions:", sessions.map(s => ({ id: s._id, title: s.title, trainerId: s.trainerId, trainerName: s.trainerName })));
-    
-    // Update cache
-    sessionsCache = {
-      data: sessions,
-      timestamp: now
-    };
-    
     // Set cache control headers
     const headers = new Headers();
     headers.set('Cache-Control', 'public, max-age=300'); // 5 minutes
-    headers.set('X-Data-Source', 'database');
-    
+    headers.set('X-Data-Source', joinedUserId ? 'database-joined' : 'database');
     return NextResponse.json(sessions, { 
       status: 200,
       headers
@@ -170,6 +165,115 @@ export async function POST(request: NextRequest) {
       trainerId: session.trainerId,
       trainerName: session.trainerName
     });
+
+    // Send email to trainer
+    try {
+      const sendTrainerEmail = process.env.SEND_TRAINER_EMAILS !== 'false'; // Default to true
+      
+      if (sendTrainerEmail) {
+        const trainer = await ApprovedTrainer.findById(verifiedTrainerId);
+        if (trainer && trainer.email) {
+          await sendEmail({
+            to: trainer.email,
+            subject: `📅 New Physical Session Created: ${body.title}`,
+            text: `Trainer "${body.trainerName}" scheduled a physical session on ${new Date(body.start).toLocaleDateString()} from ${new Date(body.start).toLocaleTimeString()} to ${new Date(body.end).toLocaleTimeString()}.`,
+            html: dedent`
+              <p>Trainer <strong>${body.trainerName}</strong> has scheduled a new physical session.</p>
+              <p><strong>Date:</strong> ${new Date(body.start).toLocaleDateString()}<br/>
+              <strong>Time:</strong> ${new Date(body.start).toLocaleTimeString()} - ${new Date(body.end).toLocaleTimeString()}<br/>
+              <strong>Location:</strong> ${body.location}<br/>
+              <strong>Max Participants:</strong> ${body.maxParticipants}</p>
+              <p>Thanks,<br/>FitSync Pro</p>
+            `
+          });
+          console.log("✅ Trainer email sent successfully!");
+        }
+      } else {
+        console.log("📧 Trainer email notifications are disabled");
+      }
+    } catch (trainerEmailError) {
+      console.error("❌ Failed to send trainer email:", trainerEmailError);
+    }
+
+    // Send emails to all approved members
+    try {
+      // Check if email notifications are enabled (you can make this configurable)
+      const sendMemberEmails = process.env.SEND_SESSION_EMAILS !== 'false'; // Default to true
+      
+      if (sendMemberEmails) {
+        // Build query for approved members
+        const memberQuery: any = { 
+          status: "approved",
+          email: { $exists: true, $ne: "" }
+        };
+
+        // Optional: Filter by membership plan if specified in session
+        if (body.targetMembershipPlan) {
+          memberQuery['membershipInfo.plan'] = body.targetMembershipPlan;
+        }
+
+        // Optional: Filter by specific member IDs if provided
+        if (body.targetMemberIds && Array.isArray(body.targetMemberIds) && body.targetMemberIds.length > 0) {
+          memberQuery._id = { $in: body.targetMemberIds };
+        }
+
+        const approvedMembers = await Member.find(memberQuery);
+
+        console.log(`📧 Sending emails to ${approvedMembers.length} approved members...`);
+        
+        let successCount = 0;
+        let errorCount = 0;
+        
+        for (const member of approvedMembers) {
+          if (member.email) {
+            // Validate email format and domain
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const isValidEmail = emailRegex.test(member.email);
+            const isNotExampleDomain = !member.email.includes('@example.com') && !member.email.includes('@test.com');
+            
+            if (!isValidEmail || !isNotExampleDomain) {
+              console.warn(`⚠️ Invalid email address, skipping member: ${member.email}`);
+              continue;
+            }
+            
+            try {
+              // Add a small delay to prevent overwhelming the email service
+              if (successCount > 0 && successCount % 10 === 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay every 10 emails
+              }
+
+              await sendEmail({
+                to: member.email,
+                subject: `📅 New Physical Session Available: ${body.title}`,
+                text: `Hi ${member.firstName || 'Member'},\n\nA new physical session "${body.title}" has been scheduled on ${new Date(body.start).toLocaleDateString()} from ${new Date(body.start).toLocaleTimeString()} to ${new Date(body.end).toLocaleTimeString()} at ${body.location}.`,
+                html: dedent`
+                  <p>Hi ${member.firstName || 'Member'},</p>
+                  <p>A new physical session <strong>${body.title}</strong> has been scheduled!</p>
+                  <p><strong>Date:</strong> ${new Date(body.start).toLocaleDateString()}<br/>
+                  <strong>Time:</strong> ${new Date(body.start).toLocaleTimeString()} - ${new Date(body.end).toLocaleTimeString()}<br/>
+                  <strong>Location:</strong> ${body.location}<br/>
+                  <strong>Trainer:</strong> ${body.trainerName}<br/>
+                  <strong>Max Participants:</strong> ${body.maxParticipants}</p>
+                  <p>Log in to your FitSync Pro account to join this session!</p>
+                  <br/>
+                  <p>Thank you,<br/>FitSync Pro Team</p>
+                `
+              });
+              successCount++;
+              console.log(`✅ Email sent to member: ${member.email}`);
+            } catch (memberEmailError) {
+              errorCount++;
+              console.error(`❌ Failed to send email to member ${member.email}:`, memberEmailError);
+            }
+          }
+        }
+        console.log(`✅ Email summary: ${successCount} sent successfully, ${errorCount} failed`);
+      } else {
+        console.log("📧 Member email notifications are disabled");
+      }
+    } catch (membersEmailError) {
+      console.error("❌ Failed to send member emails:", membersEmailError);
+    }
     
     // Invalidate the cache after creating a new session
     sessionsCache = null;
