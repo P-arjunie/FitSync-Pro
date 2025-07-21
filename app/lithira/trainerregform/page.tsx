@@ -22,7 +22,7 @@ interface TrainerFormData {
   preferredTrainingHours: string;
   yearsOfExperience: string;
   availability: string;
-  pricingPlan: string;
+  classes: string[]; // Add this
   emergencyName: string;
   emergencyPhone: string;
   relationship: string;
@@ -50,7 +50,7 @@ export default function TrainerRegistrationForm() {
     preferredTrainingHours: "",
     yearsOfExperience: "",
     availability: "",
-    pricingPlan: "",
+    classes: [],
     emergencyName: "",
     emergencyPhone: "",
     relationship: "",
@@ -95,6 +95,16 @@ export default function TrainerRegistrationForm() {
     }
   };
 
+  const handleClassChange = (className: string) => {
+    setFormData((prev) => {
+      if (prev.classes.includes(className)) {
+        return { ...prev, classes: prev.classes.filter((c) => c !== className) };
+      } else {
+        return { ...prev, classes: [...prev.classes, className] };
+      }
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -122,11 +132,10 @@ export default function TrainerRegistrationForm() {
       "preferredTrainingHours",
       "yearsOfExperience",
       "availability",
-      "pricingPlan",
+      "classes",
       "emergencyName",
       "emergencyPhone",
       "relationship",
-
       "biography",
     ];
 
@@ -375,21 +384,27 @@ export default function TrainerRegistrationForm() {
               </div>
             ))}
             <div className="flex flex-col">
-              <label className="text-sm font-semibold">Pricing Plan</label>
-              <select
-                name="pricingPlan"
-                value={formData.pricingPlan}
-                onChange={handleChange}
-                className="border border-red-500 p-2 rounded"
-                required
-              >
-                <option value="">Select a plan</option>
-                <option value="Basic">Basic - $30/month</option>
-                <option value="Standard">Standard - $50/month</option>
-                <option value="Premium">Premium - $80/month</option>
-              </select>
+              <label className="text-sm font-semibold mb-1">Select Classes</label>
+              <div className="flex flex-wrap gap-4">
+                {[
+                  "Cycling",
+                  "Yoga",
+                  "Power Lifting",
+                  "Meditation",
+                  "Mixed Martial Arts",
+                  "None",
+                ].map((className) => (
+                  <label key={className} className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={formData.classes.includes(className)}
+                      onChange={() => handleClassChange(className)}
+                    />
+                    {className}
+                  </label>
+                ))}
+              </div>
             </div>
-
             <div className="col-span-2">
               <label className="text-sm font-semibold">
                 Certifications (comma separated)
