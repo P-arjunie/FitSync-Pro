@@ -558,7 +558,7 @@ const PaidOrdersAnalyticsPage = () => {
         
           {/* Dashboard */}
           {data && (
-            <div className="bg-black p-6 shadow-lg border-l-2 border-red-600">
+            <div className="p-6 shadow-lg border-l-2 ">
               <OrderAnalyticsDashboard
                 labels={data.labels}
                 orderCounts={data.orderCounts}
