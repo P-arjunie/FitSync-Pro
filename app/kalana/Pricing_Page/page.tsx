@@ -30,47 +30,13 @@ export default function PricingPage() {
     Professional: "price_1Rl40106dhrOhRKFEAb72IQ0",
   };
 
-  // Handle plan selection
-  const handleSelectPlan = async (planName: string, amount: number) => {
-    if (!authUser) {
-      router.push("/lithira/Authform");
-      return;
-    }
-
-    const priceId = priceMap[planName];
-    console.log('Sending to backend:', { userId: authUser.userId, planName, priceId, amount, email: authUser.userEmail });
-
-    try {
-      const res = await fetch("/api/pricing-plan-purchase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          userId: authUser.userId, 
-          planName, 
-          priceId, 
-          amount,
-          email: authUser.userEmail 
-        }),
-      });
-
-      const data = await res.json();
-      console.log('Backend response:', data);
-
-      if (res.ok && data.planId) {
-        router.push(
-          `/kalana/subscription-checkout?priceId=${priceId}&planName=${encodeURIComponent(planName)}&userId=${authUser.userId}&planId=${data.planId}&email=${encodeURIComponent(authUser.userEmail)}`
-        );
-      } else {
-        alert("Failed to start payment. Try again.");
-      }
-    } catch (error) {
-      console.error('Error enrolling:', error);
-      alert("Something went wrong. Please try again.");
-    }
+  const priceIdMap: Record<string, string> = {
+    Standard: "price_1Rl5CZ06dhrOhRKFNIRfbdY5",
+    Popular: "price_1Rl5Er06dhrOhRKFnptOwuQR",
+    Golden: "price_1Rl5GI06dhrOhRKFCjHsJuXQ",
+    Professional: "price_1Rl40106dhrOhRKFEAb72IQ0",
   };
 
-
-/*
   const handleSelectPlan = async (planName: string, amount: number) => {
     const userId = localStorage.getItem("userId");
     if (!userId) {
@@ -79,19 +45,17 @@ export default function PricingPage() {
     }
 
     try {
+      const priceId = priceIdMap[planName];
       const res = await fetch("/api/pricing-plan-purchase", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, planName, amount }),
+        body: JSON.stringify({ userId, planName, amount, priceId }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.planId) {
-        //router.push(`/kalana/checkout?paymentFor=pricing-plan&pricingPlanId=${data.planId}`);
-        const priceId = priceIdMap[planName];
-        router.push(`/kalana/subscription-checkout?priceId=price_1OZRpPSC3pKhslfWiq7H1JYk&planName=${planName}&userId=${userId}&planId=${data.planId}`);
-
+        router.push(`/kalana/checkout?paymentFor=pricing-plan&pricingPlanId=${data.planId}`);
       } else {
         alert("Failed to start payment. Try again.");
       }
@@ -99,7 +63,7 @@ export default function PricingPage() {
       alert("Something went wrong. Please try again.");
     }
   };
-*/
+
   return (
     <>
       <Navbar />

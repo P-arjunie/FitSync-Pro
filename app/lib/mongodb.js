@@ -13,12 +13,9 @@ export const connectToDatabase = async () => {
   if (isConnected) return;
 
   try {
-    await mongoose.connect(MONGODB_URI, {
-      dbName: "fit-sync", 
-    });
-
+    await mongoose.connect(MONGODB_URI, { dbName: "fit-sync" });
     isConnected = true;
-    console.log("✅ MongoDB connected via Mongoose");
+    console.log("✅ MongoDB connected via Mongoose, db:", mongoose.connection.name);
   } catch (error) {
     console.error("❌ Mongoose connection error:", error);
     throw error;
