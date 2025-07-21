@@ -137,6 +137,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
         localStorage.setItem("userId", data.user.id);
         localStorage.setItem("userStatus", data.user.status || "active");
 
+        // Debug log for userId
+        console.log("[DEBUG] Set userId in localStorage:", data.user.id);
+        if (!data.user.id || data.user.id.length < 10) {
+          alert("[DEBUG] Warning: userId set in localStorage is missing or looks invalid: " + data.user.id);
+        }
+
         if (data.user.profileImage) {
           localStorage.setItem("profileImage", data.user.profileImage);
         }
