@@ -1,12 +1,12 @@
 // pages/api/get-notifications.js
-import dbConnect from '@/lib/dbConnect'; // or your DB connection logic
+import { connectToDatabase } from '@/lib/mongodb';
 import Notification from '@/models/Notification'; // your Mongoose model
 
 export default async function handler(req, res) {
   const { userId } = req.query;
   if (!userId) return res.status(400).json({ error: 'User ID missing' });
 
-  await dbConnect();
+  await connectToDatabase();
 
   try {
     const notifications = await Notification.find({ userId }).sort({ createdAt: -1 });

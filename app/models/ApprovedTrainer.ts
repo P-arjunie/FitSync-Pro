@@ -15,10 +15,11 @@ export interface IApprovedTrainer extends Document {
   yearsOfExperience: string;
   availability: string;
   pricingPlan: string;
+  classes: string[]; // Add this
   emergencyContact: {
     name: string;
     phone: string;
-  relationship: string;
+    relationship: string;
   };
   startDate?: Date;
   termsAccepted: boolean;
@@ -44,6 +45,7 @@ const approvedTrainerSchema = new Schema<IApprovedTrainer>({
   yearsOfExperience: { type: String, required: true },
   availability: { type: String, required: true },
   pricingPlan: { type: String, required: true },
+  classes: { type: [String], required: true }, // Add this
   emergencyContact: {
     name: { type: String, required: true },
     phone: { type: String, required: true },

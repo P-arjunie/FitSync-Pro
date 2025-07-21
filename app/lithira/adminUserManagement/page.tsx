@@ -648,6 +648,9 @@ export default function AdminUserManagement() {
                               Certifications
                             </TableHead>
                             <TableHead className="text-red-600">
+                              Classes
+                            </TableHead>
+                            <TableHead className="text-red-600">
                               Pricing
                             </TableHead>
                             <TableHead className="text-red-600">
@@ -762,6 +765,11 @@ export default function AdminUserManagement() {
                                       ))}
                                     </TooltipContent>
                                   </Tooltip>
+                                </TableCell>
+                                <TableCell>
+                                  {Array.isArray(trainer.classes) && trainer.classes.length > 0
+                                    ? trainer.classes.join(", ")
+                                    : "-"}
                                 </TableCell>
                                 <TableCell>
                                   {isEditing
