@@ -1,53 +1,62 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/Components/Navbar';
 import Footer1 from '@/Components/Footer_01';
+import { getAuthUser } from '@/lib/auth';
+import { createSubscription, redirectToSubscriptionCheckout } from '@/lib/subscription';
 
 const YogaClassPage = () => {
   const router = useRouter();
+  const [authUser, setAuthUser] = useState(getAuthUser());
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const user = getAuthUser();
+      setAuthUser(user);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
 
   const goBackToClasses = () => {
     router.push('/#featured-classes');
   };
 
-//ENROLLING FUNCTION FOR PAID CLASSES
-
-const enrollNow = async () => {
-  const userId = localStorage.getItem("userId");
-
-  if (!userId) {
-    router.push("/lithira/Authform");
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/enrollments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        className: "Yoga",
-        totalAmount: 10,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("🔴 Server responded with error:", data);
-      throw new Error(data.error || "Failed to create enrollment");
+  const enrollNow = async () => {
+    if (!authUser) {
+      router.push("/lithira/Authform");
+      return;
     }
 
-    router.push(`/kalana/checkout?enrollmentId=${data._id}`);
-  } catch (error) {
-    console.error("Enrollment creation failed", error);
-    alert("Could not create enrollment, please try again.");
-  }
-};
+    try {
+      const res = await fetch("/api/enrollments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: authUser.userId,
+          className: "Yoga",
+          totalAmount: 10,
+        }),
+      });
 
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("🔴 Server responded with error:", data);
+        throw new Error(data.error || "Failed to create enrollment");
+      }
+
+      router.push(`/kalana/checkout?enrollmentId=${data._id}`);
+    } catch (error) {
+      console.error("Enrollment creation failed", error);
+      alert("Could not create enrollment, please try again.");
+    }
+  };
 
   return (
     <>
@@ -127,19 +136,24 @@ const enrollNow = async () => {
         <div className="enrollment-section">
           <div className="price-tag">$10</div>
           <div className="price-period">per month</div>
-          <button className="enroll-btn" onClick={enrollNow}>
-            Enroll Now
+          <button 
+            className="enroll-btn" 
+            onClick={enrollNow}
+            disabled={isLoading}
+          >
+            {isLoading ? "Loading..." : authUser ? "Enroll Now" : "Login to Enroll"}
           </button>
-          <div className="enrollment-benefits">
-            <h4>What's Included:</h4>
-            <ul>
-              <li>Unlimited monthly classes</li>
-              <li>Certified yoga instructors</li>
-              <li>Relaxing environment</li>
-              <li>Support for all skill levels</li>
-              <li>Mind-body wellness tools</li>
-            </ul>
-          </div>
+                      <div className="enrollment-benefits">
+              <h4>What's Included:</h4>
+              <ul>
+                <li>Unlimited monthly yoga classes</li>
+                <li>Certified yoga instructors</li>
+                <li>Relaxing environment</li>
+                <li>Support for all skill levels</li>
+                <li>Mind-body wellness tools</li>
+
+              </ul>
+            </div>
         </div>
       </main>
 

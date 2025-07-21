@@ -15,9 +15,30 @@ const sessionParticipantSchema = new Schema({
     type: String,
     required: true
   },
+  userEmail: {
+    type: String,
+    required: false
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
   joinedAt: {
     type: Date,
     default: Date.now
+  },
+  approvedAt: {
+    type: Date,
+    default: null
+  },
+  rejectedAt: {
+    type: Date,
+    default: null
+  },
+  rejectionReason: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true

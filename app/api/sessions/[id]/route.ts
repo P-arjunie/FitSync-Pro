@@ -6,11 +6,11 @@ import Session from '@/models/Session';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     await connectToDatabase();
-    const session = await Session.findById(params.id);
+    const session = await Session.findById(context.params.id);
     
     if (!session) {
       return NextResponse.json(
@@ -31,7 +31,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const body = await request.json();
@@ -58,7 +58,7 @@ export async function PUT(
 
     // Check for scheduling conflicts (excluding this session)
     const conflictingSession = await Session.findOne({
-      _id: { $ne: params.id },
+      _id: { $ne: context.params.id },
       trainerName: body.trainerName,
       $or: [
         // Session starts during an existing session
@@ -88,7 +88,7 @@ export async function PUT(
 
     // Update the session
     const updatedSession = await Session.findByIdAndUpdate(
-      params.id,
+      context.params.id,
       {
         ...body,
         maxParticipants: Number(body.maxParticipants),
@@ -113,13 +113,50 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+    await connectToDatabase();
+    // Only allow updating certain fields
+    const updateFields: any = {};
+    if (body.maxParticipants !== undefined) updateFields.maxParticipants = body.maxParticipants;
+    if (body.start !== undefined) updateFields.start = body.start;
+    if (body.end !== undefined) updateFields.end = body.end;
+    if (body.location !== undefined) updateFields.location = body.location;
+    if (body.title !== undefined) updateFields.title = body.title;
+    if (body.description !== undefined) updateFields.description = body.description;
+    // Don't allow updating canceled/cancellationReason here
+    const updatedSession = await Session.findByIdAndUpdate(
+      context.params.id,
+      updateFields,
+      { new: true, runValidators: true }
+    );
+    if (!updatedSession) {
+      return NextResponse.json(
+        { error: 'Session not found' },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(updatedSession, { status: 200 });
+  } catch (error) {
+    console.error('Error patching session:', error);
+    return NextResponse.json(
+      { error: 'Failed to update session' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     await connectToDatabase();
-    const deletedSession = await Session.findByIdAndDelete(params.id);
+    const deletedSession = await Session.findByIdAndDelete(context.params.id);
     
     if (!deletedSession) {
       return NextResponse.json(

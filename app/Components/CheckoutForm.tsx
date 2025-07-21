@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { StripeCardElement } from "@stripe/stripe-js";
 import styles from "./checkoutform.module.css";
+import Navbar from "./Navbar";
+import Footer_02 from "./Footer_02";
+import cartImg from "../../public/cart.png";
+import classImg from "../../public/classesb.png";
 
 interface OrderItem {
   title: string;
   price: number;
   quantity: number;
+  image?: string;
 }
 
 interface CheckoutFormProps {
@@ -53,34 +58,30 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
     }
 
     const fetchOrders = async () => {
-      try {
-        const res = await fetch("/api/orders", {
-          headers: {
-            userId,
-            "Content-Type": "application/json",
-          },
-        });
+  try {
+    if (!orderId) return; // Don't fetch unless it's an actual order
 
-        if (!res.ok) {
-          setOrderItems([{ title: "Dummy Plan", price: 10, quantity: 1 }]);
-          setTotalAmount(10);
-          return;
-        }
+    const res = await fetch("/api/orders", {
+      headers: {
+        userId,
+        "Content-Type": "application/json",
+      },
+    });
 
-        const data = await res.json();
+    if (!res.ok) return;
 
-        if (Array.isArray(data) && data.length > 0) {
-          const latest = data[data.length - 1];
-          setOrderItems(latest.orderItems);
-          setTotalAmount(latest.totalAmount);
-        } else {
-          throw new Error("No orders found");
-        }
-      } catch (err) {
-        setOrderItems([{ title: "Dummy Plan", price: 100, quantity: 20 }]);
-        setTotalAmount(2000);
-      }
-    };
+    const data = await res.json();
+
+    if (Array.isArray(data) && data.length > 0) {
+      const latest = data[data.length - 1];
+      setOrderItems(latest.orderItems);
+      setTotalAmount(latest.totalAmount);
+    }
+  } catch (err) {
+    console.error("Order fetch error:", err);
+  }
+};
+
 
     fetchOrders();
   }, [userId, orderItemsProp, totalAmountProp]);
@@ -139,43 +140,106 @@ pricingPlanId: pricingPlanData?.pricingPlanId || null,
     setLoading(false);
   };
 
+  // Map class names to their respective images
+  const classImageMap: Record<string, string> = {
+    meditation: "/meditation.jpg",
+    workout: "/workout.jpg",
+    mma: "/mma.jpg",
+    yoga: "/yoga.jpg",
+    cycling: "/cycling.jpg",
+    power_lifting: "/powerlifting.jpg",
+  };
+
   return (
     <div className={styles.pageWrapper}>
+      <Navbar />
       <form onSubmit={handleSubmit} className={styles.container}>
         <h2 className={styles.title}>Checkout Summary</h2>
-
-        {orderItems.length > 0 && (
-          <div className={styles.grid}>
-            {orderItems.map((item, idx) => (
+        <div className={styles.grid}>
+          {/* Order Items */}
+          {orderItems.length > 0 &&
+            orderItems.map((item, idx) => (
               <div key={idx} className={styles.card}>
-                <p>
-                  <strong>{item.title}</strong>
-                </p>
-                <p>Qty: {item.quantity}</p>
-                <p>Price: ${item.price}</p>
+                <img
+                  src={item.image || cartImg.src}
+                  alt={item.title}
+                  className={styles.itemImage}
+                />
+                <div className={styles.cardContent}>
+                  <p><strong>{item.title}</strong></p>
+                  <p>Qty: {item.quantity}</p>
+                  <p>Price: ${item.price}</p>
+                </div>
               </div>
             ))}
+
+          {/* Enrollment Summary */}
+          {enrollmentData && (
             <div className={styles.card}>
+              <img
+                src={classImageMap[enrollmentData.className.toLowerCase().replace(/ /g, "_")] || classImg.src}
+                alt={enrollmentData.className}
+                className={styles.itemImage}
+              />
+              <div className={styles.cardContent}>
+                <p><strong>{enrollmentData.className}</strong></p>
+                <p>Qty: 1</p>
+                <p>Price: ${enrollmentData.totalAmount}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Pricing Plan Summary */}
+          {pricingPlanData && (
+            <div className={styles.card}>
+              <img
+                src={cartImg.src}
+                alt="Plan"
+                className={styles.itemImage}
+              />
+              <div className={styles.cardContent}>
+                <p><strong>{pricingPlanData.planName}</strong></p>
+                <p>Qty: 1</p>
+                <p>Price: ${pricingPlanData.amount}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Total Summary */}
+          <div className={styles.card}>
+            <div className={styles.cardContent}>
               <p>
-                <strong>Total: ${totalAmount}</strong>
+                <strong>
+                  Total: $
+                  {pricingPlanData
+                    ? pricingPlanData.amount
+                    : enrollmentData
+                    ? enrollmentData.totalAmount
+                    : totalAmount}
+                </strong>
               </p>
             </div>
           </div>
-        )}
+        </div>
 
-        <CardElement
-          className={styles.card}
-          options={{
-            style: {
-              base: {
-                fontSize: "16px",
-                color: "#424770",
-                "::placeholder": { color: "#aab7c4" },
+        <div className={styles.paymentCard}>
+          <h3 className={styles.paymentTitle}>Enter Card Details</h3>
+          <CardElement
+            className={styles.cardElement}
+            options={{
+              style: {
+                base: {
+                  fontSize: "16px",
+                  color: "#222",
+                  '::placeholder': { color: "#bbb" },
+                  fontFamily: "inherit",
+                  backgroundColor: "#fff",
+                },
+                invalid: { color: "#e3342f" },
               },
-              invalid: { color: "#9e2146" },
-            },
-          }}
-        />
+            }}
+          />
+        </div>
 
         <button
           type="submit"
@@ -187,6 +251,7 @@ pricingPlanId: pricingPlanData?.pricingPlanId || null,
 
         {message && <p className={styles.error}>{message}</p>}
       </form>
+      <Footer_02 />
     </div>
   );
 };

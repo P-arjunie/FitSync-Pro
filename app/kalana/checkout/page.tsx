@@ -1,8 +1,9 @@
+// app/kalana/checkout/page.tsx
 'use client';
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import StripeProvider from "../../Components/stripeprovider";
+import StripeProvider from "../../Components/StripeProvider";
 import CheckoutForm from "../../Components/CheckoutForm";
 
 const CheckoutPage: React.FC = () => {

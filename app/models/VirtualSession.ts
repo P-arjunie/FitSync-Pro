@@ -1,52 +1,73 @@
 import mongoose, { Schema } from 'mongoose';
 
+// Sub-schema for Trainer details
+const trainerSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+    minlength: 2,
+  },
+  email: {
+    type: String,
+    required: true,
+    minlength: 5,
+  },
+});
+
+// Main schema for VirtualSession
 const virtualSessionSchema = new Schema({
   title: {
     type: String,
-    required: [true, 'Session title is required'],
-    minlength: [2, 'Title must be at least 2 characters'],
+    required: true,
+    minlength: 2,
   },
   trainer: {
-    type: String,
-    required: [true, 'Trainer name is required'],
-    minlength: [2, 'Trainer name must be at least 2 characters'],
+    type: trainerSchema,
+    required: true,
   },
   date: {
     type: Date,
-    required: [true, 'Date is required'],
+    required: true,
   },
   startTime: {
     type: String,
-    required: [true, 'Start time is required'],
+    required: true,
   },
   endTime: {
     type: String,
-    required: [true, 'End time is required'],
+    required: true,
   },
   maxParticipants: {
     type: Number,
-    required: [true, 'Maximum participants is required'],
-    min: [1, 'There must be at least 1 participant'],
+    required: true,
+    min: 1,
   },
   description: {
     type: String,
-    required: false,
   },
   onlineLink: {
     type: String,
-    required: [true, 'Online session link is required'],
+    required: true,
     validate: {
-      validator: function (v: string) {
-        return /^(https?:\/\/)/.test(v);
-      },
+      validator: (v: string) => /^(https?:\/\/)/.test(v),
       message: 'Please enter a valid URL',
     },
+  },
+  participants: {
+    type: [
+      {
+        id: { type: String, required: true },
+        firstName: String,
+        lastName: String,
+        email: String,
+      }
+    ],
+    default: [],
   },
 }, {
   timestamps: true,
 });
 
-const VirtualSession =
-  mongoose.models.VirtualSession || mongoose.model('VirtualSession', virtualSessionSchema);
+const VirtualSession = mongoose.models.VirtualSession || mongoose.model('VirtualSession', virtualSessionSchema);
 
 export default VirtualSession;
