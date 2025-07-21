@@ -18,9 +18,9 @@ export const connectToDatabase = async () => {
   if (mongoose.connections[0].readyState !== 1) {
     console.log("Connecting to DB...");
     try {
-      await mongoose.connect(MONGODB_URI);
+      await mongoose.connect(MONGODB_URI, { dbName: "fit-sync" });
       isConnected = true;
-      console.log("✅ Connected to DB");
+      console.log("✅ Connected to DB", mongoose.connection.name);
     } catch (error) {
       console.error("❌ Error connecting to DB:", error);
       throw new Error("Failed to connect to the database");
@@ -30,4 +30,8 @@ export const connectToDatabase = async () => {
     console.log("✅ Already connected (mongoose readyState 1)");
   }
 };
+
+
+export const connectDB = connectToDatabase;
+
 
