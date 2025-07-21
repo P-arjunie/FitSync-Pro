@@ -33,8 +33,14 @@ const HomePage: React.FC = () => {
   const [bmi, setBmi] = useState<number | null>(null);
   const [message, setMessage] = useState("");
 
-  // Check authentication status on component mount
+  // Hydration-safe: Only run browser code after mount
+  const [currentTime, setCurrentTime] = useState<number | null>(null);
   useEffect(() => {
+    setCurrentTime(Date.now());
+  }, []);
+
+  useEffect(() => {
+    if (currentTime === null) return;
     const checkAuthStatus = () => {
       try {
         const userRole = localStorage.getItem("userRole");
@@ -58,7 +64,6 @@ const HomePage: React.FC = () => {
           const memberLoginTimestamp = localStorage.getItem(
             "memberLoginTimestamp"
           );
-          const currentTime = Date.now();
           const adminTimeSinceLogin =
             currentTime - parseInt(adminLoginTimestamp || "0");
           const memberTimeSinceLogin =
@@ -92,9 +97,8 @@ const HomePage: React.FC = () => {
         setIsLoading(false);
       }
     };
-
     checkAuthStatus();
-  }, [router]);
+  }, [router, currentTime]);
 
   // Navigation handlers
   const handleAuthNavigation = () => {
@@ -114,6 +118,7 @@ const HomePage: React.FC = () => {
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userName");
     localStorage.removeItem("userId");
+    localStorage.removeItem("approvedTrainerId"); // <-- Add this line
     setUser(null);
     router.push("/");
   };
@@ -692,17 +697,19 @@ const HomePage: React.FC = () => {
             </div>
 
             <div className="bmi-right">
-              <GaugeChart
-                id="bmi-meter"
-                nrOfLevels={5}
-                arcsLength={arcsLength}
-                colors={["#00BFFF", "#32CD32", "#FFD700", "#FF4500", "#FF0000"]}
-                arcPadding={0.02}
-                percent={bmi !== null ? Math.min((bmi - 15) / 25, 1) : 0}
-                arcWidth={0.3}
-                textColor="#000"
-                formatTextValue={() => (bmi ? `${bmi} BMI` : "--")}
-              />
+              {currentTime !== null && (
+                <GaugeChart
+                  id="bmi-meter"
+                  nrOfLevels={5}
+                  arcsLength={arcsLength}
+                  colors={["#00BFFF", "#32CD32", "#FFD700", "#FF4500", "#FF0000"]}
+                  arcPadding={0.02}
+                  percent={bmi !== null ? Math.min((bmi - 15) / 25, 1) : 0}
+                  arcWidth={0.3}
+                  textColor="#000"
+                  formatTextValue={() => (bmi ? `${bmi} BMI` : "--")}
+                />
+              )}
 
               <div className="bmi-legend">
                 <div className="bmi-legend-item">

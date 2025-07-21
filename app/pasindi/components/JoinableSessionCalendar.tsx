@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
@@ -7,7 +6,6 @@ import { useEffect, useState } from "react"
 import { Calendar, momentLocalizer, Views, type View } from "react-big-calendar"
 import moment from "moment"
 import "react-big-calendar/lib/css/react-big-calendar.css"
-import { Card, CardContent, CardHeader, CardTitle } from "../../Components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../Components/ui/dialog"
 import { Button } from "../../Components/ui/button"
 import { Badge } from "../../Components/ui/badge"
@@ -39,29 +37,33 @@ type Session = {
   maxParticipants: number
   currentParticipants?: number
   description?: string
-  hasJoined?: boolean // Added for tracking joined status
+  participants?: string[] | { userId: string }[] // Added participants field
+  hasJoined?: boolean // Added hasJoined field
 }
 
-export default function AllSessionsPage() {
+interface JoinableSessionCalendarProps {
+  trainerId: string
+  height?: string | number
+}
+
+export default function JoinableSessionCalendar({ trainerId, height = 600 }: JoinableSessionCalendarProps) {
   const [sessions, setSessions] = useState<Session[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [currentView, setCurrentView] = useState<View>(Views.WEEK)
-  const [currentDate, setCurrentDate] = useState<Date | null>(null)
+  const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isJoining, setIsJoining] = useState(false)
-
-  // New states for day-specific events dialog
   const [selectedDayEvents, setSelectedDayEvents] = useState<Session[]>([])
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
-  const [isDayEventsDialogOpen, setIsDayEventsDialogOpen] = useState(false)
+  const [isDayDialogOpen, setIsDayDialogOpen] = useState(false)
 
   useEffect(() => {
     let isMounted = true;
     const fetchSessions = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/sessions");
+        const response = await fetch(`/api/sessions?trainerId=${trainerId}`);
         const data = await response.json();
         const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
 
@@ -71,16 +73,13 @@ export default function AllSessionsPage() {
             // Fetch participants for this session
             const participantsRes = await fetch(`/api/sessions/${session._id}/participants`);
             const participants = await participantsRes.json();
-            // Normalize participants to always be an array
-            const participantList = Array.isArray(participants)
-              ? participants
-              : participants.all || [];
             // Check if user has joined
-            const hasJoined = userId && participantList.some((p: any) => p.userId === userId);
+            const hasJoined = userId && participants.some((p: any) => p.userId === userId);
             return {
               ...session,
-              start: new Date(session.start),
-              end: new Date(session.end),
+              start: moment(session.start).toDate(),
+              end: moment(session.end).toDate(),
+              allDay: false,
               title: session.title || "Unnamed Session",
               currentParticipants: session.currentParticipants || 0,
               hasJoined,
@@ -101,26 +100,41 @@ export default function AllSessionsPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [trainerId]);
+
+  // Debug current view and date
+  useEffect(() => {
+    if (currentView === Views.MONTH && sessions.length > 0) {
+      console.log("Month view - Current date:", currentDate)
+      console.log(
+        "Sessions in current month:",
+        sessions.filter(
+          (s) => s.start.getMonth() === currentDate.getMonth() && s.start.getFullYear() === currentDate.getFullYear(),
+        ),
+      )
+    }
+  }, [currentView, sessions, currentDate])
 
   // After sessions are loaded, if in month view and no sessions in current month, go to first session's month
   useEffect(() => {
-    if (sessions.length > 0 && currentView === "month") {
-      const sessionMonths = sessions.map((s) => s.start.getMonth() + "-" + s.start.getFullYear())
-      const currentMonth = currentDate?.getMonth() + "-" + currentDate?.getFullYear()
-      const firstSessionMonth = sessions[0].start.getMonth() + "-" + sessions[0].start.getFullYear()
-      if (!sessionMonths.includes(currentMonth) && currentMonth !== firstSessionMonth) {
-        setCurrentDate(sessions[0].start)
+    if (sessions.length > 0 && currentView === Views.MONTH) {
+      const currentMonth = currentDate.getMonth()
+      const currentYear = currentDate.getFullYear()
+
+      // Check if any session exists in the current month
+      const hasSessionsInCurrentMonth = sessions.some((session) => {
+        const sessionMonth = session.start.getMonth()
+        const sessionYear = session.start.getFullYear()
+        return sessionMonth === currentMonth && sessionYear === currentYear
+      })
+
+      if (!hasSessionsInCurrentMonth) {
+        // Navigate to the first session's month
+        console.log("Navigating to first session month:", sessions[0].start)
+        setCurrentDate(new Date(sessions[0].start))
       }
     }
-    // Only depend on sessions and currentView to avoid unnecessary triggers
-    // eslint-disable-next-line
-  }, [sessions, currentView])
-
-  // Set currentDate only on client to avoid hydration mismatch
-  useEffect(() => {
-    setCurrentDate(new Date());
-  }, []);
+  }, [sessions, currentView, currentDate]) // Added currentDate to dependency array for consistency
 
   const handleSelectEvent = (event: Session) => {
     setSelectedSession(event)
@@ -129,6 +143,10 @@ export default function AllSessionsPage() {
 
   const handleJoinSession = async () => {
     if (!selectedSession) return
+    if (selectedSession.hasJoined) {
+      alert('You have already joined this session.')
+      return
+    }
     setIsJoining(true)
     try {
       const userId = localStorage.getItem("userId")
@@ -141,26 +159,25 @@ export default function AllSessionsPage() {
         body: JSON.stringify({ userId, userName }),
       })
       if (response.ok) {
-        // Update the session in the local state
-        setSessions((prev) => {
-          const updated = prev.map((session) =>
+        setSessions((prev) =>
+          prev.map((session) =>
             session._id === selectedSession._id
-              ? { ...session, currentParticipants: (session.currentParticipants || 0) + 1, hasJoined: true }
+              ? { ...session, currentParticipants: (session.currentParticipants || 0) + 1 }
               : session,
-          );
-          // Update selectedSession from the new array
-          const updatedSelected = updated.find(s => s._id === selectedSession._id);
-          setSelectedSession(updatedSelected || null);
-          return updated;
-        });
+          ),
+        )
+        setSelectedSession((prev) =>
+          prev
+            ? {
+                ...prev,
+                currentParticipants: (prev.currentParticipants || 0) + 1,
+              }
+            : null,
+        )
         alert("Successfully joined the session!")
       } else {
-        const error = await response.json();
-        if (error.message && error.message.toLowerCase().includes("already")) {
-          alert("You have already joined this session.");
-        } else {
-          alert(error.message || "Failed to join session");
-        }
+        const error = await response.json()
+        alert(error.message || "Failed to join session")
       }
     } catch (error) {
       console.error("Error joining session:", error)
@@ -170,18 +187,10 @@ export default function AllSessionsPage() {
     }
   }
 
-  const formatDateTime = (date: Date) => {
-    return moment(date).format("MMMM Do YYYY, h:mm A")
-  }
-
-  const formatDuration = (start: Date, end: Date) => {
-    const duration = moment.duration(moment(end).diff(moment(start)))
-    const hours = Math.floor(duration.asHours())
-    const minutes = duration.minutes()
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`
-    }
-    return `${minutes}m`
+  const handleShowMore = (events: Session[], date: Date) => {
+    setSelectedDayEvents(events)
+    setSelectedDay(date)
+    setIsDayDialogOpen(true)
   }
 
   const isSessionFull = (session: Session) => {
@@ -192,67 +201,74 @@ export default function AllSessionsPage() {
     return moment(session.end).isBefore(moment())
   }
 
-  // Modified handleShowMore to open the new dialog
-  const handleShowMore = (events: Session[], date: Date) => {
-    setSelectedDayEvents(events)
-    setSelectedDay(date)
-    setIsDayEventsDialogOpen(true)
-  }
-
-  const handleViewChange = (newView: View) => {
-    setCurrentView(newView)
-  }
-
-  const handleNavigate = (newDate: Date) => {
-    setCurrentDate(newDate)
-  }
+  const calendarHeight = currentView === Views.MONTH ? 800 : height
 
   return (
-    <div className="min-h-screen bg-white">
-      <style dangerouslySetInnerHTML={{ __html: customStyles }} />
-      <Card className="bg-white border-gray-200 shadow-lg">
-        <CardHeader className="bg-gray-900 text-white border-b-2 border-red-500">
-          <CardTitle className="text-xl font-bold text-white">All Trainers' Sessions</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 bg-white">
-          <div className="calendar-container" style={{ height: 600 }}>
-            {isLoading || !currentDate ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
-              </div>
-            ) : (
-              <Calendar
-                localizer={localizer}
-                events={sessions}
-                startAccessor="start"
-                endAccessor="end"
-                style={{ height: "100%" }}
-                views={{
-                  month: true,
-                  week: true,
-                  day: true,
-                }}
-                view={currentView as any}
-                onView={handleViewChange}
-                date={currentDate}
-                onNavigate={handleNavigate}
-                defaultView={Views.WEEK}
-                toolbar={true}
-                popup={true}
-                popupOffset={30}
-                selectable={true}
-                dayLayoutAlgorithm={"no-overlap"}
-                showMultiDayTimes={true}
-                onShowMore={handleShowMore}
-                onSelectEvent={handleSelectEvent}
-                components={{}}
-              />
-            )}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="calendar-container" style={{ height: calendarHeight }}>
+      <style>{customStyles}</style>
+      {/* Debug button - remove this in production */}
+      {process.env.NODE_ENV === "development" && (
+        <div style={{ marginBottom: "10px" }}>
+          <button
+            onClick={() => setCurrentDate(new Date(2025, 6, 16))}
+            style={{
+              padding: "4px 8px",
+              marginRight: "8px",
+              backgroundColor: "#f0f0f0",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Go to July 2025
+          </button>
+          <span style={{ fontSize: "12px", color: "#666" }}>
+            Current: {currentDate.toDateString()} | View: {currentView} | Sessions: {sessions.length}
+          </span>
+        </div>
+      )}
 
-      {/* Session Details Dialog (Existing) */}
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+        </div>
+      ) : (
+        <Calendar
+          localizer={localizer}
+          events={sessions}
+          startAccessor="start"
+          endAccessor="end"
+          style={{ height: "100%" }}
+          views={{ month: true, week: true, day: true }}
+          view={currentView}
+          onView={(view) => setCurrentView(view)}
+          date={currentDate}
+          onNavigate={setCurrentDate}
+          defaultView={Views.WEEK}
+          toolbar={true}
+          popup={true}
+          popupOffset={30}
+          selectable={true}
+          dayLayoutAlgorithm={"no-overlap"}
+          showMultiDayTimes={true}
+          onSelectEvent={handleSelectEvent}
+          onShowMore={handleShowMore}
+          step={30}
+          timeslots={2}
+          formats={{
+            monthHeaderFormat: "MMMM YYYY",
+            dayHeaderFormat: "dddd",
+            dayRangeHeaderFormat: ({ start, end }, culture, localizer) =>
+              (localizer?.format?.(start, "MMMM DD", culture) ?? "") +
+              " - " +
+              (localizer?.format?.(end, "MMMM DD", culture) ?? ""),
+          }}
+          key={`${currentView}-${currentDate.getMonth()}-${currentDate.getFullYear()}`}
+          // No custom components prop
+        />
+      )}
+
+      {/* Session Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md bg-white border-gray-200">
           <DialogHeader className="border-b border-gray-200 pb-4">
@@ -275,9 +291,12 @@ export default function AllSessionsPage() {
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-gray-500" />
                   <div>
-                    <div className="font-medium text-gray-900">{formatDateTime(selectedSession.start)}</div>
+                    <div className="font-medium text-gray-900">
+                      {moment(selectedSession.start).format("MMMM Do YYYY, h:mm A")}
+                    </div>
                     <div className="text-sm text-gray-500">
-                      Duration: {formatDuration(selectedSession.start, selectedSession.end)}
+                      Duration:{" "}
+                      {moment.duration(moment(selectedSession.end).diff(moment(selectedSession.start))).humanize()}
                     </div>
                   </div>
                 </div>
@@ -286,7 +305,7 @@ export default function AllSessionsPage() {
                   <span className="text-gray-700">{selectedSession.location}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-gray-500" />
+                  <Users className="w-3 h-3 text-gray-500" />
                   <div className="flex items-center gap-2">
                     <span className="text-gray-700">
                       {selectedSession.currentParticipants || 0} / {selectedSession.maxParticipants} participants
@@ -313,16 +332,11 @@ export default function AllSessionsPage() {
               <div className="flex gap-2">
                 <Button
                   onClick={handleJoinSession}
-                  disabled={
-                    isJoining ||
-                    isSessionFull(selectedSession) ||
-                    isSessionPast(selectedSession) ||
-                    selectedSession.hasJoined
-                  }
+                  disabled={isJoining || isSessionFull(selectedSession) || isSessionPast(selectedSession) || selectedSession.hasJoined}
                   className={`flex-1 ${
-                    isJoining || isSessionFull(selectedSession) || isSessionPast(selectedSession)
+                    isJoining || isSessionFull(selectedSession) || isSessionPast(selectedSession) || selectedSession.hasJoined
                       ? "bg-gray-400 hover:bg-gray-400"
-                      : "bg-red-500 hover:bg-red-600"
+                      : "bg-green-600 hover:bg-green-700"
                   } text-white`}
                 >
                   {isJoining ? (
@@ -330,6 +344,8 @@ export default function AllSessionsPage() {
                       <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
                       Joining...
                     </>
+                  ) : selectedSession.hasJoined ? (
+                    "Already Joined"
                   ) : isSessionFull(selectedSession) ? (
                     "Session Full"
                   ) : isSessionPast(selectedSession) ? (
@@ -351,14 +367,11 @@ export default function AllSessionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* New: Day Events List Dialog */}
-      <Dialog open={isDayEventsDialogOpen} onOpenChange={setIsDayEventsDialogOpen}>
+      {/* Day Events Dialog for '+N more' */}
+      <Dialog open={isDayDialogOpen} onOpenChange={setIsDayDialogOpen}>
         <DialogContent className="max-w-md bg-white border-gray-200">
-          <DialogHeader className="border-b border-gray-200 pb-4">
-            <DialogTitle className="flex items-center gap-2 text-gray-900">
-              <CalendarIcon className="w-5 h-5 text-red-500" />
-              Sessions on {selectedDay ? moment(selectedDay).format("MMMM Do, YYYY") : ""}
-            </DialogTitle>
+          <DialogHeader>
+            <DialogTitle>Sessions on {selectedDay ? moment(selectedDay).format("MMMM Do, YYYY") : ""}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 max-h-[400px] overflow-y-auto">
             {selectedDayEvents.length > 0 ? (
@@ -367,8 +380,9 @@ export default function AllSessionsPage() {
                   key={session._id}
                   className="p-3 border rounded-md cursor-pointer hover:bg-gray-50 transition-colors duration-200"
                   onClick={() => {
-                    handleSelectEvent(session) // Open the main session details dialog
-                    setIsDayEventsDialogOpen(false) // Close this day events dialog
+                    setSelectedSession(session)
+                    setIsDialogOpen(true)
+                    setIsDayDialogOpen(false)
                   }}
                 >
                   <h4 className="font-semibold text-gray-900">{session.title}</h4>
@@ -381,12 +395,6 @@ export default function AllSessionsPage() {
                     <span className="text-xs font-medium">
                       {session.currentParticipants || 0}/{session.maxParticipants}
                     </span>
-                    {isSessionFull(session) && (
-                      <Badge className="bg-red-100 text-red-800 border-red-300 ml-auto">Full</Badge>
-                    )}
-                    {isSessionPast(session) && (
-                      <Badge className="bg-gray-100 text-gray-800 border-gray-300 ml-auto">Past</Badge>
-                    )}
                   </div>
                 </div>
               ))
@@ -397,7 +405,7 @@ export default function AllSessionsPage() {
           <div className="flex justify-end pt-4 border-t border-gray-200">
             <Button
               variant="outline"
-              onClick={() => setIsDayEventsDialogOpen(false)}
+              onClick={() => setIsDayDialogOpen(false)}
               className="border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               Close
