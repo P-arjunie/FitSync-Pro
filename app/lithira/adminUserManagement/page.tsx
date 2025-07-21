@@ -303,12 +303,29 @@ export default function AdminUserManagement() {
   };
 
   // Render an editable input cell
-  const editableCell = (field: string, value: any) => (
-    <Input
-      value={editedData[field] || ""}
-      onChange={(e) => handleInputChange(field, e.target.value)}
-    />
-  );
+  const editableCell = (field: string, value: any) => {
+    if (field === "pricingPlan") {
+      return (
+        <select
+          value={editedData[field] || ""}
+          onChange={e => handleInputChange(field, e.target.value)}
+          className="border border-red-500 p-2 rounded"
+        >
+          <option value="">Select a plan</option>
+          <option value="Standard">Standard</option>
+          <option value="Popular">Popular</option>
+          <option value="Golden">Golden</option>
+          <option value="Professional">Professional</option>
+        </select>
+      );
+    }
+    return (
+      <Input
+        value={editedData[field] || ""}
+        onChange={(e) => handleInputChange(field, e.target.value)}
+      />
+    );
+  };
 
   return (
     <TooltipProvider>
