@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/Components/Navbar';
 import Footer1 from '@/Components/Footer_01';
 import { getAuthUser } from '@/lib/auth';
-import { createSubscription, redirectToSubscriptionCheckout } from '@/lib/subscription';
 
 const PowerLiftingClassPage = () => {
   const router = useRouter();

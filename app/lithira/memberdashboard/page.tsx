@@ -66,7 +66,7 @@ const MemberDashboard: React.FC = () => {
       description: "View and manage your orders",
       icon: "📦",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/kalana/my-orders",
+      link: "/kalana/purchase-history", // Updated link
     },
     {
       title: "Sessions",

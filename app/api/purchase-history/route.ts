@@ -18,13 +18,22 @@ export async function GET(req: NextRequest) {
     await connectToDB();
 
     const userId = req.nextUrl.searchParams.get("userId");
+    const userEmail = req.nextUrl.searchParams.get("userEmail");
     
-    if (!userId) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+    if (!userId && !userEmail) {
+      return NextResponse.json({ error: "User ID or email is required" }, { status: 400 });
     }
 
-    // Fetch all payments for the user
-    const payments = await Payment.find({ userId }).sort({ createdAt: -1 });
+    // Fetch all payments for the user by userId
+    let payments = [];
+    if (userId) {
+      payments = await Payment.find({ userId }).sort({ createdAt: -1 });
+    }
+
+    // If no payments found and email is provided, try by email (legacy support)
+    if (payments.length === 0 && userEmail) {
+      payments = await Payment.find({ email: userEmail }).sort({ createdAt: -1 });
+    }
 
     // Fetch additional details for each payment
     const purchaseHistory = await Promise.all(
