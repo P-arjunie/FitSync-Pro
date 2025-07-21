@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (paymentIntent.status === "succeeded") {
+      // Save payment record in kalana_paymentsses
       const newPayment = new Payment({
         firstName: itemTitle,
         lastName: userId.toString(),
@@ -120,19 +121,31 @@ export async function POST(req: NextRequest) {
         relatedEnrollmentId,
         stripePaymentIntentId: paymentIntent.id,
       });
-
       await newPayment.save();
+      console.log('✅ Payment record saved in kalana_paymentsses:', newPayment._id);
 
-      if (paymentFor === "pricing-plan") {
+      // Update pricing plan status if relevant
+      if (paymentFor === "pricing-plan" && pricingPlanId) {
         await PricingPlanPurchase.findByIdAndUpdate(pricingPlanId, { status: "paid" });
+        console.log('✅ Pricing plan status updated to paid:', pricingPlanId);
       }
 
+      // Update order status if relevant
       if (relatedOrderId) {
-        await Order.findByIdAndUpdate(relatedOrderId, { status: "paid" });
+        const result = await mongoose.connection.db.collection("orders").updateOne(
+          { _id: relatedOrderId },
+          { $set: { status: "paid" } }
+        );
+        console.log('✅ Order status update result:', result);
       }
 
+      // Update enrollment status if relevant
       if (relatedEnrollmentId) {
-        await Enrollment.findByIdAndUpdate(relatedEnrollmentId, { status: "paid" });
+        const result = await mongoose.connection.db.collection("enrollments").updateOne(
+          { _id: relatedEnrollmentId },
+          { $set: { status: "paid" } }
+        );
+        console.log('✅ Enrollment status update result:', result);
       }
 
       return NextResponse.json({ success: true });
