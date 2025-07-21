@@ -98,54 +98,77 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log('🔔 paymentFor:', paymentFor, 'pricingPlanId:', pricingPlanId);
+
     if (paymentIntent.status === "succeeded") {
-      // Save payment record in kalana_paymentsses
-      const newPayment = new Payment({
-        firstName: itemTitle,
-        lastName: userId.toString(),
-        email: email,
-        company: "FitSyncPro",
-        amount: amount / 100,
-        currency: "usd",
-        paymentStatus: "succeeded",
-        paymentMethodId,
-        billingAddress: {
-          zip: "10100",
-          country: "USA",
-          city: "New York",
-          street: "456 Real Street",
-        },
-        userId,
-        paymentFor,
-        relatedOrderId,
-        relatedEnrollmentId,
-        stripePaymentIntentId: paymentIntent.id,
-      });
-      await newPayment.save();
-      console.log('✅ Payment record saved in kalana_paymentsses:', newPayment._id);
+      // Always create a payment record if not exists
+      try {
+        const existingPayment = await Payment.findOne({ stripePaymentIntentId: paymentIntent.id });
+        if (!existingPayment) {
+          const paymentDoc: any = {
+            firstName: itemTitle,
+            lastName: userId.toString(),
+            email: email,
+            company: "FitSyncPro",
+            amount: amount / 100,
+            currency: "usd",
+            paymentStatus: "succeeded",
+            paymentMethodId,
+            billingAddress: {
+              zip: "10100",
+              country: "USA",
+              city: "New York",
+              street: "456 Real Street",
+            },
+            userId,
+            paymentFor,
+            stripePaymentIntentId: paymentIntent.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          if (relatedOrderId) paymentDoc.relatedOrderId = relatedOrderId;
+          if (relatedEnrollmentId) paymentDoc.relatedEnrollmentId = relatedEnrollmentId;
+          await Payment.create(paymentDoc);
+          console.log('✅ Payment record created for', paymentFor, paymentIntent.id);
+        } else {
+          console.log('ℹ️ Payment record already exists for', paymentFor, paymentIntent.id);
+        }
+      } catch (err) {
+        console.error('❌ Failed to create payment record for', paymentFor, err);
+      }
 
       // Update pricing plan status if relevant
       if (paymentFor === "pricing-plan" && pricingPlanId) {
-        await PricingPlanPurchase.findByIdAndUpdate(pricingPlanId, { status: "paid" });
-        console.log('✅ Pricing plan status updated to paid:', pricingPlanId);
+        try {
+          const updateResult = await PricingPlanPurchase.findByIdAndUpdate(pricingPlanId, { status: "paid", updatedAt: new Date() }, { new: true });
+          if (updateResult) {
+            console.log('✅ Pricing plan status updated to paid:', pricingPlanId);
+          } else {
+            console.log('⚠️ Pricing plan update did not return a document:', pricingPlanId);
+          }
+        } catch (err) {
+          console.error('❌ Failed to update pricing plan status:', err);
+        }
       }
 
       // Update order status if relevant
       if (relatedOrderId) {
-        const result = await mongoose.connection.db.collection("orders").updateOne(
-          { _id: relatedOrderId },
-          { $set: { status: "paid" } }
-        );
-        console.log('✅ Order status update result:', result);
+        try {
+          const result = await Order.findByIdAndUpdate(relatedOrderId, { status: "paid" }, { new: true });
+          console.log('✅ Order status updated to paid:', relatedOrderId);
+        } catch (err) {
+          console.error('❌ Failed to update order status:', err);
+        }
       }
 
       // Update enrollment status if relevant
       if (relatedEnrollmentId) {
-        const result = await mongoose.connection.db.collection("enrollments").updateOne(
-          { _id: relatedEnrollmentId },
-          { $set: { status: "paid" } }
-        );
-        console.log('✅ Enrollment status update result:', result);
+        try {
+          const result = await Enrollment.findByIdAndUpdate(relatedEnrollmentId, { status: "paid" }, { new: true });
+          console.log('✅ Enrollment status updated to paid:', relatedEnrollmentId);
+        } catch (err) {
+          console.error('❌ Failed to update enrollment status:', err);
+        }
       }
 
       return NextResponse.json({ success: true });
