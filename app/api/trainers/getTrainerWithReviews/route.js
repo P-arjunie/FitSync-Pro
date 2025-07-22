@@ -15,14 +15,17 @@ export async function GET() {
         const fullName = `${trainer.firstName} ${trainer.lastName}`;
         const reviews = await Review.find({ trainer: fullName });
 
-        const averageRating =
-          reviews.reduce((acc, cur) => acc + cur.rating, 0) / (reviews.length || 1);
+        // Defensive: If no reviews, averageRating should be '0.0'
+        let averageRating = 0;
+        if (reviews.length > 0) {
+          averageRating = reviews.reduce((acc, cur) => acc + (cur.rating || 0), 0) / reviews.length;
+        }
 
         return {
           ...trainer._doc,
           fullName,
           averageRating: averageRating.toFixed(1),
-          reviews,
+          reviews: Array.isArray(reviews) ? reviews : [],
         };
       })
     );

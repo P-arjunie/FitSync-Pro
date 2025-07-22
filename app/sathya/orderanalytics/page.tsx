@@ -6,6 +6,7 @@ import OrderAnalyticsDashboard from "../../Components/analytics/OrderAnalyticsDa
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import AnalyticsSidebar from "../../Components/analytics/AnalyticsSidebar";
+import autotable from "jspdf-autotable";
 
 interface OrderAnalyticsData {
   labels: string[];
@@ -58,6 +59,93 @@ const OrderAnalyticsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [reportFormat, setReportFormat] = useState<string>("pdf");
   const [isGeneratingReport, setIsGeneratingReport] = useState<boolean>(false);
+  // Order history state
+  const [orderHistory, setOrderHistory] = useState<any[]>([]);
+  const [historyStartDate, setHistoryStartDate] = useState<string>("");
+  const [historyEndDate, setHistoryEndDate] = useState<string>("");
+  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  // Fetch order history with date filter using /api/analytics/orders
+  const fetchOrderHistory = useCallback(async () => {
+    if (!historyStartDate || !historyEndDate) return;
+    setIsLoadingHistory(true);
+    setHistoryError(null);
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.append("startDate", historyStartDate);
+      queryParams.append("endDate", historyEndDate);
+      // Optionally filter by status/category if needed
+      queryParams.append("history", "true"); // Custom flag to indicate history request
+      const response = await fetch(`/api/analytics/orders?${queryParams.toString()}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch order history`);
+      }
+      const result = await response.json();
+      // Accept either result.data.history (preferred) or result.data.orders/rawOrders
+      let historyArr = [];
+      if (Array.isArray(result.data?.history)) {
+        historyArr = result.data.history;
+      } else if (Array.isArray(result.data?.orders)) {
+        historyArr = result.data.orders;
+      } else if (Array.isArray(result.data)) {
+        historyArr = result.data;
+      } else if (Array.isArray(result.orders)) {
+        historyArr = result.orders;
+      }
+      setOrderHistory(historyArr);
+    } catch (err) {
+      setHistoryError(err instanceof Error ? err.message : "Failed to fetch order history");
+      setOrderHistory([]);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [historyStartDate, historyEndDate]);
+
+  // Fetch history when dates change
+  useEffect(() => {
+    if (historyStartDate && historyEndDate) fetchOrderHistory();
+  }, [historyStartDate, historyEndDate, fetchOrderHistory]);
+
+  // PDF report for history
+  const generateHistoryPDF = useCallback(() => {
+    if (!orderHistory.length) return;
+    setIsGeneratingReport(true);
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.setTextColor('#dc2626');
+      doc.text("Order History Report", 20, 20);
+      doc.setFontSize(12);
+      doc.setTextColor('#1e293b');
+      doc.text(`Date Range: ${historyStartDate} to ${historyEndDate}`, 20, 30);
+      doc.setFontSize(14);
+      doc.setTextColor('#dc2626');
+      doc.text("Order History", 20, 40);
+      autotable(doc, {
+        startY: 44,
+        head: [['Order ID', 'Date', 'Status', 'Category', 'Total', 'Customer']],
+        body: orderHistory.map(order => [
+          order.id || order._id || '',
+          order.date ? new Date(order.date).toLocaleString() : '',
+          order.status || '',
+          order.category || '',
+          order.total ? `$${order.total.toFixed(2)}` : '',
+          order.customer || ''
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [220,38,38], textColor: [255,255,255], fontStyle: 'bold' },
+        bodyStyles: { fillColor: [243,244,246], textColor: [30,41,59] },
+        alternateRowStyles: { fillColor: [255,255,255] },
+      });
+      doc.save(`order_history_${historyStartDate}_to_${historyEndDate}.pdf`);
+    } catch (error) {
+      setError("Failed to generate history PDF report");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  }, [orderHistory, historyStartDate, historyEndDate]);
 
   // Memoized date range helpers
   const dateRangeHelpers = useMemo(() => ({
@@ -138,16 +226,16 @@ const OrderAnalyticsPage: React.FC = () => {
         totalRevenue: Number(result.data?.totalRevenue) || 0,
         totalOrders: Number(result.data?.totalOrders) || 0,
         averageOrderValue: Number(result.data?.averageOrderValue) || 0,
-        statusBreakdown: result.data?.statusBreakdown && typeof result.data.statusBreakdown === "object" ? 
+        statusBreakdown: (result.data?.statusBreakdown && typeof result.data.statusBreakdown === "object") ? 
           result.data.statusBreakdown : {},
-        categoryBreakdown: result.data?.categoryBreakdown && typeof result.data.categoryBreakdown === "object" ? 
+        categoryBreakdown: (result.data?.categoryBreakdown && typeof result.data.categoryBreakdown === "object") ? 
           result.data.categoryBreakdown : {},
         topProducts: Array.isArray(result.data?.topProducts) ? 
           result.data.topProducts.map((prod: any) => ({
             title: String(prod?.title || ""),
             count: Number(prod?.count) || 0,
-            revenue: Number(prod?.revenue) || 0,
-          })) : [],
+            revenue: Number(prod?.revenue) || 0
+          })) : []
       };
       
       setAnalyticsData(data);
@@ -248,91 +336,82 @@ const OrderAnalyticsPage: React.FC = () => {
     setIsGeneratingReport(true);
     try {
       const doc = new jsPDF();
-      const margin = 20;
-      let currentY = margin;
-
       // Title and metadata
       doc.setFontSize(18);
-      doc.text("Order Analytics Report", margin, currentY);
-      currentY += 15;
-      
+      doc.setTextColor('#dc2626');
+      doc.text("Order Analytics Report", 20, 20);
       doc.setFontSize(12);
-      doc.text(`Date Range: ${filters.startDate} to ${filters.endDate}`, margin, currentY);
-      currentY += 10;
-      doc.text(`Status Filter: ${filters.status === "all" ? "All Statuses" : filters.status}`, margin, currentY);
-      currentY += 10;
-      doc.text(`Category Filter: ${filters.category === "all" ? "All Categories" : filters.category}`, margin, currentY);
-      currentY += 20;
+      doc.setTextColor('#1e293b');
+      doc.text(`Date Range: ${filters.startDate} to ${filters.endDate}`, 20, 30);
+      doc.text(`Status Filter: ${filters.status === "all" ? "All Statuses" : filters.status}`, 20, 36);
+      doc.text(`Category Filter: ${filters.category === "all" ? "All Categories" : filters.category}`, 20, 42);
 
-      // Summary section
+      // Summary table
       doc.setFontSize(14);
-      doc.text("Summary", margin, currentY);
-      currentY += 15;
-      
-      doc.setFontSize(12);
-      const summaryData = [
-        `Total Revenue: $${analyticsData.totalRevenue.toFixed(2)}`,
-        `Total Orders: ${analyticsData.totalOrders}`,
-        `Average Order Value: $${analyticsData.averageOrderValue.toFixed(2)}`
-      ];
-      
-      summaryData.forEach(item => {
-        doc.text(item, margin, currentY);
-        currentY += 10;
+      doc.setTextColor('#dc2626');
+      doc.text("Summary", 20, 52);
+      autotable(doc, {
+        startY: 56,
+        head: [['Total Revenue', 'Total Orders', 'Average Order Value']],
+        body: [[
+          `$${analyticsData.totalRevenue.toFixed(2)}`,
+          analyticsData.totalOrders,
+          `$${analyticsData.averageOrderValue.toFixed(2)}`
+        ]],
+        theme: 'grid',
+        headStyles: { fillColor: [220,38,38], textColor: [255,255,255], fontStyle: 'bold' },
+        bodyStyles: { fillColor: [243,244,246], textColor: [30,41,59] },
+        alternateRowStyles: { fillColor: [255,255,255] },
       });
-      currentY += 10;
 
-      // Status breakdown
+      // Status breakdown table
+      let nextY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : 80;
       if (Object.keys(analyticsData.statusBreakdown).length > 0) {
         doc.setFontSize(14);
-        doc.text("Status Breakdown", margin, currentY);
-        currentY += 15;
-        
-        doc.setFontSize(12);
-        Object.entries(analyticsData.statusBreakdown).forEach(([status, count]) => {
-          doc.text(`${status}: ${count}`, margin, currentY);
-          currentY += 10;
+        doc.setTextColor('#1e293b');
+        doc.text("Status Breakdown", 20, nextY);
+        autotable(doc, {
+          startY: nextY + 4,
+          head: [['Status', 'Count']],
+          body: Object.entries(analyticsData.statusBreakdown),
+          theme: 'grid',
+          headStyles: { fillColor: [30,41,59], textColor: [255,255,255], fontStyle: 'bold' },
+          bodyStyles: { fillColor: [243,244,246], textColor: [220,38,38] },
+          alternateRowStyles: { fillColor: [255,255,255] },
         });
-        currentY += 10;
+        nextY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : nextY + 30;
       }
 
-      // Category breakdown
+      // Category breakdown table
       if (Object.keys(analyticsData.categoryBreakdown).length > 0) {
         doc.setFontSize(14);
-        doc.text("Category Breakdown", margin, currentY);
-        currentY += 15;
-        
-        doc.setFontSize(12);
-        Object.entries(analyticsData.categoryBreakdown).forEach(([category, count]) => {
-          if (currentY > 270) { // Check if we need a new page
-            doc.addPage();
-            currentY = margin;
-          }
-          doc.text(`${category}: ${count}`, margin, currentY);
-          currentY += 10;
+        doc.setTextColor('#1e293b');
+        doc.text("Category Breakdown", 20, nextY);
+        autotable(doc, {
+          startY: nextY + 4,
+          head: [['Category', 'Count']],
+          body: Object.entries(analyticsData.categoryBreakdown),
+          theme: 'grid',
+          headStyles: { fillColor: [30,41,59], textColor: [255,255,255], fontStyle: 'bold' },
+          bodyStyles: { fillColor: [243,244,246], textColor: [220,38,38] },
+          alternateRowStyles: { fillColor: [255,255,255] },
         });
-        currentY += 10;
+        nextY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : nextY + 30;
       }
 
-      // Top products
+      // Top products table
       if (analyticsData.topProducts.length > 0) {
-        if (currentY > 200) { // Check if we need a new page
-          doc.addPage();
-          currentY = margin;
-        }
-        
         doc.setFontSize(14);
-        doc.text("Top Products", margin, currentY);
-        currentY += 15;
-        
-        doc.setFontSize(12);
-        analyticsData.topProducts.forEach((product, index) => {
-          if (currentY > 270) { // Check if we need a new page
-            doc.addPage();
-            currentY = margin;
-          }
-          doc.text(`${index + 1}. ${product.title}: ${product.count} orders, $${product.revenue.toFixed(2)}`, margin, currentY);
-          currentY += 10;
+        doc.setTextColor('#dc2626');
+        doc.text("Top Products", 20, nextY);
+        autotable(doc, {
+          startY: nextY + 4,
+          head: [['Title', 'Order Count', 'Revenue']],
+          body: analyticsData.topProducts.map(product => [product.title, product.count, `$${product.revenue.toFixed(2)}`]),
+          theme: 'grid',
+          headStyles: { fillColor: [220,38,38], textColor: [255,255,255], fontStyle: 'bold' },
+          bodyStyles: { fillColor: [243,244,246], textColor: [30,41,59] },
+          alternateRowStyles: { fillColor: [255,255,255] },
         });
       }
 
@@ -643,16 +722,17 @@ const OrderAnalyticsPage: React.FC = () => {
             </div>
           </div>
         
-          {/* Loading state */}
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <svg className="animate-spin h-12 w-12 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </div>
-          ) : (
-            /* Order Analytics dashboard */
+        {/* Loading state */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <svg className="animate-spin h-12 w-12 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        ) : (
+          <>
+            {/* Order Analytics dashboard */}
             <OrderAnalyticsDashboard 
               labels={analyticsData.labels}
               orderCounts={analyticsData.orderCounts}
@@ -665,7 +745,77 @@ const OrderAnalyticsPage: React.FC = () => {
               topProducts={analyticsData.topProducts}
               selectedStatus={filters.status}
             />
-          )}
+
+            {/* Scrollable Order History Section */}
+            <div className="mt-12">
+              <h3 className="text-2xl font-bold mb-4 text-black">Order History</h3>
+              <div className="flex flex-wrap gap-4 mb-4">
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={historyStartDate}
+                    onChange={e => setHistoryStartDate(e.target.value)}
+                    className="p-2 border border-gray-400 rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={historyEndDate}
+                    onChange={e => setHistoryEndDate(e.target.value)}
+                    className="p-2 border border-gray-400 rounded"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    className="bg-red-600 text-white px-4 py-2 rounded font-semibold shadow hover:bg-red-700"
+                    onClick={generateHistoryPDF}
+                    disabled={isLoadingHistory || isGeneratingReport || !orderHistory.length}
+                  >
+                    Generate History PDF
+                  </button>
+                </div>
+              </div>
+              {historyError && (
+                <div className="bg-red-100 text-red-700 p-2 mb-2 rounded">{historyError}</div>
+              )}
+              <div className="overflow-x-auto overflow-y-auto max-h-96 border rounded shadow bg-white">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-100 text-gray-700">
+                      <th className="px-4 py-2 text-left">Order ID</th>
+                      <th className="px-4 py-2 text-left">Date</th>
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Category</th>
+                      <th className="px-4 py-2 text-left">Total</th>
+                      <th className="px-4 py-2 text-left">Customer</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoadingHistory ? (
+                      <tr><td colSpan={6} className="text-center py-4 text-gray-400">Loading...</td></tr>
+                    ) : orderHistory.length === 0 ? (
+                      <tr><td colSpan={6} className="text-center py-4 text-gray-400">No order history available.</td></tr>
+                    ) : (
+                      orderHistory.map((order, idx) => (
+                        <tr key={idx} className="border-b border-gray-200">
+                          <td className="px-4 py-2">{order.id || order._id || ''}</td>
+                          <td className="px-4 py-2">{order.date ? new Date(order.date).toLocaleString() : ''}</td>
+                          <td className="px-4 py-2">{order.status || ''}</td>
+                          <td className="px-4 py-2">{order.category || ''}</td>
+                          <td className="px-4 py-2">{order.total ? `$${order.total.toFixed(2)}` : ''}</td>
+                          <td className="px-4 py-2">{order.customer || ''}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
         </div>
       </div>
     </div>

@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const category = searchParams.get('category');
+    const history = searchParams.get('history');
     
     // Build query object
     const query: any = {};
@@ -72,6 +73,116 @@ export async function GET(req: NextRequest) {
     const uniqueStatuses = await Order.distinct('status');
     const uniqueCategories = await Order.distinct('orderItems.category');
     
+    // If history=true, return raw order data for history section, but also include analytics fields for frontend compatibility
+    if (history === 'true') {
+      // Calculate analytics fields as in normal response
+      // Get unique statuses and categories for dropdowns
+      const uniqueStatuses = await Order.distinct('status');
+      const uniqueCategories = await Order.distinct('orderItems.category');
+
+      // Determine the date range for the chart
+      let minDate, maxDate;
+      if (startDate && endDate) {
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(endDate);
+        if (!isNaN(startDateObj.getTime()) && !isNaN(endDateObj.getTime())) {
+          minDate = startDateObj;
+          maxDate = endDateObj;
+        } else {
+          minDate = orders.length > 0 ? new Date(orders[0].createdAt) : new Date();
+          maxDate = orders.length > 0 ? new Date(orders[orders.length - 1].createdAt) : new Date();
+        }
+      } else if (orders.length > 0) {
+        minDate = new Date(orders[0].createdAt);
+        maxDate = new Date(orders[orders.length - 1].createdAt);
+      } else {
+        const now = new Date();
+        minDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        maxDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      }
+      const allMonths = [];
+      const currentDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+      while (currentDate <= maxDate) {
+        const monthYear = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+        allMonths.push(monthYear);
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+      const ordersByMonth: { [key: string]: number } = {};
+      const revenueByMonth: { [key: string]: number } = {};
+      allMonths.forEach(month => {
+        ordersByMonth[month] = 0;
+        revenueByMonth[month] = 0;
+      });
+      orders.forEach(order => {
+        const date = new Date(order.createdAt);
+        const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (ordersByMonth[monthYear] !== undefined) {
+          ordersByMonth[monthYear]++;
+          revenueByMonth[monthYear] += order.totalAmount;
+        }
+      });
+      const months = allMonths.sort();
+      const orderCounts = months.map(month => ordersByMonth[month]);
+      const revenueCounts = months.map(month => revenueByMonth[month]);
+      const monthLabels = months.map(month => {
+        const [year, monthNum] = month.split('-');
+        const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+        return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+      });
+      const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      const totalOrders = orders.length;
+      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+      const statusBreakdown: { [key: string]: number } = {};
+      orders.forEach(order => {
+        statusBreakdown[String(order.status)] = (statusBreakdown[String(order.status)] || 0) + 1;
+      });
+      const categoryBreakdown: { [key: string]: number } = {};
+      const productSales: { [key: string]: { count: number; revenue: number; title: string } } = {};
+      orders.forEach(order => {
+        (order.orderItems || []).forEach((item: any) => {
+          categoryBreakdown[String(item.category)] = (categoryBreakdown[String(item.category)] || 0) + item.quantity;
+          const productKey = item.product?.toString() || item.title;
+          if (!productSales[productKey]) {
+            productSales[productKey] = { count: 0, revenue: 0, title: item.title };
+          }
+          productSales[productKey].count += item.quantity;
+          productSales[productKey].revenue += item.price * item.quantity;
+        });
+      });
+      const topProducts = Object.entries(productSales)
+        .map(([key, data]) => ({
+          title: (data as { count: number; revenue: number; title: string }).title,
+          count: (data as { count: number; revenue: number; title: string }).count,
+          revenue: (data as { count: number; revenue: number; title: string }).revenue
+        }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10);
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          labels: monthLabels,
+          orderCounts,
+          revenueCounts,
+          statuses: uniqueStatuses,
+          categories: uniqueCategories,
+          totalRevenue,
+          totalOrders,
+          averageOrderValue,
+          statusBreakdown,
+          categoryBreakdown,
+          topProducts,
+          history: orders.map(order => ({
+            id: order._id,
+            date: order.createdAt,
+            status: order.status,
+            category: Array.isArray(order.orderItems) && order.orderItems.length > 0 ? order.orderItems[0].category : '',
+            total: order.totalAmount,
+            customer: order.customerName || order.customer || '',
+          }))
+        }
+      });
+    }
     // If no orders found, return empty data with filter options
     if (orders.length === 0) {
       return NextResponse.json({
