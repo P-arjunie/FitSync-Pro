@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer_02';
-import { 
-  ShoppingBag, 
-  Calendar, 
-  DollarSign, 
-  CheckCircle, 
-  Clock, 
+import {
+  ShoppingBag,
+  Calendar,
+  DollarSign,
+  CheckCircle,
+  Clock,
   Package,
   CreditCard,
   TrendingUp,
@@ -73,7 +73,7 @@ const PurchaseHistoryPage = () => {
     const id = localStorage.getItem("userId");
     const email = localStorage.getItem("userEmail");
     const name = localStorage.getItem("userName");
-    
+
     if (!id) {
       router.push('/lithira/Authform');
       return;
@@ -119,14 +119,13 @@ const PurchaseHistoryPage = () => {
 
   const filteredPurchases = purchaseHistory.filter(purchase => {
     const matchesSearch = purchase.itemDetails?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         purchase.itemType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         purchase.paymentId?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = selectedFilter === 'all' || 
-                         (selectedFilter === 'store' && purchase.paymentFor === 'order') ||
-                         (selectedFilter === 'classes' && purchase.paymentFor === 'enrollment') ||
-                         (selectedFilter === 'monthly-plans' && purchase.paymentFor === 'monthly-plan') ||
-                         (selectedFilter === 'subscriptions' && purchase.paymentFor === 'pricing-plan');
+      purchase.itemType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      purchase.paymentId?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesFilter = selectedFilter === 'all' ||
+      (selectedFilter === 'store' && purchase.paymentFor === 'order') ||
+      (selectedFilter === 'classes' && purchase.paymentFor === 'enrollment') ||
+      (selectedFilter === 'subscriptions' && purchase.paymentFor === 'pricing-plan');
 
     return matchesSearch && matchesFilter;
   });
@@ -182,7 +181,7 @@ const PurchaseHistoryPage = () => {
     setProcessingRefund(true);
     try {
       let res;
-      
+
       if (selectedPurchase.paymentFor === 'order') {
         // Shop purchase - only send email to admin
         res = await fetch('/api/shop-refund-request', {
@@ -244,7 +243,7 @@ const PurchaseHistoryPage = () => {
           } else {
             alert(`Refund request sent successfully! $${selectedPurchase.refundAmount.toFixed(2)} added to your wallet.`);
           }
-          
+
           // Refresh wallet data for class refunds
           const walletRes = await fetch(`/api/wallet?userId=${userId}`);
           const walletData = await walletRes.json();
@@ -252,7 +251,23 @@ const PurchaseHistoryPage = () => {
             setWalletData(walletData.wallet);
           }
         }
-        
+
+        // Update purchaseHistory state instantly
+        setPurchaseHistory((prev) => prev.map((p) => {
+          if (p.id === selectedPurchase.id) {
+            // For shop refund, set status to requested
+            if (selectedPurchase.paymentFor === 'order') {
+              return { ...p, refundStatus: 'requested', refundRequestedAt: new Date().toISOString() };
+            } else if (selectedPurchase.paymentFor === 'enrollment') {
+              // For class refund, set status to refunded
+              return { ...p, refundStatus: 'refunded', refundProcessedAt: new Date().toISOString() };
+            } else if (selectedPurchase.paymentFor === 'pricing-plan') {
+              // For subscription refund, set status to refunded
+              return { ...p, refundStatus: 'refunded', refundProcessedAt: new Date().toISOString() };
+            }
+          }
+          return p;
+        }));
         setShowRefundModal(false);
         setSelectedPurchase(null);
         setRefundReason('');
@@ -322,7 +337,7 @@ const PurchaseHistoryPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       {/* Hero Header */}
       <div className="relative bg-gradient-to-r from-gray-900 to-gray-800 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -336,7 +351,7 @@ const PurchaseHistoryPage = () => {
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
               Track all your fitness investments and subscription activities
             </p>
-            
+
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
@@ -346,7 +361,7 @@ const PurchaseHistoryPage = () => {
                 <ArrowLeft size={20} />
                 Back to Profile
               </button>
-              
+
               <button
                 onClick={() => setShowWalletModal(true)}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
@@ -371,7 +386,7 @@ const PurchaseHistoryPage = () => {
               <DollarSign className="text-green-500" size={40} />
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -381,7 +396,7 @@ const PurchaseHistoryPage = () => {
               <ShoppingBag className="text-blue-500" size={40} />
             </div>
           </div>
-          
+
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -411,7 +426,7 @@ const PurchaseHistoryPage = () => {
             <Filter className="text-gray-800" size={24} />
             <h2 className="text-2xl font-bold text-gray-800">Filter & Search</h2>
           </div>
-          
+
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -423,16 +438,15 @@ const PurchaseHistoryPage = () => {
                 className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-800 placeholder-gray-400 text-lg"
               />
             </div>
-            
+
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
               className="px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-800 font-medium text-lg min-w-[200px]"
             >
-              <option value="all">All Purchases</option>
+              <option value="all">All Payments</option>
               <option value="store">Store Purchases</option>
               <option value="classes">Class Enrollments</option>
-              <option value="monthly-plans">Monthly Plans</option>
               <option value="subscriptions">Subscriptions</option>
             </select>
           </div>
@@ -468,7 +482,7 @@ const PurchaseHistoryPage = () => {
                       <p className="text-gray-600">{purchase.itemType}</p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div className="flex items-center gap-2">
                       <Calendar className="text-gray-400" size={16} />
@@ -476,14 +490,14 @@ const PurchaseHistoryPage = () => {
                         {formatDate(purchase.createdAt)}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       <CreditCard className="text-gray-400" size={16} />
                       <span className="text-gray-600 font-mono">
                         {purchase.paymentId ? `ID: ${purchase.paymentId.slice(-8)}` : 'N/A'}
                       </span>
                     </div>
-                    
+
                     {purchase.itemDetails?.orderNumber && (
                       <div className="flex items-center gap-2">
                         <Package className="text-gray-400" size={16} />
@@ -579,7 +593,7 @@ const PurchaseHistoryPage = () => {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Right side - Amount, status, and actions */}
                 <div className="flex flex-col items-end gap-3">
                   <div className="text-right">
@@ -588,16 +602,15 @@ const PurchaseHistoryPage = () => {
                     </p>
                     <p className="text-gray-500 text-sm">{purchase.currency.toUpperCase()}</p>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     {getStatusIcon(purchase.status)}
-                    <span className={`text-sm font-medium ${
-                      purchase.status.toLowerCase() === 'succeeded' || purchase.status.toLowerCase() === 'paid'
+                    <span className={`text-sm font-medium ${purchase.status.toLowerCase() === 'succeeded' || purchase.status.toLowerCase() === 'paid'
                         ? 'text-green-600'
                         : purchase.status.toLowerCase() === 'pending'
-                        ? 'text-yellow-600'
-                        : 'text-gray-600'
-                    }`}>
+                          ? 'text-yellow-600'
+                          : 'text-gray-600'
+                      }`}>
                       {purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
                     </span>
                   </div>
@@ -616,7 +629,7 @@ const PurchaseHistoryPage = () => {
                         Request Refund (Email Admin)
                       </button>
                     )}
-                    
+
                     {/* Shop purchases - refunded status */}
                     {purchase.paymentFor === 'order' && purchase.refundStatus === 'refunded' && (
                       <button
@@ -626,7 +639,7 @@ const PurchaseHistoryPage = () => {
                         Refunded
                       </button>
                     )}
-                    
+
                     {/* Shop purchases - denied status */}
                     {purchase.paymentFor === 'order' && purchase.refundStatus === 'denied' && (
                       <button
@@ -636,7 +649,7 @@ const PurchaseHistoryPage = () => {
                         Refund Denied
                       </button>
                     )}
-                    
+
                     {/* Class enrollments - refund to wallet */}
                     {purchase.paymentFor === 'enrollment' && purchase.canRefund && purchase.refundStatus === 'none' && (
                       <button
@@ -649,7 +662,7 @@ const PurchaseHistoryPage = () => {
                         Request Refund (${purchase.refundAmount.toFixed(2)})
                       </button>
                     )}
-                    
+
                     {/* Class enrollments - refunded status */}
                     {purchase.paymentFor === 'enrollment' && purchase.refundStatus === 'refunded' && (
                       <button
@@ -659,7 +672,7 @@ const PurchaseHistoryPage = () => {
                         Refunded (${purchase.refundAmount?.toFixed(2) || '0.00'})
                       </button>
                     )}
-                    
+
                     {/* Class enrollments - denied status */}
                     {purchase.paymentFor === 'enrollment' && purchase.refundStatus === 'denied' && (
                       <button
@@ -669,7 +682,7 @@ const PurchaseHistoryPage = () => {
                         Refund Denied
                       </button>
                     )}
-                    
+
                     {/* Monthly plans - cancel subscription */}
                     {purchase.paymentFor === 'monthly-plan' && purchase.isActive && (
                       <button
@@ -680,9 +693,9 @@ const PurchaseHistoryPage = () => {
                         {processingCancel ? 'Cancelling...' : 'Cancel Subscription'}
                       </button>
                     )}
-                    
+
                     {/* Pricing plans - cancel subscription */}
-                    {purchase.paymentFor === 'pricing-plan' && purchase.isActive && (
+                    {purchase.paymentFor === 'pricing-plan' && purchase.isActive && purchase.refundStatus === 'none' && (
                       <button
                         onClick={() => handleCancelSubscription(purchase)}
                         disabled={processingCancel}
@@ -691,10 +704,19 @@ const PurchaseHistoryPage = () => {
                         {processingCancel ? 'Cancelling...' : 'Cancel Subscription'}
                       </button>
                     )}
+                    {/* Pricing plans - refunded status */}
+                    {purchase.paymentFor === 'pricing-plan' && purchase.refundStatus === 'refunded' && (
+                      <button
+                        disabled
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium opacity-75 cursor-not-allowed"
+                      >
+                        Refunded
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
-              
+
               {/* Additional details for store purchases */}
               {purchase.paymentFor === 'order' && purchase.itemDetails?.items && (
                 <div className="mt-6 pt-6 border-t border-gray-100">
@@ -703,8 +725,8 @@ const PurchaseHistoryPage = () => {
                     {purchase.itemDetails.items.map((item: any, index: number) => (
                       <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         {item.image && (
-                          <img 
-                            src={item.image} 
+                          <img
+                            src={item.image}
                             alt={item.title}
                             className="w-12 h-12 object-cover rounded-lg"
                           />
@@ -736,12 +758,12 @@ const PurchaseHistoryPage = () => {
                 <X size={24} />
               </button>
             </div>
-            
+
             <div className="mb-6">
               <p className="text-gray-600 mb-4">
                 You're requesting a refund for: <strong>{selectedPurchase.itemDetails?.title}</strong>
               </p>
-              
+
               {selectedPurchase.paymentFor === 'order' ? (
                 <>
                   <p className="text-gray-600 mb-4">
@@ -761,7 +783,7 @@ const PurchaseHistoryPage = () => {
                   </p>
                 </>
               )}
-              
+
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Reason for refund:
               </label>
@@ -773,7 +795,7 @@ const PurchaseHistoryPage = () => {
                 rows={4}
               />
             </div>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={() => setShowRefundModal(false)}
@@ -806,7 +828,7 @@ const PurchaseHistoryPage = () => {
                 <X size={24} />
               </button>
             </div>
-            
+
             <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
               <div className="flex items-center gap-3">
                 <Wallet className="text-green-600" size={32} />
@@ -830,11 +852,10 @@ const PurchaseHistoryPage = () => {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className={`font-bold ${
-                          transaction.type === 'refund' || transaction.type === 'credit' 
-                            ? 'text-green-600' 
+                        <p className={`font-bold ${transaction.type === 'refund' || transaction.type === 'credit'
+                            ? 'text-green-600'
                             : 'text-red-600'
-                        }`}>
+                          }`}>
                           {transaction.type === 'refund' || transaction.type === 'credit' ? '+' : '-'}${transaction.amount.toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-500 capitalize">{transaction.type}</p>
@@ -849,7 +870,7 @@ const PurchaseHistoryPage = () => {
           </div>
         </div>
       )}
-      
+
       <Footer />
     </div>
   );

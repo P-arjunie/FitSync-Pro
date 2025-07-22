@@ -59,6 +59,7 @@ export async function POST(req: Request) {
       status: 'pending',
       comments: [],
       likes: 0,
+      source: 'gallery', // Mark as uploaded from gallery page
     });
 
     // ✅ Return uploaded image URL

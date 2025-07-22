@@ -36,25 +36,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Active subscription not found" }, { status: 404 });
     }
 
-    if (!plan.stripeCustomerId) {
-      return NextResponse.json({ error: "Stripe customer ID not found" }, { status: 400 });
-    }
-
-    // Get customer's subscriptions from Stripe
-    const subscriptions = await stripe.subscriptions.list({
-      customer: plan.stripeCustomerId,
-      status: 'active',
-    });
-
-    if (subscriptions.data.length === 0) {
-      return NextResponse.json({ error: "No active subscription found" }, { status: 404 });
-    }
-
-    // Cancel the subscription at period end
-    const subscription = await stripe.subscriptions.update(subscriptions.data[0].id, {
-      cancel_at_period_end: true,
-    });
-
     // Update the plan status in database
     await PricingPlanPurchase.findByIdAndUpdate(plan._id, {
       status: "cancelled",
@@ -63,9 +44,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      message: "Subscription cancelled successfully",
-      subscriptionId: subscription.id,
-      currentPeriodEnd: (subscription as any).current_period_end
+      message: "Subscription cancelled successfully"
     });
 
   } catch (error: any) {
