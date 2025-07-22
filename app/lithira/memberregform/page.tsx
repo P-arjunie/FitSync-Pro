@@ -28,6 +28,7 @@ const MemberRegistrationForm: React.FC = () => {
     membershipInfo: {
       plan: "",
       startDate: "",
+      paymentPlan: "", // <-- add this
     },
     termsAccepted: false,
     password: "",
@@ -144,7 +145,7 @@ const MemberRegistrationForm: React.FC = () => {
       const payload = {
         ...formData,
       };
-      delete payload.confirmPassword;
+      delete (payload as any).confirmPassword;
 
       // Submit form data to backend API
       const res = await fetch("/api/member/register", {
@@ -324,7 +325,7 @@ const MemberRegistrationForm: React.FC = () => {
             <div>
               <span className="font-semibold">Choose Membership Type:</span>
               <div className="flex gap-4 mt-2">
-                {["Monthly Membership", "Annual Membership", "Day Pass"].map(
+                {["Monthly Membership", "Annual Membership"].map(
                   (type) => (
                     <label key={type} className="flex items-center gap-2">
                       <input
@@ -341,7 +342,23 @@ const MemberRegistrationForm: React.FC = () => {
                 )}
               </div>
             </div>
-
+            {/* Price Package Dropdown */}
+            <div className="flex flex-col">
+              <label className="text-sm font-semibold">Choose Price Package</label>
+              <select
+                name="membershipInfo.paymentPlan"
+                className="border border-red-500 p-2 rounded"
+                value={formData.membershipInfo.paymentPlan}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select a package</option>
+                <option value="Standard">Standard</option>
+                <option value="Popular">Popular</option>
+                <option value="Golden">Golden</option>
+                <option value="Professional">Professional</option>
+              </select>
+            </div>
             <div className="flex flex-col">
               <label className="text-sm font-semibold">
                 Preferred Start Date
@@ -355,7 +372,6 @@ const MemberRegistrationForm: React.FC = () => {
                 required
               />
             </div>
-
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
