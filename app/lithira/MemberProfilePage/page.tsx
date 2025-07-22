@@ -438,7 +438,7 @@ const MemberProfilePage = () => {
             )}
           </div>
         </div>
-          </div>
+        </div>
         </div>
       </div>
       <Footer1 />

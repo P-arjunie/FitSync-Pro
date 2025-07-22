@@ -16,15 +16,42 @@ const connectToDB = async () => {
 export async function GET(req: NextRequest) {
   try {
     await connectToDB();
+    console.log('🔎 [DEBUG] mongoose.connection.name:', mongoose.connection.name);
 
     const userId = req.nextUrl.searchParams.get("userId");
+    const userEmail = req.nextUrl.searchParams.get("userEmail");
     
-    if (!userId) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+    if (!userId && !userEmail) {
+      return NextResponse.json({ error: "User ID or email is required" }, { status: 400 });
     }
 
-    // Fetch all payments for the user
-    const payments = await Payment.find({ userId }).sort({ createdAt: -1 });
+    // Fetch all payments for the user by userId from both fit-sync and test databases
+    let payments: any[] = [];
+    if (userId) {
+      // Fetch from current (fit-sync) connection
+      payments = await Payment.find({ userId }).sort({ createdAt: -1 });
+      console.log(`[fit-sync] Payments found:`, payments.length);
+      // Also fetch from 'test' database if not already connected
+      if (mongoose.connection.name !== 'test') {
+        try {
+          const testConn = await mongoose.createConnection(process.env.MONGODB_URI!, { dbName: 'test' });
+          const TestPayment = testConn.model('Payment', Payment.schema, 'kalana_paymentsses');
+          const testPayments = await TestPayment.find({ userId }).sort({ createdAt: -1 });
+          console.log(`[test] Payments found:`, testPayments.length);
+          payments = payments.concat(testPayments);
+          await testConn.close();
+        } catch (err) {
+          console.error('❌ Error fetching from test DB:', err);
+          return NextResponse.json({ error: 'Failed to fetch from test DB', details: (err as Error).message }, { status: 500 });
+        }
+      }
+      console.log(`[merged] Total payments:`, payments.length);
+    }
+
+    // If no payments found and email is provided, try by email (legacy support)
+    if (payments.length === 0 && userEmail) {
+      payments = await Payment.find({ email: userEmail }).sort({ createdAt: -1 });
+    }
 
     // Fetch additional details for each payment
     const purchaseHistory = await Promise.all(
@@ -179,7 +206,7 @@ export async function GET(req: NextRequest) {
     console.log(`📊 Purchase History Summary:`);
     console.log(`- Total payments found: ${payments.length}`);
     console.log(`- Processed items: ${filteredHistory.length}`);
-    console.log(`- Payment types:`, payments.map(p => p.paymentFor));
+    console.log(`- Payment types:`, (payments as any[]).map(p => p.paymentFor));
     
     return NextResponse.json({ 
       success: true, 

@@ -10,12 +10,18 @@ import Link from 'next/link';
 
 interface AnalyticsData {
   labels: string[];
-  bookings: number[];
+  donePhysical: number[];
+  toBeHeldPhysical: number[];
+  doneVirtual: number[];
+  toBeHeldVirtual: number[];
   trainers: string[];
-  totalSessions: number;
-  averageSessionsPerDay: number;
-  trainerBreakdown: Record<string, number>;
-  busiestDays: Array<{
+  // Optionally keep old fields for backward compatibility
+  bookings?: number[];
+  virtualBookings?: number[];
+  totalSessions?: number;
+  averageSessionsPerDay?: number;
+  trainerBreakdown?: Record<string, number>;
+  busiestDays?: Array<{
     day: string;
     count: number;
   }>;
@@ -30,8 +36,13 @@ interface FilterState {
 const AnalyticsPage: React.FC = () => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
     labels: [],
-    bookings: [],
+    donePhysical: [],
+    toBeHeldPhysical: [],
+    doneVirtual: [],
+    toBeHeldVirtual: [],
     trainers: [],
+    bookings: [],
+    virtualBookings: [],
     totalSessions: 0,
     averageSessionsPerDay: 0,
     trainerBreakdown: {},
@@ -131,18 +142,11 @@ const AnalyticsPage: React.FC = () => {
       // Enhanced data validation with better error handling
       const data: AnalyticsData = {
         labels: Array.isArray(result.data?.labels) ? result.data.labels : [],
-        bookings: Array.isArray(result.data?.bookings) ? 
-          result.data.bookings.map((count: any) => Number(count) || 0) : [],
+        donePhysical: Array.isArray(result.data?.donePhysical) ? result.data.donePhysical.map((count: any) => Number(count) || 0) : [],
+        toBeHeldPhysical: Array.isArray(result.data?.toBeHeldPhysical) ? result.data.toBeHeldPhysical.map((count: any) => Number(count) || 0) : [],
+        doneVirtual: Array.isArray(result.data?.doneVirtual) ? result.data.doneVirtual.map((count: any) => Number(count) || 0) : [],
+        toBeHeldVirtual: Array.isArray(result.data?.toBeHeldVirtual) ? result.data.toBeHeldVirtual.map((count: any) => Number(count) || 0) : [],
         trainers: Array.isArray(result.data?.trainers) ? result.data.trainers : [],
-        totalSessions: Number(result.data?.totalSessions) || 0,
-        averageSessionsPerDay: Number(result.data?.averageSessionsPerDay) || 0,
-        trainerBreakdown: result.data?.trainerBreakdown && typeof result.data.trainerBreakdown === "object" ? 
-          result.data.trainerBreakdown : {},
-        busiestDays: Array.isArray(result.data?.busiestDays) ? 
-          result.data.busiestDays.map((day: any) => ({
-            day: String(day?.day || ""),
-            count: Number(day?.count) || 0,
-          })) : [],
       };
       
       setAnalyticsData(data);
@@ -154,8 +158,13 @@ const AnalyticsPage: React.FC = () => {
       // Reset to empty state on error
       setAnalyticsData({
         labels: [],
-        bookings: [],
+        donePhysical: [],
+        toBeHeldPhysical: [],
+        doneVirtual: [],
+        toBeHeldVirtual: [],
         trainers: [],
+        bookings: [],
+        virtualBookings: [],
         totalSessions: 0,
         averageSessionsPerDay: 0,
         trainerBreakdown: {},
@@ -260,8 +269,8 @@ const AnalyticsPage: React.FC = () => {
       
       doc.setFontSize(12);
       const summaryData = [
-        `Total Sessions: ${analyticsData.totalSessions}`,
-        `Average Sessions Per Day: ${analyticsData.averageSessionsPerDay.toFixed(2)}`
+        `Total Sessions: ${analyticsData.totalSessions ?? 0}`,
+        `Average Sessions Per Day: ${analyticsData.averageSessionsPerDay ? analyticsData.averageSessionsPerDay.toFixed(2) : '0.00'}`
       ];
       
       summaryData.forEach(item => {
@@ -271,7 +280,7 @@ const AnalyticsPage: React.FC = () => {
       currentY += 10;
 
       // Trainer breakdown
-      if (Object.keys(analyticsData.trainerBreakdown).length > 0) {
+      if (analyticsData.trainerBreakdown && Object.keys(analyticsData.trainerBreakdown).length > 0) {
         doc.setFontSize(14);
         doc.text("Trainer Breakdown", margin, currentY);
         currentY += 15;
@@ -285,7 +294,7 @@ const AnalyticsPage: React.FC = () => {
       }
 
       // Busiest days
-      if (analyticsData.busiestDays.length > 0) {
+      if (analyticsData.busiestDays && analyticsData.busiestDays.length > 0) {
         if (currentY > 200) { // Check if we need a new page
           doc.addPage();
           currentY = margin;
@@ -332,12 +341,12 @@ const AnalyticsPage: React.FC = () => {
       ];
 
       // Trainer breakdown sheet
-      const trainerData = [["Trainer", "Session Count"], ...Object.entries(analyticsData.trainerBreakdown)];
+      const trainerData = [["Trainer", "Session Count"], ...(analyticsData.trainerBreakdown ? Object.entries(analyticsData.trainerBreakdown) : [])];
       
       // Busiest days sheet
       const busiestDaysData = [
         ["Day", "Session Count"],
-        ...analyticsData.busiestDays.map(day => [day.day, day.count])
+        ...(analyticsData.busiestDays ? analyticsData.busiestDays.map(day => [day.day, day.count]) : [])
       ];
 
       // Create sheets
@@ -368,11 +377,11 @@ const AnalyticsPage: React.FC = () => {
         [""],
         ["Trainer Breakdown"],
         ["Trainer", "Session Count"],
-        ...Object.entries(analyticsData.trainerBreakdown),
+        ...(analyticsData.trainerBreakdown ? Object.entries(analyticsData.trainerBreakdown) : []),
         [""],
         ["Busiest Days"],
         ["Day", "Session Count"],
-        ...analyticsData.busiestDays.map(day => [day.day, day.count]),
+        ...(analyticsData.busiestDays ? analyticsData.busiestDays.map(day => [day.day, day.count]) : [])
       ];
 
       const csvContent = csvData.map(row => 
@@ -583,9 +592,12 @@ const AnalyticsPage: React.FC = () => {
           ) : (
             /* Analytics dashboard */
             <AnalyticsDashboard 
-              bookingsData={analyticsData.bookings} 
               bookingLabels={analyticsData.labels}
               selectedTrainer={filters.trainer}
+              donePhysical={analyticsData.donePhysical}
+              toBeHeldPhysical={analyticsData.toBeHeldPhysical}
+              doneVirtual={analyticsData.doneVirtual}
+              toBeHeldVirtual={analyticsData.toBeHeldVirtual}
             />
           )}
         </div>
