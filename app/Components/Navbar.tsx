@@ -23,6 +23,7 @@ const Navbar: React.FC = () => {
     };
 
     window.addEventListener("storage", handleStorageChange);
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };

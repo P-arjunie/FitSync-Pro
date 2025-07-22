@@ -9,7 +9,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const connectToDB = async () => {
   if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.MONGODB_URI!);
+    await mongoose.connect(process.env.MONGODB_URI!, { dbName: 'fit-sync' });
+    console.log('✅ MongoDB connected (pricing-plan-purchase)');
+    console.log('🔎 [DEBUG] mongoose.connection.name:', mongoose.connection.name);
   }
 };
 
@@ -20,6 +22,28 @@ export async function POST(req: NextRequest) {
 
     if (!userId || !planName || !amount || !priceId) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+    }
+
+    // Check if user already has an active (paid or active) plan in PricingPlanPurchase
+    const existingActivePlan = await PricingPlanPurchase.findOne({
+      userId,
+      status: { $in: ['paid', 'active'] }
+    });
+    // Also check in Payment (kalana_paymentsses)
+    const Payment = (await import('@/models/Payment')).default;
+    const existingActivePayment = await Payment.findOne({
+      userId,
+      paymentFor: 'pricing-plan',
+      paymentStatus: { $in: ['paid', 'active', 'succeeded'] },
+      $or: [
+        { refundStatus: { $in: [null, 'none'] } },
+        { refundStatus: { $exists: false } }
+      ]
+    });
+    if (existingActivePlan || existingActivePayment) {
+      return NextResponse.json({
+        error: 'You already have an active subscription plan. Please refund or cancel your current plan before purchasing a new one.'
+      }, { status: 400 });
     }
 
     // Create or retrieve Stripe customer
