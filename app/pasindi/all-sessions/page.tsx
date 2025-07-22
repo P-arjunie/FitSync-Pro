@@ -60,37 +60,23 @@ export default function AllSessionsPage() {
     let isMounted = true;
     const fetchSessions = async () => {
       try {
-        setIsLoading(true);
-        const response = await fetch("/api/sessions");
-        const data = await response.json();
-        const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
-
-        // Fetch participants for each session in parallel
-        const sessionsWithParticipants = await Promise.all(
-          data.map(async (session: any) => {
-            // Fetch participants for this session
-            const participantsRes = await fetch(`/api/sessions/${session._id}/participants`);
-            const participants = await participantsRes.json();
-            // Normalize participants to always be an array
-            const participantList = Array.isArray(participants)
-              ? participants
-              : participants.all || [];
-            // Check if user has joined
-            const hasJoined = userId && participantList.some((p: any) => p.userId === userId);
-            return {
-              ...session,
-              start: new Date(session.start),
-              end: new Date(session.end),
-              title: session.title || "Unnamed Session",
-              currentParticipants: session.currentParticipants || 0,
-              hasJoined,
-            };
-          })
-        );
-
-        if (isMounted) {
-          setSessions(sessionsWithParticipants);
+        setIsLoading(true)
+        const response = await fetch("/api/sessions")
+        const data = await response.json()
+        if (!Array.isArray(data)) {
+          console.error("Error loading sessions: API did not return an array", data)
+          setSessions([])
+          return
         }
+        // Convert string dates to Date objects
+        const formattedSessions = data.map((session: Session) => ({
+          ...session,
+          start: new Date(session.start),
+          end: new Date(session.end),
+          title: session.title || "Unnamed Session",
+          currentParticipants: session.currentParticipants || 0,
+        }))
+        setSessions(formattedSessions)
       } catch (error) {
         console.error("Error loading sessions:", error);
       } finally {

@@ -5,6 +5,7 @@ import SessionParticipant from "@/models/SessionParticipant";
 import Member from "@/models/member";
 import { sendEmail } from '@/lib/sendEmail';
 import dedent from 'dedent';
+import VirtualSession from "@/models/VirtualSession";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -30,12 +31,22 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     // Check if session exists and is not full
-    const session = await Session.findById(id);
+    let session = await Session.findById(id);
+    let isVirtual = false;
+    if (!session) {
+      session = await VirtualSession.findById(id);
+      isVirtual = true;
+    }
     if (!session) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    if (session.currentParticipants >= session.maxParticipants) {
+    // Count current participants using SessionParticipant collection
+    const approvedCount = await SessionParticipant.countDocuments({
+      sessionId: id,
+      status: 'approved'
+    });
+    if (approvedCount >= session.maxParticipants) {
       return NextResponse.json({ error: "Session is full" }, { status: 409 });
     }
 
@@ -60,19 +71,26 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     // Send notification email to trainer about new booking request
     try {
-      const trainer = await Session.findById(id).select('trainerName trainerId');
-      if (trainer) {
+      let trainerName = session.trainerName;
+      let trainerId = session.trainerId;
+      if (isVirtual) {
+        trainerName = session.trainer?.name || "Unknown Trainer";
+        trainerId = null; // Update if VirtualSession has a trainerId field
+      }
+      if (trainerName) {
         // Get trainer email from ApprovedTrainer model
         const ApprovedTrainer = (await import('@/models/ApprovedTrainer')).default;
-        const approvedTrainer = await ApprovedTrainer.findById(trainer.trainerId);
-        
+        let approvedTrainer = null;
+        if (trainerId) {
+          approvedTrainer = await ApprovedTrainer.findById(trainerId);
+        }
         if (approvedTrainer && approvedTrainer.email) {
           await sendEmail({
             to: approvedTrainer.email,
             subject: `📋 New Booking Request: ${session.title}`,
             text: `Member ${userName} has requested to join your session "${session.title}" on ${new Date(session.start).toLocaleDateString()}. Please approve or reject this request.`,
             html: dedent`
-              <p>Hi ${trainer.trainerName},</p>
+              <p>Hi ${trainerName},</p>
               <p>Member <strong>${userName}</strong> has requested to join your session <strong>${session.title}</strong>.</p>
               <p><strong>Session Details:</strong><br/>
               <strong>Date:</strong> ${new Date(session.start).toLocaleDateString()}<br/>
@@ -93,6 +111,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     // Send confirmation email to member
     if (userEmail) {
       try {
+        let dateStr = isVirtual ? (session.date ? new Date(session.date).toLocaleDateString() : "-") : (session.start ? new Date(session.start).toLocaleDateString() : "-");
+        let timeStr = isVirtual ? `${session.startTime} - ${session.endTime}` : (session.start && session.end ? `${new Date(session.start).toLocaleTimeString()} - ${new Date(session.end).toLocaleTimeString()}` : "-");
+        let locationStr = isVirtual ? (session.onlineLink ? `Virtual (Join link: <a href='${session.onlineLink}' target='_blank'>${session.onlineLink}</a>)` : "Virtual Session") : (session.location || "-");
         await sendEmail({
           to: userEmail,
           subject: `📋 Booking Request Submitted: ${session.title}`,
@@ -101,10 +122,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             <p>Hi ${userName},</p>
             <p>Your booking request for <strong>${session.title}</strong> has been submitted successfully!</p>
             <p><strong>Session Details:</strong><br/>
-            <strong>Date:</strong> ${new Date(session.start).toLocaleDateString()}<br/>
-            <strong>Time:</strong> ${new Date(session.start).toLocaleTimeString()} - ${new Date(session.end).toLocaleTimeString()}<br/>
-            <strong>Location:</strong> ${session.location}<br/>
-            <strong>Trainer:</strong> ${session.trainerName}</p>
+            <strong>Date:</strong> ${dateStr}<br/>
+            <strong>Time:</strong> ${timeStr}<br/>
+            <strong>Location:</strong> ${locationStr}<br/>
+            <strong>Trainer:</strong> ${isVirtual ? (session.trainer?.name || "Unknown Trainer") : session.trainerName}</p>
             <p>Your request is now pending trainer approval. You will receive an email notification once the trainer responds.</p>
             <br/>
             <p>Thank you,<br/>FitSync Pro Team</p>

@@ -21,7 +21,7 @@ const sessionParticipantSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected'],
+    enum: ['pending', 'approved', 'rejected', 'cancelled'],
     default: 'pending'
   },
   joinedAt: {
@@ -37,6 +37,14 @@ const sessionParticipantSchema = new Schema({
     default: null
   },
   rejectionReason: {
+    type: String,
+    default: null
+  },
+  cancelledAt: {
+    type: Date,
+    default: null
+  },
+  cancellationReason: {
     type: String,
     default: null
   }
