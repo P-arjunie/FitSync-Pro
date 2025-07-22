@@ -2,146 +2,135 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from "@/lib/mongodb";
 import Session from '@/models/Session';
+import ApprovedTrainer from '@/models/ApprovedTrainer';
+import VirtualSession from '@/models/VirtualSession';
 
 export async function GET(req: NextRequest) {
   try {
     await connectToDatabase();
     const { searchParams } = new URL(req.url);
-    
-    // Get query parameters for filtering
     const trainer = searchParams.get('trainer');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
-    
-    // Build query object
-    const query: any = {};
-    
-    // Add trainer filter if provided
-    if (trainer && trainer !== 'all') {
-      query.trainerName = trainer;
+    const now = new Date();
+
+    // Helper to build query for sessions (physical or virtual)
+    function buildQuery(isVirtual = false) {
+      const q: any = {};
+      if (trainer && trainer !== 'all') {
+        q[isVirtual ? 'trainer' : 'trainerName'] = trainer;
+      }
+      if (startDate || endDate) {
+        const key = isVirtual ? 'date' : 'start';
+        q[key] = {};
+        if (startDate) {
+          const startDateObj = new Date(startDate);
+          if (!isNaN(startDateObj.getTime())) {
+            q[key].$gte = startDateObj;
+          }
+        }
+        if (endDate) {
+          const endDateObj = new Date(endDate);
+          if (!isNaN(endDateObj.getTime())) {
+            endDateObj.setDate(endDateObj.getDate() + 1);
+            q[key].$lte = endDateObj;
+          }
+        }
+        if (Object.keys(q[key]).length === 0) {
+          delete q[key];
+        }
+      }
+      return q;
     }
-    
-    // Add date range filter if provided
-    if (startDate || endDate) {
-      query.start = {};
-      
-      // Validate and add start date
-      if (startDate) {
-        const startDateObj = new Date(startDate);
-        if (!isNaN(startDateObj.getTime())) {
-          query.start.$gte = startDateObj;
-        }
-      }
-      
-      // Validate and add end date (add one day to include the full end date)
-      if (endDate) {
-        const endDateObj = new Date(endDate);
-        if (!isNaN(endDateObj.getTime())) {
-          endDateObj.setDate(endDateObj.getDate() + 1);
-          query.start.$lte = endDateObj;
-        }
-      }
-      
-      // If no valid dates were added, remove the empty start object
-      if (Object.keys(query.start).length === 0) {
-        delete query.start;
-      }
-    }
-    
-    // Get all sessions that match the query
-    const sessions = await Session.find(query).sort({ start: 1 });
-    
-    // Get unique trainers for dropdown (always fetch all trainers regardless of filters)
-    const uniqueTrainers = await Session.distinct('trainerName');
-    
-    // If no sessions found, return empty data with trainers list
-    if (sessions.length === 0) {
-      return NextResponse.json({
-        success: true,
-        data: {
-          labels: [],
-          bookings: [],
-          trainers: uniqueTrainers
-        }
+
+    // Fetch all sessions (physical and virtual)
+    const sessions = await Session.find(buildQuery(false)).sort({ start: 1 });
+    const virtualSessions = await VirtualSession.find(buildQuery(true)).sort({ date: 1 });
+
+    // Categorize sessions: done (past) and to be held (future)
+    const doneSessions = sessions.filter(s => s.start < now);
+    const toBeHeldSessions = sessions.filter(s => s.start >= now);
+    const doneVirtualSessions = virtualSessions.filter(s => s.date < now);
+    const toBeHeldVirtualSessions = virtualSessions.filter(s => s.date >= now);
+
+    // Get unique approved trainers for dropdown
+    const approvedTrainers = await ApprovedTrainer.find({}, 'firstName lastName');
+    const uniqueTrainers = approvedTrainers.map((trainer: any) => `${trainer.firstName} ${trainer.lastName}`);
+
+    // Helper to group sessions by month
+    function groupByMonth(sessionsArr: any[], dateKey: string) {
+      const map: Record<string, number> = {};
+      sessionsArr.forEach(session => {
+        const date = new Date(session[dateKey]);
+        const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        map[monthYear] = (map[monthYear] || 0) + 1;
       });
+      return map;
     }
-    
-    // Determine the date range for the chart
+
+    // Get all months in range for chart
     let minDate, maxDate;
-    
+    const allSessions = [...sessions, ...virtualSessions];
     if (startDate && endDate) {
-      // Use provided date range
       const startDateObj = new Date(startDate);
       const endDateObj = new Date(endDate);
-      
-      // Validate dates
       if (!isNaN(startDateObj.getTime()) && !isNaN(endDateObj.getTime())) {
         minDate = startDateObj;
         maxDate = endDateObj;
+      } else if (allSessions.length > 0) {
+        minDate = new Date(Math.min(...allSessions.map(s => new Date(s.start || s.date).getTime())));
+        maxDate = new Date(Math.max(...allSessions.map(s => new Date(s.start || s.date).getTime())));
       } else {
-        // Fallback to session range if dates are invalid
-        minDate = sessions.length > 0 ? new Date(sessions[0].start) : new Date();
-        maxDate = sessions.length > 0 ? new Date(sessions[sessions.length - 1].start) : new Date();
+        minDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        maxDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       }
-    } else if (sessions.length > 0) {
-      // Use the range from the available sessions
-      minDate = new Date(sessions[0].start);
-      maxDate = new Date(sessions[sessions.length - 1].start);
+    } else if (allSessions.length > 0) {
+      minDate = new Date(Math.min(...allSessions.map(s => new Date(s.start || s.date).getTime())));
+      maxDate = new Date(Math.max(...allSessions.map(s => new Date(s.start || s.date).getTime())));
     } else {
-      // Fallback to current month
-      const now = new Date();
       minDate = new Date(now.getFullYear(), now.getMonth(), 1);
       maxDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     }
-    
+
     // Generate all months between min and max date
     const allMonths: string[] = [];
     const currentDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
-    
     while (currentDate <= maxDate) {
       const monthYear = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
       allMonths.push(monthYear);
       currentDate.setMonth(currentDate.getMonth() + 1);
     }
-    
-    // Group sessions by month
-    const sessionsByMonth: Record<string, number> = {};
-    
-    // Initialize all months with zero counts
-    allMonths.forEach(month => {
-      sessionsByMonth[month] = 0;
-    });
-    
-    // Count sessions by month
-    sessions.forEach(session => {
-      const date = new Date(session.start);
-      const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      
-      if (sessionsByMonth[monthYear] !== undefined) {
-        sessionsByMonth[monthYear]++;
-      }
-    });
-    
-    // Convert to array format for chart (ensure consistent order)
-    const months = allMonths.sort();
-    const bookingCounts = months.map(month => sessionsByMonth[month]);
-    
-    // Format month labels for display (e.g., "2023-01" to "January 2023")
-    const monthLabels = months.map(month => {
+
+    // Group by month for each category
+    const donePhysicalByMonth = groupByMonth(doneSessions, 'start');
+    const toBeHeldPhysicalByMonth = groupByMonth(toBeHeldSessions, 'start');
+    const doneVirtualByMonth = groupByMonth(doneVirtualSessions, 'date');
+    const toBeHeldVirtualByMonth = groupByMonth(toBeHeldVirtualSessions, 'date');
+
+    // Prepare chart arrays
+    const donePhysicalCounts = allMonths.map(month => donePhysicalByMonth[month] || 0);
+    const toBeHeldPhysicalCounts = allMonths.map(month => toBeHeldPhysicalByMonth[month] || 0);
+    const doneVirtualCounts = allMonths.map(month => doneVirtualByMonth[month] || 0);
+    const toBeHeldVirtualCounts = allMonths.map(month => toBeHeldVirtualByMonth[month] || 0);
+
+    // Format month labels for display
+    const monthLabels = allMonths.map(month => {
       const [year, monthNum] = month.split('-');
       const date = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
       return date.toLocaleString('default', { month: 'long', year: 'numeric' });
     });
-    
+
     return NextResponse.json({
       success: true,
       data: {
         labels: monthLabels,
-        bookings: bookingCounts,
+        donePhysical: donePhysicalCounts,
+        toBeHeldPhysical: toBeHeldPhysicalCounts,
+        doneVirtual: doneVirtualCounts,
+        toBeHeldVirtual: toBeHeldVirtualCounts,
         trainers: uniqueTrainers
       }
     });
-    
   } catch (error) {
     console.error('Error fetching analytics data:', error);
     return NextResponse.json(

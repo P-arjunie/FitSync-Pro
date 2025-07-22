@@ -195,105 +195,86 @@ export default function Contact() {
       >
         <Navbar />
         
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 px-4 py-8 md:px-8 lg:px-16">
-          
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 px-4 py-8 md:px-8 lg:px-16 items-start">
           {/* Left Section - Company Information */}
-          <div className="bg-white shadow-lg rounded-lg p-8 md:p-10 transform hover:scale-105 transition-transform duration-300">
-            <h1 className="text-3xl font-bold mb-5 text-black">
-              We are here to help you! To Shape Your Body.
+          <div className="bg-white shadow-lg rounded-lg p-12 md:p-16 flex flex-col justify-between min-h-[650px]" style={{ minWidth: '420px', justifyContent: 'flex-start', paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
+            <h1 className="text-3xl font-bold mb-5 text-black" style={{ marginBottom: 0, lineHeight: 1.2 }}>
+              We are here to help you! 
             </h1>
-            <p className="text-gray-700 mb-8 leading-relaxed">
+            <hr className="my-4 border-t border-gray-200 w-full" />
+            <p className="text-gray-700 mb-8 leading-relaxed text-justify">
               At FitSync Pro, we're committed to helping you achieve your fitness goals. 
               Whether you have questions about our programs, need guidance, or want to get started, 
               we're here to support your fitness journey every step of the way.
             </p>
+            <div style={{ height: '0.1rem' }} />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="group">
-                <h2 className="text-xl font-bold mb-3 text-black flex items-center">
-                  <span className="inline-block w-8 h-8 bg-gray-600 text-white rounded-full text-center leading-8 mr-3 text-sm">📍</span>
-                  Location
-                </h2>
-                <p className="text-gray-700 ml-11">4/1, Sapumal Place, Colombo, Sri Lanka</p>
+            {/* 2x2 Info Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+              {/* Phone Number */}
+              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
+                <span className="mb-3">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M22 16.92V19a2 2 0 0 1-2.18 2A19.72 19.72 0 0 1 3 5.18 2 2 0 0 1 5 3h2.09a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11l-.27.27a16 16 0 0 0 6.29 6.29l.27-.27a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 21 16.91z" /></svg>
+                </span>
+                <h2 className="text-lg font-semibold mb-1 text-black">Phone Number</h2>
+                <p className="text-gray-700 text-center">+94 71 2781 444</p>
               </div>
-              
-              <div className="group">
-                <h2 className="text-xl font-bold mb-3 text-black flex items-center">
-                  <span className="inline-block w-8 h-8 bg-gray-600 text-white rounded-full text-center leading-8 mr-3 text-sm">🕒</span>
-                  Opening Hours
-                </h2>
-                <p className="text-gray-700 ml-11">
-                  Mon to Fri: 7:30 AM — 1:00 AM<br />
-                  Sat to Sun: 8:00 AM — 11:00 PM
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div className="group">
-                <h2 className="text-xl font-bold mb-3 text-black flex items-center">
-                  <span className="inline-block w-8 h-8 bg-gray-600 text-white rounded-full text-center leading-8 mr-3 text-sm">📞</span>
-                  Contact Info
-                </h2>
-                <div className="ml-11 space-y-2">
-                  <p className="text-gray-700">
-                    <a href="tel:+94712781444" className="hover:text-red-600 transition-colors">
-                      +94 71 2781 444
-                    </a>
-                  </p>
-                  <p className="text-gray-700">
-                    <a href="mailto:fitsyncpro@gmail.com" className="hover:text-red-600 transition-colors">
-                      fitsyncpro@gmail.com
-                    </a>
-                  </p>
+              {/* Follow Us */}
+              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
+                <span className="mb-3">
+                  {/* Share/Network icon for Follow Us */}
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                </span>
+                <h2 className="text-lg font-semibold mb-3 text-black">Follow Us</h2>
+                <div className="flex items-center space-x-4">
+                  <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                    <img src="/linkedin.png" alt="LinkedIn" className="w-8 h-8" style={{ filter: 'none' }} />
+                  </a>
+                  <a href="https://wa.me/+94712781444" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                    <img src="/whatsapp.png" alt="WhatsApp" className="w-8 h-8" style={{ filter: 'none' }} />
+                  </a>
+                  <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                    <img src="/facebook.png" alt="Facebook" className="w-8 h-8" style={{ filter: 'none' }} />
+                  </a>
+                  <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                    <img src="/insta.png" alt="Instagram" className="w-8 h-8" style={{ filter: 'none' }} />
+                  </a>
                 </div>
               </div>
-              
-              <div className="group">
-                <h2 className="text-xl font-bold mb-3 text-black flex items-center">
-                  <span className="inline-block w-8 h-8 bg-gray-600 text-white rounded-full text-center leading-8 mr-3 text-sm">🌐</span>
-                  Follow Us
-                </h2>
-                <div className="flex space-x-4 ml-11">
-                  <a 
-                    href="#" 
-                    className="text-gray-600 hover:text-blue-600 transition-colors transform hover:scale-110"
-                    aria-label="Facebook"
-                  >
-                    <i className="fab fa-facebook fa-lg"></i>
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-gray-600 hover:text-blue-400 transition-colors transform hover:scale-110"
-                    aria-label="Twitter"
-                  >
-                    <i className="fab fa-twitter fa-lg"></i>
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-gray-600 hover:text-pink-600 transition-colors transform hover:scale-110"
-                    aria-label="Instagram"
-                  >
-                    <i className="fab fa-instagram fa-lg"></i>
-                  </a>
-                  <a 
-                    href="#" 
-                    className="text-gray-600 hover:text-red-600 transition-colors transform hover:scale-110"
-                    aria-label="Pinterest"
-                  >
-                    <i className="fab fa-pinterest fa-lg"></i>
-                  </a>
+              {/* Working Hours */}
+              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
+                <span className="mb-3">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" /></svg>
+                </span>
+                <h2 className="text-lg font-semibold mb-1 text-black">Opening Hours</h2>
+                <div className="text-gray-700 text-center">
+                  <div>Monday to Friday</div>
+                  <div className="pl-2">7:30 AM-1:00 AM</div>
+                  <div className="mt-2">Saturday to Sunday</div>
+                  <div className="pl-2">8:00 AM-11:00 PM</div>
                 </div>
+              </div>
+              {/* Location */}
+              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
+                <span className="mb-3">
+                  {/* Map Pin icon for Location */}
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21C12 21 7 16.5 7 12A5 5 0 0 1 17 12C17 16.5 12 21 12 21Z" /><circle cx="12" cy="12" r="2.5" /></svg>
+                </span>
+                <h2 className="text-lg font-semibold mb-1 text-black">Location</h2>
+                <p className="text-gray-700 text-center">4/1, Sapumal Place, Colombo, Sri Lanka</p>
               </div>
             </div>
           </div>
 
-          {/* Right Section - Contact Form */}
-          <div className="bg-white shadow-lg rounded-lg p-8 md:p-10">
-            <h2 className="text-2xl font-bold mb-5 text-black flex items-center">
-              <span className="inline-block w-8 h-8 bg-red-600 text-white rounded-full text-center leading-8 mr-3 text-sm">✉️</span>
-              Leave Us Your Info
-            </h2>
+          {/* Right Section - Contact Form (now styled to match left) */}
+          <div className="bg-white shadow-lg rounded-lg p-10 md:p-12 flex flex-col justify-between min-h-[650px]" style={{ minWidth: '340px', justifyContent: 'flex-start', paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
+            <div className="flex items-center mb-0">
+              <svg className="w-8 h-8 text-red-600 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8" /><rect x="2" y="6" width="20" height="12" rx="2" ry="2" /></svg>
+              <h2 className="text-2xl font-bold text-black" style={{ marginBottom: 0, lineHeight: 1.2 }}>
+                Leave Us Your Info
+              </h2>
+            </div>
+            <hr className="my-4 border-t border-gray-200 w-full" />
 
             {/* Success Message */}
             {success && (
@@ -398,7 +379,7 @@ export default function Contact() {
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                 >
                   {isLoading ? (
                     <>
@@ -420,19 +401,14 @@ export default function Contact() {
                   type="button" 
                   onClick={resetForm}
                   disabled={isLoading}
-                  className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                 >
                   RESET
                 </button>
               </div>
             </form>
 
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 text-center">
-                <span className="font-semibold">Response Time:</span> We typically respond within 24 hours. 
-                For urgent inquiries, please call us directly.
-              </p>
-            </div>
+            
           </div>
         </div>
         

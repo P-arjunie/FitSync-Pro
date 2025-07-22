@@ -424,19 +424,12 @@ const TrainerProfilePage = () => {
 
             {/* Pricing Plan */}
             <div>
-              <label className="block font-semibold">Pricing Plan:</label>
-              <select
-                name="pricingPlan"
-                value={formData.pricingPlan || ""}
-                onChange={handleInputChange}
-                disabled={!editMode}
-                className="select select-bordered w-full"
-              >
-                <option value="">Select Plan</option>
-                <option value="Basic">Basic</option>
-                <option value="Standard">Standard</option>
-                <option value="Premium">Premium</option>
-              </select>
+              <label className="block font-semibold">Assigned Price Plans:</label>
+              <div className="py-2 px-3 bg-gray-100 rounded border border-gray-300">
+                {Array.isArray(formData.pricingPlans) && formData.pricingPlans.length > 0
+                  ? formData.pricingPlans.join(", ")
+                  : "No plans assigned"}
+              </div>
             </div>
 
             {/* Buttons */}

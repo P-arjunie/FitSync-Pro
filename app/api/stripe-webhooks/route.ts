@@ -59,7 +59,12 @@ export async function POST(req: NextRequest) {
       }
 
       // Create payment record if not exists
-      const existingPayment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
+      const existingPayment = await Payment.findOne({
+        stripePaymentIntentId: paymentIntentId,
+        userId,
+        paymentFor: 'pricing-plan',
+        amount
+      });
       if (!existingPayment) {
         await Payment.create({
           firstName: "Subscription",

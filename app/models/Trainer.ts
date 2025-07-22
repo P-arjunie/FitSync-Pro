@@ -15,11 +15,11 @@ export interface ITrainer extends Document {
   preferredTrainingHours: string;
   yearsOfExperience: string;
   availability: string;
-  pricingPlan: string;
+  classes: string[]; // Add this
   emergencyContact: {
     name: string;
     phone: string;
-  relationship: string;
+    relationship: string;
   };
   startDate?: Date;
   termsAccepted: boolean;
@@ -49,11 +49,11 @@ const TrainerSchema = new Schema<ITrainer>({
   preferredTrainingHours: { type: String, required: true },
   yearsOfExperience: { type: String, required: true },
   availability: { type: String, required: true },
-  pricingPlan: { type: String, required: true },
+  classes: { type: [String], required: true }, // Add this
   emergencyContact: {
     name: { type: String, required: true },
     phone: { type: String, required: true },
-  relationship: { type: String, required: true },
+    relationship: { type: String, required: true },
   },
   startDate: { type: Date },
   termsAccepted: { type: Boolean, required: true },

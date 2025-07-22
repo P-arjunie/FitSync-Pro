@@ -16,15 +16,27 @@ const connectToDB = async () => {
 export async function GET(req: NextRequest) {
   try {
     await connectToDB();
+    console.log('🔎 [DEBUG] mongoose.connection.name:', mongoose.connection.name);
 
     const userId = req.nextUrl.searchParams.get("userId");
+    const userEmail = req.nextUrl.searchParams.get("userEmail");
     
-    if (!userId) {
-      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+    if (!userId && !userEmail) {
+      return NextResponse.json({ error: "User ID or email is required" }, { status: 400 });
     }
 
-    // Fetch all payments for the user
-    const payments = await Payment.find({ userId }).sort({ createdAt: -1 });
+    // Fetch all payments for the user by userId from both fit-sync and test databases
+    let payments: any[] = [];
+    if (userId) {
+      // Only fetch from fit-sync (default) connection and kalana_paymentsses collection
+      payments = await Payment.find({ userId, hiddenForUser: { $ne: true } }).sort({ createdAt: -1 });
+      console.log(`[fit-sync] Payments found:`, payments.length);
+    }
+
+    // If no payments found and email is provided, try by email (legacy support)
+    if (payments.length === 0 && userEmail) {
+      payments = await Payment.find({ email: userEmail }).sort({ createdAt: -1 });
+    }
 
     // Fetch additional details for each payment
     const purchaseHistory = await Promise.all(
@@ -99,9 +111,14 @@ export async function GET(req: NextRequest) {
             };
             itemType = "Subscription Plan";
             isActive = plan.status === "paid" || plan.status === "active";
-            // No refunds for subscription plans
-            canRefund = false;
-            refundAmount = 0;
+            // Set refund logic based on refundStatus
+            if (payment.refundStatus === 'refunded') {
+              canRefund = false;
+              refundAmount = 0;
+            } else {
+              canRefund = false;
+              refundAmount = 0;
+            }
           } else {
             // If no plan found, create basic details from payment
             console.log(`⚠️ No plan found for payment, creating basic details`);
@@ -112,8 +129,13 @@ export async function GET(req: NextRequest) {
             };
             itemType = "Subscription Plan";
             isActive = payment.paymentStatus === "succeeded" || payment.paymentStatus === "paid";
-            canRefund = false;
-            refundAmount = 0;
+            if (payment.refundStatus === 'refunded') {
+              canRefund = false;
+              refundAmount = 0;
+            } else {
+              canRefund = false;
+              refundAmount = 0;
+            }
           }
         } else if (payment.paymentFor === "monthly-plan") {
           const monthlyPlan = await MonthlyPlan.findOne({ 
@@ -179,7 +201,7 @@ export async function GET(req: NextRequest) {
     console.log(`📊 Purchase History Summary:`);
     console.log(`- Total payments found: ${payments.length}`);
     console.log(`- Processed items: ${filteredHistory.length}`);
-    console.log(`- Payment types:`, payments.map(p => p.paymentFor));
+    console.log(`- Payment types:`, (payments as any[]).map(p => p.paymentFor));
     
     return NextResponse.json({ 
       success: true, 

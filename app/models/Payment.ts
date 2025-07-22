@@ -26,6 +26,7 @@ export interface IPayment extends Document {
   refundProcessedAt?: Date;
   refundAmount?: number;
   refundReason?: string;
+  hiddenForUser: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -81,6 +82,10 @@ const paymentSchema = new Schema<IPayment>(
     },
     refundReason: {
       type: String,
+    },
+    hiddenForUser: {
+      type: Boolean,
+      default: false,
     },
   },
   {

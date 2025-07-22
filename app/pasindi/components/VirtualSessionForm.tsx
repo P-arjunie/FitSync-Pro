@@ -45,9 +45,11 @@ const formSchema = z.object({
 export default function VirtualSessionForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [members, setMembers] = useState<any[]>([])
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
+  // Remove: useState for members, selectedMembers, searchTerm
+  // Remove: useEffect for fetching members
+  // Remove: handleCheckboxChange, filteredMembers, and all member selection logic
+  // Remove: the entire <div> with Search Members and Selected Members UI
+  // Update onSubmit to not include participants/selectedMembers
 
   // Get trainer name from localStorage
   const trainerName = typeof window !== "undefined" ? localStorage.getItem("userName") || "" : ""
@@ -70,54 +72,17 @@ export default function VirtualSessionForm() {
     }
   }, [userRole, router])
 
-  useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const res = await fetch("/api/member/profile")
-        const data = await res.json()
-        setMembers(data)
-      } catch (error) {
-        console.error("Failed to load members", error)
-      }
-    }
-    fetchMembers()
-  }, [])
+  // Remove the useEffect that fetches members
+  // Remove handleCheckboxChange and filteredMembers
 
-  const handleCheckboxChange = (id: string) => {
-    setSelectedMembers((prev) =>
-      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
-    )
-  }
-
-  const filteredMembers = members.filter(
-    (m: any) =>
-      m.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
+  // Update onSubmit:
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
     try {
-      // Find trainer email from members or localStorage
-      const trainerEmail =
-        members.find(m => (m.firstName + " " + m.lastName) === values.trainer)?.email ||
-        localStorage.getItem("userEmail") ||
-        ""
-
-      const fullSelectedMembers = selectedMembers.map((id) => {
-        const member = members.find((m) => m._id === id)
-        return {
-          id,
-          firstName: member?.firstName || "",
-          lastName: member?.lastName || "",
-          email: member?.email || "",
-        }
-      })
-
+      // Find trainer email from localStorage only
+      const trainerEmail = localStorage.getItem("userEmail") || ""
       // Format the date properly for the API
       const formattedDate = values.date ? format(values.date, "yyyy-MM-dd") : ""
-
       const requestBody = {
         title: values.title,
         trainer: {
@@ -130,11 +95,8 @@ export default function VirtualSessionForm() {
         onlineLink: values.onlineLink,
         maxParticipants: parseInt(values.maxParticipants),
         description: values.description || "",
-        participants: fullSelectedMembers,
       };
-
       console.log("📤 Form sending data:", JSON.stringify(requestBody, null, 2));
-
       const response = await fetch("/api/trainerV-sessionForm", {
         method: "POST",
         headers: {
@@ -142,10 +104,8 @@ export default function VirtualSessionForm() {
         },
         body: JSON.stringify(requestBody),
       })
-
       const data = await response.json()
       console.log("📥 API Response:", data)
-
       if (response.ok) {
         alert("Virtual session created successfully!")
         form.reset({
@@ -155,8 +115,6 @@ export default function VirtualSessionForm() {
           maxParticipants: "10",
           description: "",
         })
-        setSelectedMembers([])
-        setSearchTerm("")
       } else {
         console.error("❌ API Error:", data)
         alert(data.error || "Failed to create session")
@@ -365,62 +323,7 @@ export default function VirtualSessionForm() {
                 />
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-black font-semibold mb-2">Search Members</label>
-                  <Input
-                    type="text"
-                    placeholder="Search by name or email"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="border-gray-300 focus:border-red-500 focus:ring-red-500 mb-2"
-                  />
-
-                  <div className="max-h-40 overflow-y-auto border border-gray-200 rounded p-2 bg-white">
-                    {filteredMembers.map((member) => (
-                      <label key={member._id} className="block mb-1 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                        <input
-                          type="checkbox"
-                          value={member._id}
-                          checked={selectedMembers.includes(member._id)}
-                          onChange={() => handleCheckboxChange(member._id)}
-                          className="mr-2"
-                          disabled={
-                            !selectedMembers.includes(member._id) &&
-                            selectedMembers.length >= Number(form.getValues("maxParticipants"))
-                          }
-                        />
-                        {member.firstName} {member.lastName} ({member.email})
-                      </label>
-                    ))}
-                    {filteredMembers.length === 0 && (
-                      <p className="text-gray-500 text-sm">No matching members found.</p>
-                    )}
-                  </div>
-
-                  {selectedMembers.length >= Number(form.getValues("maxParticipants")) && (
-                    <p className="text-red-500 text-sm mt-2">
-                      🚫 Maximum participants reached. You can't select more.
-                    </p>
-                  )}
-                </div>
-
-                {selectedMembers.length > 0 && (
-                  <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded">
-                    <strong>Selected Members:</strong>
-                    <ul className="list-disc list-inside mt-1">
-                      {selectedMembers.map((id) => {
-                        const member = members.find((m) => m._id === id)
-                        return (
-                          <li key={id}>
-                            {member?.firstName} {member?.lastName} ({member?.email})
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
-                )}
-              </div>
+              {/* Remove the entire <div> with Search Members and Selected Members UI from the form JSX */}
 
               <FormField
                 control={form.control}
