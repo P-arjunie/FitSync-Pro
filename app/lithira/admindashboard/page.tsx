@@ -128,7 +128,7 @@ const AdminDashboard: React.FC = () => {
       description: "Manage user feedback and reviews",
       icon: "💬",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/sathya/feedback",
+      link: "/sathya/traineeReviwsediting",
     },
     {
       title: "Product Management",
