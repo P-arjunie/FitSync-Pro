@@ -125,13 +125,23 @@ export async function GET(req: NextRequest) {
     // Calculate average sessions per day
     let averageSessionsPerDay = 0;
     if (allSessions.length > 0) {
-      // Find unique days in the range
+      // Find unique days in the range, skip invalid dates
       const daySet = new Set<string>();
       allSessions.forEach(s => {
         const d = new Date(s.start || s.date);
-        daySet.add(d.toISOString().split('T')[0]);
+        if (!isNaN(d.getTime())) {
+          daySet.add(d.toISOString().split('T')[0]);
+        }
       });
-      averageSessionsPerDay = totalSessions / daySet.size;
+      if (daySet.size > 0) {
+        averageSessionsPerDay = totalSessions / daySet.size;
+      } else {
+        averageSessionsPerDay = 0;
+      }
+      // Ensure it's a valid number
+      if (!isFinite(averageSessionsPerDay) || isNaN(averageSessionsPerDay)) {
+        averageSessionsPerDay = 0;
+      }
     }
     // Trainer breakdown
     const trainerBreakdown: Record<string, number> = {};
@@ -147,8 +157,10 @@ export async function GET(req: NextRequest) {
     const dayCounts: Record<string, number> = {};
     allSessions.forEach(s => {
       const d = new Date(s.start || s.date);
-      const dayStr = d.toLocaleDateString('en-CA');
-      dayCounts[dayStr] = (dayCounts[dayStr] || 0) + 1;
+      if (!isNaN(d.getTime())) {
+        const dayStr = d.toLocaleDateString('en-CA');
+        dayCounts[dayStr] = (dayCounts[dayStr] || 0) + 1;
+      }
     });
     const busiestDays = Object.entries(dayCounts)
       .map(([day, count]) => ({ day, count }))
