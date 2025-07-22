@@ -13,6 +13,8 @@ type ImageItem = {
   src: string;
   status: 'pending' | 'approved' | 'declined';
   likes: number;
+  createdAt?: string;
+  likedBy?: string[]; // Added for likedBy property
 };
 
 export default function GalleryPage() {
@@ -22,8 +24,9 @@ export default function GalleryPage() {
   const [notification, setNotification] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [likeLoading, setLikeLoading] = useState<string | null>(null);
 
-  // Fetch user role from localStorage (or use your auth context if available)
+  // Fetch user role from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const role = localStorage.getItem('userRole');
@@ -35,13 +38,14 @@ export default function GalleryPage() {
   const fetchImages = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/image');
+      const res = await fetch('/api/image?status=approved');
       if (res.ok) {
         const data = await res.json();
         setImages(data);
       }
     } catch (err) {
       setNotification('❌ Failed to load images');
+      setTimeout(() => setNotification(null), 3000);
     } finally {
       setLoading(false);
     }
@@ -51,10 +55,11 @@ export default function GalleryPage() {
     fetchImages();
   }, []);
 
+  // Upload handler
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow upload if user is member or trainer
     if (!userRole || (userRole !== 'member' && userRole !== 'trainer')) {
       setNotification('❌ You must be logged in as a member or trainer to upload images.');
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
     const file = e.target.files?.[0];
@@ -72,30 +77,75 @@ export default function GalleryPage() {
 
     if (!res.ok) {
       setNotification('❌ Upload failed');
+    } else {
+      setNotification('✅ Image uploaded for review');
+    }
+
+    setTimeout(() => setNotification(null), 3000);
+    e.target.value = ''; // Reset input to allow same file upload again
+  };
+
+  // Helper functions for anonymous like tracking
+  const getLikedImages = () => {
+    if (typeof window === 'undefined') return [];
+    try {
+      return JSON.parse(localStorage.getItem('galleryLikedImages') || '[]');
+    } catch {
+      return [];
+    }
+  };
+  const setLikedImages = (ids: string[]) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('galleryLikedImages', JSON.stringify(ids));
+    }
+  };
+
+  // Like handler
+  const handleLike = async (imgId: string) => {
+    if (likeLoading) return;
+    setLikeLoading(imgId);
+
+    // Check localStorage for anonymous like
+    const likedImages = getLikedImages();
+    if (likedImages.includes(imgId)) {
+      setNotification('You have already liked this image.');
+      setTimeout(() => setNotification(null), 3000);
+      setLikeLoading(null);
       return;
     }
 
-    setNotification('✅ Image uploaded for review');
-    setTimeout(() => setNotification(null), 3000);
-    setPage(1);
-    fetchImages(); // Refresh gallery after upload
-  };
+    // Try to get userId if logged in
+    const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    const res = await fetch(`/api/image/${imgId}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userId ? { userId } : {}),
+    });
 
-  // Like handler: POST to /api/image/[id]/like
-  const handleLike = async (imgId: string) => {
-    try {
-      const res = await fetch(`/api/image/${imgId}/like`, { method: 'POST' });
-      if (res.ok) {
-        // Optimistically update UI
-        setImages(prev => prev.map(img => img._id === imgId ? { ...img, likes: img.likes + 1 } : img));
-      }
-    } catch (err) {
+    if (res.ok) {
+      const data = await res.json();
+      setImages(prev =>
+        prev.map(img =>
+          img._id === imgId ? { ...img, likes: data.likes, likedBy: data.likedBy } : img
+        )
+      );
+      setLikedImages([...likedImages, imgId]);
+    } else {
       setNotification('❌ Failed to like image');
+      setTimeout(() => setNotification(null), 3000);
     }
+    setLikeLoading(null);
   };
 
-  // Only show approved images
-  const approvedImages = images.filter(img => img.status === 'approved');
+  // Approved images sorted by newest first
+  const approvedImages = images
+    .filter(img => img.status === 'approved')
+    .sort((a, b) =>
+      b.createdAt && a.createdAt
+        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        : 0
+    );
+
   const totalPages = Math.ceil(approvedImages.length / IMAGES_PER_PAGE);
 
   const getCurrentImages = () => {
@@ -120,7 +170,6 @@ export default function GalleryPage() {
         <div className="absolute inset-0 bg-white/30 backdrop-blur-sm z-0" />
         <div className="relative z-10 max-w-7xl mx-auto">
 
-          {/* Only show upload button if user is member or trainer */}
           {(userRole === 'member' || userRole === 'trainer') && (
             <div className="flex justify-center mb-6">
               <label className="cursor-pointer bg-red-500 text-white px-6 py-2 font-semibold rounded-lg shadow hover:bg-red-600 transition">
@@ -152,10 +201,17 @@ export default function GalleryPage() {
                     className="w-full h-auto object-cover rounded cursor-pointer transition-transform hover:scale-105 duration-200"
                     onClick={() => setLightboxImg(img.src)}
                   />
-
                   <div className="flex items-center justify-center mt-2 px-2">
                     <button
-                      className="text-red-500 font-bold select-none"
+                      disabled={
+                        likeLoading === img._id ||
+                        getLikedImages().includes(img._id)
+                      }
+                      className={`text-red-500 font-bold select-none ${
+                        likeLoading === img._id || getLikedImages().includes(img._id)
+                          ? 'opacity-50 cursor-not-allowed'
+                          : ''
+                      }`}
                       onClick={() => handleLike(img._id)}
                     >
                       ❤️ {img.likes ?? 0}
