@@ -47,6 +47,9 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   const [message, setMessage] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  // Add a state for store purchase warning
+  const [showStoreWarning, setShowStoreWarning] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -140,6 +143,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
 
     if (data.success) {
       setMessage("✅ Payment succeeded!");
+      setPaymentSuccess(true);
+      if (!enrollmentData && !pricingPlanData) {
+        setShowStoreWarning(true);
+      }
     } else {
       setMessage(`❌ Payment failed: ${data.error || "Unknown error"}`);
     }
@@ -248,15 +255,26 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
           />
         </div>
 
+        {/* Show store purchase warning before payment for shop purchases */}
+        {(!enrollmentData && !pricingPlanData) && (
+          <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1 text-yellow-700 mt-4 mb-4 mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z" />
+            </svg>
+            <span className="font-medium">Note: Store purchases are non-refundable.</span>
+          </div>
+        )}
+
         <button
           type="submit"
-          disabled={!stripe || loading}
+          disabled={!stripe || loading || paymentSuccess}
           className={styles.button}
         >
-          {loading ? "Processing..." : "Pay Now"}
+          {loading ? "Processing..." : paymentSuccess ? "Payment Successful" : "Pay Now"}
         </button>
 
         {message && <p className={styles.error}>{message}</p>}
+        {/* Remove post-payment warning, now always shown above */}
       </form>
       <Footer_02 />
     </div>

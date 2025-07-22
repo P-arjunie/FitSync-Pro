@@ -12,7 +12,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const connectToDB = async () => {
   if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.MONGODB_URI!);
+    await mongoose.connect(process.env.MONGODB_URI!, { dbName: 'fit-sync' });
+    console.log('✅ MongoDB connected (payment-intents)');
+    console.log('🔎 [DEBUG] mongoose.connection.name:', mongoose.connection.name);
   }
 };
 
@@ -40,6 +42,7 @@ export async function POST(req: NextRequest) {
     let itemTitle = "";
     let relatedOrderId = null;
     let relatedEnrollmentId = null;
+    let relatedPlanId = null;
 
     if (paymentFor === "order") {
       const order = await Order.findOne({ user: userId }).sort({ createdAt: -1 });
@@ -70,6 +73,8 @@ export async function POST(req: NextRequest) {
       }
       amount = Math.round(plan.amount * 100);
       itemTitle = plan.planName;
+      // Add relatedPlanId for linking
+      relatedPlanId = plan._id;
     } else {
       return NextResponse.json({ error: "Invalid paymentFor value" }, { status: 400 });
     }
@@ -103,12 +108,12 @@ export async function POST(req: NextRequest) {
     if (paymentIntent.status === "succeeded") {
       // Always create a payment record if not exists
       try {
-        const existingPayment = await Payment.findOne({
-          stripePaymentIntentId: paymentIntent.id,
-          userId,
-          paymentFor,
-          amount: amount / 100
-        });
+        let paymentQuery: any = { userId, paymentFor, amount: amount / 100 };
+        if (relatedOrderId) paymentQuery["relatedOrderId"] = relatedOrderId;
+        if (relatedEnrollmentId) paymentQuery["relatedEnrollmentId"] = relatedEnrollmentId;
+        if (relatedPlanId) paymentQuery["relatedPlanId"] = relatedPlanId;
+        const existingPayment = await Payment.findOne(paymentQuery);
+        let currentPaymentId = null;
         if (!existingPayment) {
           const paymentDoc: any = {
             firstName: itemTitle,
@@ -133,11 +138,23 @@ export async function POST(req: NextRequest) {
           };
           if (relatedOrderId) paymentDoc.relatedOrderId = relatedOrderId;
           if (relatedEnrollmentId) paymentDoc.relatedEnrollmentId = relatedEnrollmentId;
-          await Payment.create(paymentDoc);
+          if (relatedPlanId) paymentDoc.relatedPlanId = relatedPlanId;
+          const createdPayment = await Payment.create(paymentDoc);
+          currentPaymentId = createdPayment._id;
           console.log('✅ Payment record created for', paymentFor, paymentIntent.id);
         } else {
+          currentPaymentId = existingPayment._id;
           console.log('ℹ️ Payment record already exists for', paymentFor, paymentIntent.id);
         }
+        // Cancel all previous pending payments for this user and paymentFor (except the current one)
+        await Payment.updateMany({
+          userId,
+          paymentFor,
+          paymentStatus: 'pending',
+          _id: { $ne: currentPaymentId }
+        }, {
+          $set: { paymentStatus: 'cancelled', updatedAt: new Date() }
+        });
       } catch (err) {
         console.error('❌ Failed to create payment record for', paymentFor, err);
       }
@@ -161,6 +178,14 @@ export async function POST(req: NextRequest) {
         try {
           const result = await Order.findByIdAndUpdate(relatedOrderId, { status: "paid" }, { new: true });
           console.log('✅ Order status updated to paid:', relatedOrderId);
+          // Cancel all previous pending orders for this user except the one just paid for
+          await Order.updateMany({
+            user: userId,
+            status: "pending",
+            _id: { $ne: relatedOrderId }
+          }, {
+            $set: { status: "cancelled", updatedAt: new Date() }
+          });
         } catch (err) {
           console.error('❌ Failed to update order status:', err);
         }
