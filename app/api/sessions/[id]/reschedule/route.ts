@@ -5,7 +5,7 @@ import SessionParticipant from "@/models/SessionParticipant";
 import { sendEmail } from '@/lib/sendEmail';
 import dedent from 'dedent';
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     await connectToDatabase();
     const { id } = await params;
