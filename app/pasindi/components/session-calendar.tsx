@@ -35,7 +35,8 @@ type Session = {
   maxParticipants: number
   description?: string
   currentParticipants?: number
-  canceled?: boolean // Added for canceled sessions
+  sessionType?: 'physical' | 'virtual'
+  onlineLink?: string
 }
 
 interface SessionCalendarProps {
@@ -358,11 +359,12 @@ export default function SessionCalendar({
     setCurrentView(newView)
   }
 
+  // Handle calendar navigation (e.g., next/prev/today)
   const handleNavigate = (newDate: Date) => {
     setCurrentDate(newDate)
   }
 
-  // Custom event styling - different colors for different modes
+  // Custom event styling - different colors for different modes and session types
   const eventStyleGetter = (event: Session) => {
     const baseStyle = {
       borderRadius: "6px",
@@ -374,6 +376,28 @@ export default function SessionCalendar({
       fontWeight: "500",
     }
 
+    // Virtual sessions get different styling
+    if (event.sessionType === 'virtual') {
+      if (mode === 'trainer') {
+        return {
+          style: {
+            ...baseStyle,
+            backgroundColor: "#6b7280", // gray-500
+            border: "1px solid #fca5a5", // light red-300
+          },
+        }
+      } else {
+        return {
+          style: {
+            ...baseStyle,
+            backgroundColor: "#fca5a5", // light red-300
+            border: "1px solid #f87171", // red-400
+          },
+        }
+      }
+    }
+
+    // Physical sessions
     if (mode === 'trainer') {
       return {
         style: {
@@ -397,6 +421,8 @@ export default function SessionCalendar({
   const handleJoinSession = async (sessionId: string) => {
     try {
       const userId = localStorage.getItem("userId")
+      const userName = localStorage.getItem("userName") || "Unknown User"
+      
       if (!userId) {
         toast({
           title: "Error",
@@ -411,7 +437,7 @@ export default function SessionCalendar({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId, userName }),
       })
 
       if (response.ok) {
@@ -423,9 +449,23 @@ export default function SessionCalendar({
         window.location.reload()
       } else {
         const errorData = await response.json()
+        let errorMessage = errorData.error || "Failed to join session."
+        
+        if (response.status === 409) {
+          if (errorData.error === "Already joined this session") {
+            errorMessage = "You have already joined this session."
+          } else if (errorData.error === "Session is full") {
+            errorMessage = "This session is full. Please try another session."
+          } else {
+            errorMessage = errorData.error || "Conflict occurred while joining session."
+          }
+        } else {
+          errorMessage = errorData.error || errorData.message || "Failed to join session."
+        }
+        
         toast({
           title: "Error",
-          description: errorData.message || "Failed to join session.",
+          description: errorMessage,
           variant: "destructive",
         })
       }
@@ -536,9 +576,21 @@ export default function SessionCalendar({
               <DialogDescription>
                 Trainer
               </DialogDescription>
-              <Badge variant="outline" className="mt-2 border-red-200 text-red-700 bg-red-50">
-                {selectedSession.trainerName}
-              </Badge>
+              <div className="flex gap-2 mt-2">
+                <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50">
+                  {selectedSession.trainerName}
+                </Badge>
+                {selectedSession.sessionType === 'virtual' && (
+                  <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50">
+                    Virtual Session
+                  </Badge>
+                )}
+                {selectedSession.sessionType === 'physical' && (
+                  <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
+                    Physical Session
+                  </Badge>
+                )}
+              </div>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="flex items-center gap-3">
