@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { sendEmail } from "@/lib/sendEmail"; // Your existing sendEmail helper
+import { connectToDatabase } from '@/lib/mongodb';
+import Notification from '@/models/Notification';
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to send test email" }, { status: 500 });
   }
 }
-=======
+
 import nodemailer from 'nodemailer';
 
 export async function GET(req: NextRequest) {

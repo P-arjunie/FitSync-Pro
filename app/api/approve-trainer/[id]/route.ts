@@ -68,6 +68,7 @@ export async function POST(
       preferredTrainingHours: trainerData.preferredTrainingHours,
       availability: trainerData.availability,
       pricingPlan: trainerData.pricingPlan,
+      classes: trainerData.classes, // Add this
       biography: trainerData.biography || "",
       skills: trainerData.skills || [],
       

@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import VirtualSession from '@/models/VirtualSession';
 import { sendEmail } from '@/lib/sendEmail';
 import dedent from 'dedent';
+import Member from '@/models/member';
 
 export async function POST(req: NextRequest) {
   try {
@@ -70,6 +71,48 @@ export async function POST(req: NextRequest) {
       console.log("✅ Trainer email sent successfully!");
     } catch (trainerEmailError) {
       console.error("❌ Failed to send trainer email:", trainerEmailError);
+    }
+
+    // Send emails to all approved members (like physical session)
+    try {
+      const approvedMembers = await Member.find({ status: "approved", email: { $exists: true, $ne: "" } });
+      console.log(`📧 Sending emails to ${approvedMembers.length} approved members...`);
+      for (const member of approvedMembers) {
+        if (member.email) {
+          // Validate email format and domain
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const isValidEmail = emailRegex.test(member.email);
+          const isNotExampleDomain = !member.email.includes('@example.com') && !member.email.includes('@test.com');
+          if (!isValidEmail || !isNotExampleDomain) {
+            console.warn(`⚠️ Invalid email address, skipping member: ${member.email}`);
+            continue;
+          }
+          try {
+            await sendEmail({
+              to: member.email,
+              subject: `📅 New Virtual Session Available: ${body.title}`,
+              text: `Hi ${member.firstName || 'Member'},\n\nA new virtual session "${body.title}" has been scheduled on ${body.date} from ${body.startTime} to ${body.endTime}. Join here: ${body.onlineLink}`,
+              html: dedent`
+                <p>Hi ${member.firstName || 'Member'},</p>
+                <p>A new virtual session <strong>${body.title}</strong> has been scheduled!</p>
+                <p><strong>Date:</strong> ${body.date}<br/>
+                <strong>Time:</strong> ${body.startTime} - ${body.endTime}<br/>
+                <strong>Link:</strong> <a href="${body.onlineLink}" target="_blank">${body.onlineLink}</a><br/>
+                <strong>Trainer:</strong> ${body.trainer.name}<br/>
+                <strong>Max Participants:</strong> ${body.maxParticipants}</p>
+                <p>Log in to your FitSync Pro account to join this session!</p>
+                <br/>
+                <p>Thank you,<br/>FitSync Pro Team</p>
+              `
+            });
+            console.log(`✅ Email sent to member: ${member.email}`);
+          } catch (memberEmailError) {
+            console.error(`❌ Failed to send email to member ${member.email}:`, memberEmailError);
+          }
+        }
+      }
+    } catch (membersEmailError) {
+      console.error("❌ Failed to send member emails:", membersEmailError);
     }
 
     // Send emails to each participant

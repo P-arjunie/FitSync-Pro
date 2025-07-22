@@ -1,11 +1,11 @@
 // pages/api/send-notification.js
-import dbConnect from '@/lib/dbConnect';
+import { connectToDatabase } from '@/lib/mongodb';
 import Notification from '@/models/Notification';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  await dbConnect();
+  await connectToDatabase();
 
   const { userId, role, message, sessionId } = req.body;
 

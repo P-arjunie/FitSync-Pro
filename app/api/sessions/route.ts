@@ -4,12 +4,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from "../../lib/mongodb";
 import Session from '@/models/Session';
+import VirtualSession from '@/models/VirtualSession';
 import Member from '@/models/member';
 import ApprovedTrainer from '@/models/ApprovedTrainer';
 import { sendEmail } from '@/lib/sendEmail';
 import dedent from 'dedent';
 // import bcrypt from 'bcrypt';
 import bcrypt from 'bcryptjs';
+import SessionParticipant from '@/models/SessionParticipant';
 
 
 // Cache to store sessions with timestamp
@@ -25,54 +27,106 @@ export async function GET(request: NextRequest) {
   try {
     // Check if we have a valid cache
     const now = Date.now();
-    if (sessionsCache && (now - sessionsCache.timestamp < CACHE_TTL)) {
+    // Only use cache if not filtering by joinedUserId
+    const { searchParams } = new URL(request.url);
+    const joinedUserId = searchParams.get("joinedUserId");
+    if (!joinedUserId && sessionsCache && (now - sessionsCache.timestamp < CACHE_TTL)) {
       // Set cache control headers
       const headers = new Headers();
       headers.set('Cache-Control', 'public, max-age=300'); // 5 minutes
       headers.set('X-Data-Source', 'cache');
-      
       return NextResponse.json(sessionsCache.data, { 
         status: 200,
         headers
       });
     }
-    
     // Cache miss or expired, fetch from database
     await connectToDatabase();
-
-    // --- ADDED: filter by trainerId if present ---
-    const { searchParams } = new URL(request.url);
+    // --- ADDED: filter by trainerId or joinedUserId if present ---
     const trainerId = searchParams.get("trainerId");
     const publicOnly = searchParams.get("public") === "true";
+    let sessions = [];
+    let query: any = undefined;
+    if (joinedUserId) {
+      // Find all sessionIds the user has joined (status approved or pending)
+      const joined = await SessionParticipant.find({ userId: joinedUserId, status: { $in: ["approved", "pending"] } });
+      const sessionIds = joined.map((p: any) => p.sessionId);
+      sessions = await Session.find({ _id: { $in: sessionIds } }).sort({ start: 1 });
+    } else {
+      query = {};
+      if (trainerId) {
+        query.trainerId = trainerId;
+      }
+      if (!searchParams.get("includeCanceled")) {
+        query.canceled = { $ne: true };
+      }
+      sessions = await Session.find(query).sort({ start: 1 });
+      // Update cache only if not filtering by joinedUserId
+      sessionsCache = {
+        data: sessions,
+        timestamp: now
+      };
+    }
     
-    console.log("API: Fetching sessions with trainerId:", trainerId, "publicOnly:", publicOnly);
+    if (query) {
+      console.log("API: Final query:", query);
+      console.log("API: Found physical sessions count:", sessions.length);
+    }
+    // Fetch physical sessions
+    const physicalSessions = await Session.find(query).sort({ start: 1 });
+    console.log("API: Found physical sessions count:", physicalSessions.length);
     
-    const query: any = {};
+    // Fetch virtual sessions
+    const virtualSessionsQuery: any = {};
     if (trainerId) {
-      // Only use ApprovedTrainer model for consistency
+      // For virtual sessions, we need to match by trainer name
       const ApprovedTrainer = (await import('@/models/ApprovedTrainer')).default;
-      
-      // Find the trainer in ApprovedTrainer model
       let approvedTrainer = await ApprovedTrainer.findById(trainerId);
       if (approvedTrainer) {
         const fullName = `${approvedTrainer.firstName} ${approvedTrainer.lastName}`;
-        console.log("API: Found trainer in ApprovedTrainer model:", fullName);
-        query.trainerName = fullName;
-      } else {
-        console.log("API: Trainer not found in ApprovedTrainer model, using trainerId directly");
-        query.trainerId = trainerId;
+        virtualSessionsQuery['trainer.name'] = fullName;
       }
     }
     
-    console.log("API: Final query:", query);
+    const virtualSessions = await VirtualSession.find(virtualSessionsQuery).sort({ date: 1 });
+    console.log("API: Found virtual sessions count:", virtualSessions.length);
     
-    const sessions = await Session.find(query).sort({ start: 1 });
-    console.log("API: Found sessions count:", sessions.length);
-    console.log("API: Sessions:", sessions.map(s => ({ id: s._id, title: s.title, trainerId: s.trainerId, trainerName: s.trainerName })));
+    // Transform virtual sessions to match physical session format
+    const transformedVirtualSessions = virtualSessions.map(vs => ({
+      _id: vs._id,
+      title: vs.title,
+      trainerName: vs.trainer?.name || "Unknown Trainer",
+      trainerId: null, // Virtual sessions don't have trainerId
+      start: new Date(`${vs.date.toISOString().split('T')[0]}T${vs.startTime}`),
+      end: new Date(`${vs.date.toISOString().split('T')[0]}T${vs.endTime}`),
+      location: 'Virtual Session',
+      maxParticipants: vs.maxParticipants,
+      description: vs.description,
+      currentParticipants: vs.participants?.length || 0,
+      onlineLink: vs.onlineLink,
+      sessionType: 'virtual'
+    }));
+    
+    // Transform physical sessions to include sessionType
+    const transformedPhysicalSessions = physicalSessions.map(ps => ({
+      ...ps.toObject(),
+      sessionType: 'physical'
+    }));
+    
+    // Combine both session types
+    const allSessions = [...transformedPhysicalSessions, ...transformedVirtualSessions];
+    
+    console.log("API: Total sessions count:", allSessions.length);
+    console.log("API: Sessions:", allSessions.map(s => ({ 
+      id: s._id, 
+      title: s.title, 
+      trainerName: s.trainerName, 
+      sessionType: s.sessionType 
+    })));
     
     // Update cache
     sessionsCache = {
-      data: sessions,
+      data: allSessions,
       timestamp: now
     };
     
@@ -81,7 +135,7 @@ export async function GET(request: NextRequest) {
     headers.set('Cache-Control', 'public, max-age=300'); // 5 minutes
     headers.set('X-Data-Source', 'database');
     
-    return NextResponse.json(sessions, { 
+    return NextResponse.json(allSessions, { 
       status: 200,
       headers
     });

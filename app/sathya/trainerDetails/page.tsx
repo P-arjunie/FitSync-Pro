@@ -1,9 +1,11 @@
+/* eslint-disable react/no-unescaped-entities */
 'use client';
 
 import React, { useEffect, useState } from 'react';
-
 import Link from "next/link";
 import { Search, Filter, X, Star, User, Award, Clock } from 'lucide-react';
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
 
 interface Review {
   trainer: string;
@@ -12,6 +14,7 @@ interface Review {
   comments: string;
   rating: number;
   createdAt: string;
+  memberEmail?: string;
 }
 
 interface Trainer {
@@ -26,31 +29,43 @@ interface Trainer {
   skills?: { name: string; level: number }[];
   certifications?: string[];
   preferredTrainingHours?: string;
+  pricingPlan?: string;
+  status?: 'pending' | 'approved' | 'suspended';
 }
+
 
 const TrainerReviewsPage = () => {
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [filteredTrainers, setFilteredTrainers] = useState<Trainer[]>([]);
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+  // Auth state
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  // Review edit/delete modal state
+  const [editReview, setEditReview] = useState<Review | null>(null);
+  const [editComments, setEditComments] = useState('');
+  const [editRating, setEditRating] = useState(5);
+  const [editLoading, setEditLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null); // reviewId
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCertification, setSelectedCertification] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('');
+  const [selectedPricingPlan, setSelectedPricingPlan] = useState('');
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState('name');
 
-  // Hardcoded profile images
-  const profileImages = [
-    'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-  ];
+
+  // On mount, get user email from localStorage (if logged in)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setUserEmail(localStorage.getItem('userEmail'));
+      setUserName(localStorage.getItem('userName'));
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,13 +73,14 @@ const TrainerReviewsPage = () => {
         const res = await fetch('/api/trainers/getTrainerWithReviews');
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
         const data = await res.json();
-        
-        // Add hardcoded images to trainers
-        const trainersWithImages = data.data.map((trainer: Trainer, index: number) => ({
-          ...trainer,
-          profileImage: profileImages[index % profileImages.length] || "/placeholder.jpg"
-        }));
-        
+        // Use profileImage from backend, fallback to placeholder if missing
+        // Filter out suspended trainers
+        const trainersWithImages = data.data
+          .filter((trainer: Trainer) => trainer.status !== 'suspended')
+          .map((trainer: Trainer) => ({
+            ...trainer,
+            profileImage: trainer.profileImage || "/placeholder.jpg"
+          }));
         setTrainers(trainersWithImages);
         setFilteredTrainers(trainersWithImages);
       } catch (err: any) {
@@ -72,13 +88,13 @@ const TrainerReviewsPage = () => {
         setError("Could not load trainer data.");
       }
     };
-
     fetchData();
   }, []);
 
-  // Get unique certifications and skills for filter dropdowns
+  // Get unique certifications, skills, and pricing plans for filter dropdowns
   const allCertifications = [...new Set(trainers.flatMap(trainer => trainer.certifications || []))];
   const allSkills = [...new Set(trainers.flatMap(trainer => trainer.skills?.map(skill => skill.name) || []))];
+  const allPricingPlans = [...new Set(trainers.map(trainer => trainer.pricingPlan).filter(Boolean))];
 
   // Filter and search logic
   useEffect(() => {
@@ -107,6 +123,11 @@ const TrainerReviewsPage = () => {
       );
     }
 
+    // Filter by pricing plan
+    if (selectedPricingPlan) {
+      filtered = filtered.filter(trainer => trainer.pricingPlan === selectedPricingPlan);
+    }
+
     // Filter by minimum rating
     if (minRating > 0) {
       filtered = filtered.filter(trainer =>
@@ -129,34 +150,136 @@ const TrainerReviewsPage = () => {
     });
 
     setFilteredTrainers(filtered);
-  }, [trainers, searchTerm, selectedCertification, selectedSkill, minRating, sortBy]);
+  }, [trainers, searchTerm, selectedCertification, selectedSkill, selectedPricingPlan, minRating, sortBy]);
 
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedCertification('');
     setSelectedSkill('');
+    setSelectedPricingPlan('');
     setMinRating(0);
     setSortBy('name');
   };
 
-  const activeFiltersCount = [searchTerm, selectedCertification, selectedSkill, minRating > 0].filter(Boolean).length;
+  const activeFiltersCount = [searchTerm, selectedCertification, selectedSkill, selectedPricingPlan, minRating > 0].filter(Boolean).length;
+
+  // Delete review handler
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!reviewId) return;
+    setDeleteLoading(reviewId);
+    setActionMessage(null);
+    try {
+      const res = await fetch('/api/feedback/deleteReview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId, _method: 'DELETE' })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Delete failed');
+      // Remove review from selectedTrainer and trainers state
+      if (selectedTrainer) {
+        const updatedReviews = selectedTrainer.reviews.filter(r => (r as any)._id !== reviewId);
+        setSelectedTrainer({ ...selectedTrainer, reviews: updatedReviews });
+      }
+      setTrainers(prev => prev.map(tr =>
+        tr.reviews.some(r => (r as any)._id === reviewId)
+          ? { ...tr, reviews: tr.reviews.filter(r => (r as any)._id !== reviewId) }
+          : tr
+      ));
+      setActionMessage('Review deleted successfully.');
+    } catch (err: any) {
+      setActionMessage(err.message || 'Failed to delete review.');
+    } finally {
+      setDeleteLoading(null);
+    }
+  };
+
+  // Open edit modal
+  const openEditModal = (review: Review & { _id?: string }) => {
+    setEditReview(review);
+    setEditComments(review.comments);
+    setEditRating(review.rating);
+    setActionMessage(null);
+  };
+
+  // Submit edit
+  const handleEditReview = async () => {
+    if (!editReview || !(editReview as any)._id) return;
+    setEditLoading(true);
+    setActionMessage(null);
+    try {
+      const res = await fetch('/api/feedback/updateReview', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reviewId: (editReview as any)._id,
+          trainer: editReview.trainer,
+          sessionType: editReview.sessionType,
+          date: editReview.date,
+          comments: editComments,
+          rating: editRating,
+          memberEmail: editReview.memberEmail
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Update failed');
+      // Update review in selectedTrainer and trainers state
+      if (selectedTrainer) {
+        const updatedReviews = selectedTrainer.reviews.map(r =>
+          (r as any)._id === (editReview as any)._id
+            ? { ...r, comments: editComments, rating: editRating }
+            : r
+        );
+        setSelectedTrainer({ ...selectedTrainer, reviews: updatedReviews });
+      }
+      setTrainers(prev => prev.map(tr =>
+        tr.reviews.some(r => (r as any)._id === (editReview as any)._id)
+          ? { ...tr, reviews: tr.reviews.map(r => (r as any)._id === (editReview as any)._id ? { ...r, comments: editComments, rating: editRating } : r) }
+          : tr
+      ));
+      setActionMessage('Review updated successfully.');
+      setEditReview(null);
+    } catch (err: any) {
+      setActionMessage(err.message || 'Failed to update review.');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // Cancel edit modal
+  const closeEditModal = () => {
+    setEditReview(null);
+    setEditComments('');
+    setEditRating(5);
+    setActionMessage(null);
+  };
 
   return (
-    <div className="bg-black min-h-screen px-6 py-10 font-sans text-white">
-      <h2 className="text-3xl font-bold text-center mb-8 tracking-wide">
-        <span className="text-white">FitSyncPro</span>{' '}
-        <span className="text-red-600">- Trainers</span>
-      </h2>
+    <>
+      <Navbar />
+      <div className="bg-black min-h-screen px-6 py-10 font-sans text-white">
+        {/* Greeting for logged-in user */}
+        {userEmail && (
+          <div className="max-w-4xl mx-auto mb-4 flex justify-end">
+            <span className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow">
+              Hi{userName ? `, ${userName}` : userEmail}!
+            </span>
+          </div>
+        )}
+        <h2 className="text-3xl font-bold text-center mb-8 tracking-wide">
+          <span className="text-white">FitSyncPro</span>{' '}
+          <span className="text-red-600">- Trainers</span>
+        </h2>
 
-      {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-      {/* Search and Filter Controls */}
-      <div className="max-w-4xl mx-auto mb-8 space-y-4">
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
+        {/* Search and Filter Controls */}
+        <div className="max-w-4xl mx-auto mb-8 space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
             placeholder="Search trainers by name, email, or biography..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -197,7 +320,7 @@ const TrainerReviewsPage = () => {
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="bg-gray-800 rounded-lg p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gray-800 rounded-lg p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Certification Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -230,6 +353,23 @@ const TrainerReviewsPage = () => {
                 <option value="">All Skills</option>
                 {allSkills.map(skill => (
                   <option key={skill} value={skill}>{skill}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Pricing Plan Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                💲 Pricing Plan
+              </label>
+              <select
+                value={selectedPricingPlan}
+                onChange={(e) => setSelectedPricingPlan(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-700 text-white rounded-md border border-gray-600 focus:border-red-600 focus:outline-none"
+              >
+                <option value="">All Pricing Plans</option>
+                {allPricingPlans.map(plan => (
+                  <option key={plan} value={plan}>{plan}</option>
                 ))}
               </select>
             </div>
@@ -295,6 +435,7 @@ const TrainerReviewsPage = () => {
             <h3 className="text-xl font-bold text-gray-900">{trainer.fullName}</h3>
             <p className="text-sm text-gray-700">{trainer.email}</p>
             <p className="text-sm text-gray-700 mb-2">{trainer.phone}</p>
+            <p className="text-sm text-gray-700 mb-2 font-semibold">💲 Pricing Plan: <span className="text-red-600">{trainer.pricingPlan || 'N/A'}</span></p>
             <p className="text-red-600 text-sm font-semibold mb-2">⭐ {trainer.averageRating} / 5</p>
             
             {/* Skills Preview */}
@@ -389,6 +530,7 @@ const TrainerReviewsPage = () => {
               <p className="text-gray-600">{selectedTrainer.phone}</p>
               <p className="text-red-600 font-semibold mt-2">⭐ {selectedTrainer.averageRating} / 5</p>
               <p className="text-sm text-gray-500">{selectedTrainer.reviews.length} review{selectedTrainer.reviews.length !== 1 ? 's' : ''}</p>
+              <p className="text-sm text-gray-700 font-semibold mt-2">💲 Pricing Plan: <span className="text-red-600">{selectedTrainer.pricingPlan || 'N/A'}</span></p>
 
               <div className="mt-6">
                 <h4 className="text-lg font-bold mb-2">Class Schedule</h4>
@@ -441,7 +583,7 @@ const TrainerReviewsPage = () => {
                 <div className="max-h-60 overflow-y-auto pr-2 space-y-4">
                   {selectedTrainer.reviews.length ? (
                     selectedTrainer.reviews.map((review, idx) => (
-                      <div key={idx} className="border-b border-gray-300 pb-3">
+                      <div key={idx} className="border-b border-gray-300 pb-3 relative">
                         <p className="italic text-sm">"{review.comments}"</p>
                         <p className="text-xs text-gray-500">
                           {new Date(review.date).toLocaleDateString()} • {review.sessionType}
@@ -451,6 +593,21 @@ const TrainerReviewsPage = () => {
                             <span key={i}>{i < review.rating ? '★' : '☆'}</span>
                           ))}
                         </div>
+                        {/* Show edit/delete only if logged in user is the review owner */}
+                        {userEmail && userEmail === review.memberEmail && (
+                          <div className="absolute top-2 right-2 flex gap-2">
+                            <button
+                              className="text-blue-600 hover:underline text-xs px-2 py-1 bg-blue-100 rounded"
+                              onClick={() => openEditModal(review as any)}
+                              disabled={editLoading || deleteLoading === (review as any)._id}
+                            >{editLoading && editReview && (editReview as any)._id === (review as any)._id ? 'Saving...' : 'Edit'}</button>
+                            <button
+                              className="text-red-600 hover:underline text-xs px-2 py-1 bg-red-100 rounded"
+                              onClick={() => handleDeleteReview((review as any)._id)}
+                              disabled={deleteLoading === (review as any)._id || editLoading}
+                            >{deleteLoading === (review as any)._id ? 'Deleting...' : 'Delete'}</button>
+                          </div>
+                        )}
                       </div>
                     ))
                   ) : (
@@ -462,7 +619,65 @@ const TrainerReviewsPage = () => {
           </div>
         </div>
       )}
-    </div>
+      {/* Edit Review Modal */}
+      {editReview && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 px-4">
+          <div className="bg-white text-black p-6 rounded-2xl max-w-md w-full relative shadow-2xl">
+            <button
+              onClick={closeEditModal}
+              className="absolute top-3 right-4 text-red-600 hover:text-black text-2xl font-bold z-10"
+            >×</button>
+            <h3 className="text-xl font-bold mb-4">Edit Your Review</h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Comments</label>
+              <textarea
+                className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                rows={3}
+                value={editComments}
+                onChange={e => setEditComments(e.target.value)}
+                disabled={editLoading}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Rating</label>
+              <select
+                className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                value={editRating}
+                onChange={e => setEditRating(Number(e.target.value))}
+                disabled={editLoading}
+              >
+                {[5,4,3,2,1].map(val => (
+                  <option key={val} value={val}>{val} Star{val > 1 ? 's' : ''}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={closeEditModal}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                disabled={editLoading}
+              >Cancel</button>
+              <button
+                onClick={handleEditReview}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 font-semibold"
+                disabled={editLoading}
+              >{editLoading ? 'Saving...' : 'Save'}</button>
+            </div>
+            {actionMessage && <p className="mt-3 text-center text-sm text-red-600">{actionMessage}</p>}
+          </div>
+        </div>
+      )}
+
+      {/* Action message for delete */}
+      {actionMessage && !editReview && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+          {actionMessage}
+        </div>
+      )}
+
+      </div>
+      <Footer />
+    </>
   );
 };
 

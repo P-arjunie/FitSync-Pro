@@ -170,9 +170,9 @@ const ReviewsPage = () => {
     </div>
   );
 
-  return (
-    <div className="w-full min-h-screen bg-black text-white px-4 sm:px-8 py-8">
-      <h2 className="text-4xl font-bold text-center mb-10">Feedback Management</h2>
+return (
+  <div className="w-full min-h-screen bg-white text-black px-4 sm:px-8 py-8">
+    <h2 className="text-4xl font-bold text-center mb-10 text-black">Feedback Management</h2>
   
       <div className="flex mb-10 bg-gray-900 rounded-lg overflow-hidden max-w-sm mx-auto shadow-lg">
         {(['all', 'byTrainer'] as const).map((tab) => (

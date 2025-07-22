@@ -35,6 +35,8 @@ type Session = {
   maxParticipants: number
   description?: string
   currentParticipants?: number
+  sessionType?: 'physical' | 'virtual'
+  onlineLink?: string
 }
 
 interface SessionCalendarProps {
@@ -62,21 +64,25 @@ export default function SessionCalendar({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [currentView, setCurrentView] = useState("week")
+  const [currentDate, setCurrentDate] = useState(new Date())
   const { toast } = useToast()
 
   // Add state for participants
   const [participants, setParticipants] = useState([])
   const [showParticipants, setShowParticipants] = useState(false)
 
+  // Add state for ApprovedTrainer ID
+  const [approvedTrainerId, setApprovedTrainerId] = useState<string | null>(null)
+  const [loadingTrainerId, setLoadingTrainerId] = useState(true)
+  const trainerEmail = typeof window !== "undefined" ? localStorage.getItem("userEmail") || "" : ""
+
   // Determine which trainer ID to use based on mode and available sources
   const getTrainerId = () => {
-    if (propTrainerId) return propTrainerId
-    if (urlTrainerId) return urlTrainerId
-    if (mode === 'trainer' && typeof window !== "undefined") {
-      return localStorage.getItem("userId")
-    }
-    return null
-  }
+    if (propTrainerId) return propTrainerId;
+    if (urlTrainerId) return urlTrainerId;
+    if (mode === 'trainer') return approvedTrainerId;
+    return null;
+  };
 
   // Get default title and description based on mode
   const getDefaultTitle = () => {
@@ -182,8 +188,17 @@ export default function SessionCalendar({
 
   // Load sessions from API
   useEffect(() => {
+    // Only fetch if not loading and ID is available (for trainer mode)
+    if (mode === 'trainer') {
+      if (loadingTrainerId) return; // Wait until ID is loaded
+      if (!approvedTrainerId) return; // Don't fetch if ID is missing
+    }
+
     let isMounted = true
     const trainerId = getTrainerId()
+    if (mode === 'trainer') {
+      console.log("SessionCalendar: Using trainerId for fetch:", trainerId); // <-- Log the ID being used
+    }
     console.log("Fetching sessions for trainerId:", trainerId, "Mode:", mode)
 
     const fetchSessions = async () => {
@@ -195,9 +210,9 @@ export default function SessionCalendar({
         if (mode === 'trainer' && trainerId) {
           apiUrl = `/api/sessions?trainerId=${trainerId}`
         } else if (mode === 'public' && trainerId) {
-          apiUrl = `/api/sessions?trainerId=${trainerId}&public=true`
+          apiUrl = `/api/sessions?trainerId=${trainerId}`
         } else if (mode === 'public' && !trainerId) {
-          apiUrl = `/api/sessions?public=true` // All public sessions
+          apiUrl = `/api/sessions`
         } else {
           throw new Error("Invalid configuration")
         }
@@ -276,7 +291,62 @@ export default function SessionCalendar({
     return () => {
       isMounted = false
     }
-  }, [propTrainerId, urlTrainerId, mode]) // Add mode to dependencies
+  }, [propTrainerId, urlTrainerId, mode, loadingTrainerId, approvedTrainerId]) // Add mode and approvedTrainerId to dependencies
+
+  // Effect to fetch ApprovedTrainer ID if in trainer mode
+  useEffect(() => {
+    async function fetchApprovedTrainerId() {
+      if (!trainerEmail) {
+        setLoadingTrainerId(false)
+        return
+      }
+      try {
+        const res = await fetch(`/api/trainer/getByEmail?email=${trainerEmail}`)
+        const data = await res.json()
+        if (res.ok && data.data && data.data._id) {
+          setApprovedTrainerId(data.data._id)
+          localStorage.setItem("approvedTrainerId", data.data._id)
+          console.log("Fetched ApprovedTrainer ID (calendar):", data.data._id)
+        } else {
+          setApprovedTrainerId(null)
+        }
+      } catch (err) {
+        setApprovedTrainerId(null)
+      } finally {
+        setLoadingTrainerId(false)
+      }
+    }
+    if (mode === 'trainer') {
+      const localId = localStorage.getItem("approvedTrainerId")
+      if (localId) {
+        setApprovedTrainerId(localId)
+        setLoadingTrainerId(false)
+      } else {
+        fetchApprovedTrainerId()
+      }
+    } else {
+      setLoadingTrainerId(false)
+    }
+  }, [trainerEmail, mode])
+
+  // Log trainerEmail for debugging
+  console.log("Trainer email for ApprovedTrainer fetch:", trainerEmail)
+
+  // After sessions are loaded, if in month view and no sessions in current month, go to first session's month
+  useEffect(() => {
+    if (sessions.length > 0 && currentView === 'month') {
+      const sessionMonths = sessions.map(s => s.start.getMonth() + '-' + s.start.getFullYear())
+      const currentMonth = currentDate.getMonth() + '-' + currentDate.getFullYear()
+      if (!sessionMonths.includes(currentMonth)) {
+        setCurrentDate(sessions[0].start)
+      }
+    }
+  }, [sessions, currentView])
+
+  // Add a Go to Today button
+  const goToToday = () => {
+    setCurrentDate(new Date())
+  }
 
   // Handle session click to show details
   const handleSelectEvent = (session: Session) => {
@@ -289,7 +359,12 @@ export default function SessionCalendar({
     setCurrentView(newView)
   }
 
-  // Custom event styling - different colors for different modes
+  // Handle calendar navigation (e.g., next/prev/today)
+  const handleNavigate = (newDate: Date) => {
+    setCurrentDate(newDate)
+  }
+
+  // Custom event styling - different colors for different modes and session types
   const eventStyleGetter = (event: Session) => {
     const baseStyle = {
       borderRadius: "6px",
@@ -301,6 +376,28 @@ export default function SessionCalendar({
       fontWeight: "500",
     }
 
+    // Virtual sessions get different styling
+    if (event.sessionType === 'virtual') {
+      if (mode === 'trainer') {
+        return {
+          style: {
+            ...baseStyle,
+            backgroundColor: "#6b7280", // gray-500
+            border: "1px solid #fca5a5", // light red-300
+          },
+        }
+      } else {
+        return {
+          style: {
+            ...baseStyle,
+            backgroundColor: "#fca5a5", // light red-300
+            border: "1px solid #f87171", // red-400
+          },
+        }
+      }
+    }
+
+    // Physical sessions
     if (mode === 'trainer') {
       return {
         style: {
@@ -324,6 +421,8 @@ export default function SessionCalendar({
   const handleJoinSession = async (sessionId: string) => {
     try {
       const userId = localStorage.getItem("userId")
+      const userName = localStorage.getItem("userName") || "Unknown User"
+      
       if (!userId) {
         toast({
           title: "Error",
@@ -338,7 +437,7 @@ export default function SessionCalendar({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId, userName }),
       })
 
       if (response.ok) {
@@ -350,9 +449,23 @@ export default function SessionCalendar({
         window.location.reload()
       } else {
         const errorData = await response.json()
+        let errorMessage = errorData.error || "Failed to join session."
+        
+        if (response.status === 409) {
+          if (errorData.error === "Already joined this session") {
+            errorMessage = "You have already joined this session."
+          } else if (errorData.error === "Session is full") {
+            errorMessage = "This session is full. Please try another session."
+          } else {
+            errorMessage = errorData.error || "Conflict occurred while joining session."
+          }
+        } else {
+          errorMessage = errorData.error || errorData.message || "Failed to join session."
+        }
+        
         toast({
           title: "Error",
-          description: errorData.message || "Failed to join session.",
+          description: errorMessage,
           variant: "destructive",
         })
       }
@@ -367,7 +480,12 @@ export default function SessionCalendar({
   }
 
   const calendarContent = (
-    <div className={`h-[${height}] calendar-container`}>
+    <div className="calendar-container" style={{ height }}>
+      <div className="flex justify-end mb-2">
+        <Button size="sm" variant="outline" onClick={goToToday}>
+          Go to Today
+        </Button>
+      </div>
       {isLoading ? (
         <div className="flex items-center justify-center h-full">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-600"></div>
@@ -379,34 +497,19 @@ export default function SessionCalendar({
           startAccessor="start"
           endAccessor="end"
           style={{ height: "100%" }}
-          onSelectEvent={handleSelectEvent}
-          eventPropGetter={eventStyleGetter}
-          views={{
-            month: true,
-            week: true,
-            day: true,
-          }}
           view={currentView as any}
           onView={handleViewChange}
+          date={currentDate}
+          onNavigate={handleNavigate}
           defaultView={Views.WEEK}
           toolbar={true}
           popup={true}
           selectable={true}
           dayLayoutAlgorithm={"no-overlap"}
           showMultiDayTimes={true}
+          onSelectEvent={handleSelectEvent}
           components={{
-            event: (props: {
-              title:
-                | string
-                | number
-                | bigint
-                | boolean
-                | ReactElement<any, string | JSXElementConstructor<any>>
-                | Iterable<ReactNode>
-                | Promise<AwaitedReactNode>
-                | null
-                | undefined
-            }) => (
+            event: (props: any) => (
               <div className="text-xs truncate font-medium" title={String(props.title)}>
                 {props.title}
               </div>
@@ -416,6 +519,15 @@ export default function SessionCalendar({
       )}
     </div>
   )
+
+  if (mode === 'trainer') {
+    if (loadingTrainerId) {
+      return <div>Loading trainer information...</div>
+    }
+    if (!approvedTrainerId) {
+      return <div className="text-red-600">Could not find your trainer profile. Please contact support.</div>
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -428,11 +540,31 @@ export default function SessionCalendar({
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 bg-white">
-            {calendarContent}
+            {loadingTrainerId ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-600"></div>
+              </div>
+            ) : approvedTrainerId ? (
+              calendarContent
+            ) : (
+              <div className="text-red-600 text-center py-8">
+                Could not find your trainer profile. Please contact support.
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (
-        calendarContent
+        loadingTrainerId ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-red-600"></div>
+          </div>
+        ) : approvedTrainerId ? (
+          calendarContent
+        ) : (
+          <div className="text-red-600 text-center py-8">
+            Could not find your trainer profile. Please contact support.
+          </div>
+        )
       )}
 
       {/* Session Details Dialog */}
@@ -444,9 +576,21 @@ export default function SessionCalendar({
               <DialogDescription>
                 Trainer
               </DialogDescription>
-              <Badge variant="outline" className="mt-2 border-red-200 text-red-700 bg-red-50">
-                {selectedSession.trainerName}
-              </Badge>
+              <div className="flex gap-2 mt-2">
+                <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50">
+                  {selectedSession.trainerName}
+                </Badge>
+                {selectedSession.sessionType === 'virtual' && (
+                  <Badge variant="outline" className="border-red-200 text-red-700 bg-red-50">
+                    Virtual Session
+                  </Badge>
+                )}
+                {selectedSession.sessionType === 'physical' && (
+                  <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
+                    Physical Session
+                  </Badge>
+                )}
+              </div>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="flex items-center gap-3">

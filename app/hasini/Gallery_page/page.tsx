@@ -3,15 +3,15 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
-import Navbar from "@/Components/navbar";
-import Footer1 from '@/Components/footer_01';
+import Navbar from "@/Components/Navbar";
+import Footer1 from '@/Components/Footer_01';
 
 const IMAGES_PER_PAGE = 9;
 
 type ImageItem = {
+  _id: string;
   src: string;
   status: 'pending' | 'approved' | 'declined';
-  comments: never[]; // unused now
   likes: number;
 };
 
@@ -20,27 +20,43 @@ export default function GalleryPage() {
   const [page, setPage] = useState(1);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Fetch user role from localStorage (or use your auth context if available)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const role = localStorage.getItem('userRole');
+      setUserRole(role ? role.toLowerCase() : null);
+    }
+  }, []);
+
+  // Fetch approved images from backend
+  const fetchImages = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/image');
+      if (res.ok) {
+        const data = await res.json();
+        setImages(data);
+      }
+    } catch (err) {
+      setNotification('❌ Failed to load images');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadImages = () => {
-      const stored = localStorage.getItem('galleryImages');
-      if (stored) {
-        const parsed: ImageItem[] = JSON.parse(stored);
-        const fixed = parsed.map(img => ({
-          ...img,
-          comments: [],
-          likes: typeof img.likes === 'number' ? img.likes : 0,
-        }));
-        setImages(fixed);
-      }
-    };
-
-    loadImages();
-    window.addEventListener('focus', loadImages);
-    return () => window.removeEventListener('focus', loadImages);
+    fetchImages();
   }, []);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only allow upload if user is member or trainer
+    if (!userRole || (userRole !== 'member' && userRole !== 'trainer')) {
+      setNotification('❌ You must be logged in as a member or trainer to upload images.');
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -59,34 +75,26 @@ export default function GalleryPage() {
       return;
     }
 
-    const data = await res.json();
-    const cloudUrl = data.url;
-
-    const newImage: ImageItem = {
-      src: cloudUrl,
-      status: 'pending',
-      comments: [],
-      likes: 0,
-    };
-
-    const updated = [newImage, ...images];
-    setImages(updated);
-    localStorage.setItem('galleryImages', JSON.stringify(updated));
-
     setNotification('✅ Image uploaded for review');
     setTimeout(() => setNotification(null), 3000);
     setPage(1);
+    fetchImages(); // Refresh gallery after upload
   };
 
-  // ✅ Fixed Like Handler (uses img.src as unique identifier)
-  const handleLike = (imgSrc: string) => {
-    const updated = images.map(img =>
-      img.src === imgSrc ? { ...img, likes: img.likes + 1 } : img
-    );
-    setImages(updated);
-    localStorage.setItem('galleryImages', JSON.stringify(updated));
+  // Like handler: POST to /api/image/[id]/like
+  const handleLike = async (imgId: string) => {
+    try {
+      const res = await fetch(`/api/image/${imgId}/like`, { method: 'POST' });
+      if (res.ok) {
+        // Optimistically update UI
+        setImages(prev => prev.map(img => img._id === imgId ? { ...img, likes: img.likes + 1 } : img));
+      }
+    } catch (err) {
+      setNotification('❌ Failed to like image');
+    }
   };
 
+  // Only show approved images
   const approvedImages = images.filter(img => img.status === 'approved');
   const totalPages = Math.ceil(approvedImages.length / IMAGES_PER_PAGE);
 
@@ -112,44 +120,51 @@ export default function GalleryPage() {
         <div className="absolute inset-0 bg-white/30 backdrop-blur-sm z-0" />
         <div className="relative z-10 max-w-7xl mx-auto">
 
-          <div className="flex justify-center mb-6">
-            <label className="cursor-pointer bg-red-500 text-white px-6 py-2 font-semibold rounded-lg shadow hover:bg-red-600 transition">
-              📤 Upload Image
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleUpload}
-                className="hidden"
-              />
-            </label>
-          </div>
-
-          <div className="columns-2 sm:columns-3 gap-3 space-y-3 px-2">
-            {currentImages.map((img) => (
-              <div
-                key={img.src}
-                className="overflow-hidden rounded-lg break-inside-avoid bg-white shadow p-2 mb-4"
-              >
-                <Image
-                  src={img.src}
-                  alt="Gallery Image"
-                  width={600}
-                  height={400}
-                  className="w-full h-auto object-cover rounded cursor-pointer transition-transform hover:scale-105 duration-200"
-                  onClick={() => setLightboxImg(img.src)}
+          {/* Only show upload button if user is member or trainer */}
+          {(userRole === 'member' || userRole === 'trainer') && (
+            <div className="flex justify-center mb-6">
+              <label className="cursor-pointer bg-red-500 text-white px-6 py-2 font-semibold rounded-lg shadow hover:bg-red-600 transition">
+                📤 Upload Image
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUpload}
+                  className="hidden"
                 />
+              </label>
+            </div>
+          )}
 
-                <div className="flex items-center justify-center mt-2 px-2">
-                  <button
-                    className="text-red-500 font-bold select-none"
-                    onClick={() => handleLike(img.src)}
-                  >
-                    ❤️ {img.likes ?? 0}
-                  </button>
+          {loading ? (
+            <div className="flex justify-center items-center py-10 text-gray-500">Loading images...</div>
+          ) : (
+            <div className="columns-2 sm:columns-3 gap-3 space-y-3 px-2">
+              {currentImages.map((img) => (
+                <div
+                  key={img._id}
+                  className="overflow-hidden rounded-lg break-inside-avoid bg-white shadow p-2 mb-4"
+                >
+                  <Image
+                    src={img.src}
+                    alt="Gallery Image"
+                    width={600}
+                    height={400}
+                    className="w-full h-auto object-cover rounded cursor-pointer transition-transform hover:scale-105 duration-200"
+                    onClick={() => setLightboxImg(img.src)}
+                  />
+
+                  <div className="flex items-center justify-center mt-2 px-2">
+                    <button
+                      className="text-red-500 font-bold select-none"
+                      onClick={() => handleLike(img._id)}
+                    >
+                      ❤️ {img.likes ?? 0}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="flex justify-center items-center gap-2 mt-8">
             <button

@@ -5,6 +5,8 @@ if (!MONGODB_URI) {
   throw new Error("❌ MONGODB_URI not defined in environment variables");
 }
 
+console.log("DEBUG MONGODB_URI:", process.env.MONGODB_URI);
+
 let isConnected = false;
 
 export const connectToDatabase = async () => {
@@ -29,5 +31,7 @@ export const connectToDatabase = async () => {
   }
 };
 
+
 export const connectDB = connectToDatabase;
+
 

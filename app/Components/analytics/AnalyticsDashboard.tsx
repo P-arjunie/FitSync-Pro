@@ -26,55 +26,57 @@ ChartJS.register(
 );
 
 interface DashboardProps {
-  bookingsData: number[];
   bookingLabels: string[];
   selectedTrainer: string;
-  virtualSessionsData?: number[]; // Make this optional
+  donePhysical: number[];
+  toBeHeldPhysical: number[];
+  doneVirtual: number[];
+  toBeHeldVirtual: number[];
 }
 
 const AnalyticsDashboard: React.FC<DashboardProps> = ({
-  bookingsData,
   bookingLabels,
   selectedTrainer,
-  virtualSessionsData = [], // Provide default empty array
+  donePhysical,
+  toBeHeldPhysical,
+  doneVirtual,
+  toBeHeldVirtual,
 }) => {
   // Calculate stats for physical sessions
-  const totalPhysicalSessions = useMemo(() => 
-    bookingsData.reduce((sum, count) => sum + count, 0), 
-    [bookingsData]);
-    
+  const totalPhysicalSessions = useMemo(() =>
+    [...donePhysical, ...toBeHeldPhysical].reduce((sum, count) => sum + count, 0),
+    [donePhysical, toBeHeldPhysical]);
+
   // Calculate stats for virtual sessions
-  const totalVirtualSessions = useMemo(() => 
-    virtualSessionsData.reduce((sum, count) => sum + count, 0), 
-    [virtualSessionsData]);
-    
+  const totalVirtualSessions = useMemo(() =>
+    [...doneVirtual, ...toBeHeldVirtual].reduce((sum, count) => sum + count, 0),
+    [doneVirtual, toBeHeldVirtual]);
+
   // Combined stats
-  const totalSessions = useMemo(() => 
+  const totalSessions = useMemo(() =>
     totalPhysicalSessions + totalVirtualSessions,
     [totalPhysicalSessions, totalVirtualSessions]);
-    
+
+  const totalMonths = bookingLabels.length;
   const averageSessionsPerMonth = useMemo(() => {
-    const totalMonths = Math.max(bookingsData.length, virtualSessionsData.length);
     return totalMonths > 0 ? Math.round(totalSessions / totalMonths) : 0;
-  }, [totalSessions, bookingsData, virtualSessionsData]);
-    
-  const maxSessions = useMemo(() => {
-    const combinedData = bookingsData.map((val, idx) => 
-      val + (virtualSessionsData[idx] || 0)
-    );
-    return combinedData.length > 0 ? Math.max(...combinedData) : 0;
-  }, [bookingsData, virtualSessionsData]);
-    
+  }, [totalSessions, totalMonths]);
+
+  // For chart: sum all categories for each month
+  const combinedData = bookingLabels.map((_, idx) =>
+    (donePhysical[idx] || 0) + (toBeHeldPhysical[idx] || 0) + (doneVirtual[idx] || 0) + (toBeHeldVirtual[idx] || 0)
+  );
+  const maxSessions = useMemo(() =>
+    combinedData.length > 0 ? Math.max(...combinedData) : 0,
+    [combinedData]);
+
   // Find peak month
   const peakMonthIndex = useMemo(() => {
-    const combinedData = bookingsData.map((val, idx) => 
-      val + (virtualSessionsData[idx] || 0)
-    );
     if (combinedData.length === 0) return -1;
     return combinedData.indexOf(Math.max(...combinedData));
-  }, [bookingsData, virtualSessionsData]);
-  
-  const peakMonth = useMemo(() => 
+  }, [combinedData]);
+
+  const peakMonth = useMemo(() =>
     peakMonthIndex !== -1 ? bookingLabels[peakMonthIndex] : "N/A",
     [bookingLabels, peakMonthIndex]);
 
@@ -83,22 +85,36 @@ const AnalyticsDashboard: React.FC<DashboardProps> = ({
     labels: bookingLabels,
     datasets: [
       {
-        label: "Physical Sessions",
-        data: bookingsData,
+        label: "Physical Sessions (Done)",
+        data: donePhysical,
         backgroundColor: "rgba(239, 68, 68, 0.8)", // Red-600
         borderColor: "rgba(239, 68, 68, 1)",
         borderWidth: 1,
       },
       {
-        label: "Virtual Sessions",
-        data: virtualSessionsData,
+        label: "Physical Sessions (To Be Held)",
+        data: toBeHeldPhysical,
+        backgroundColor: "rgba(239, 68, 68, 0.3)", // Red-300
+        borderColor: "rgba(239, 68, 68, 0.5)",
+        borderWidth: 1,
+      },
+      {
+        label: "Virtual Sessions (Done)",
+        data: doneVirtual,
         backgroundColor: "rgba(59, 130, 246, 0.8)", // Blue-500
         borderColor: "rgba(59, 130, 246, 1)",
         borderWidth: 1,
       },
       {
+        label: "Virtual Sessions (To Be Held)",
+        data: toBeHeldVirtual,
+        backgroundColor: "rgba(59, 130, 246, 0.3)", // Blue-300
+        borderColor: "rgba(59, 130, 246, 0.5)",
+        borderWidth: 1,
+      },
+      {
         label: "Total Sessions",
-        data: bookingsData.map((val, idx) => val + (virtualSessionsData[idx] || 0)),
+        data: combinedData,
         backgroundColor: "rgba(16, 185, 129, 0.8)", // Green-500
         borderColor: "rgba(16, 185, 129, 1)",
         borderWidth: 1,
@@ -193,6 +209,7 @@ const AnalyticsDashboard: React.FC<DashboardProps> = ({
     <div className="flex flex-col space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Total Sessions Card */}
         <div className="bg-gray-900 border-l-2 border-green-500 p-6 shadow-lg relative">
           <div className="absolute top-0 right-0 mt-4 mr-4">
             <svg className="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -202,11 +219,12 @@ const AnalyticsDashboard: React.FC<DashboardProps> = ({
           <h3 className="text-lg font-medium text-gray-300">Total Sessions</h3>
           <p className="text-4xl font-bold mt-2 text-white">{totalSessions}</p>
           <div className="mt-2 text-sm text-gray-400">
-            <span className="text-red-400">{totalPhysicalSessions} physical</span> + 
+            <span className="text-red-400">{totalPhysicalSessions} physical</span> +
             <span className="text-blue-400"> {totalVirtualSessions} virtual</span>
           </div>
         </div>
-        
+
+        {/* Physical Sessions Card */}
         <div className="bg-gray-900 border-l-2 border-red-600 p-6 shadow-lg relative">
           <div className="absolute top-0 right-0 mt-4 mr-4">
             <svg className="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -215,9 +233,14 @@ const AnalyticsDashboard: React.FC<DashboardProps> = ({
           </div>
           <h3 className="text-lg font-medium text-gray-300">Physical Sessions</h3>
           <p className="text-4xl font-bold mt-2 text-white">{totalPhysicalSessions}</p>
-          <div className="mt-2 text-sm text-gray-400">In-person training sessions</div>
+          <div className="mt-2 text-sm text-gray-400">
+            <span className="text-green-400">Done: {donePhysical.reduce((a, b) => a + b, 0)}</span> |
+            <span className="text-yellow-400"> To Be Held: {toBeHeldPhysical.reduce((a, b) => a + b, 0)}</span>
+          </div>
+          <div className="mt-2 text-xs text-gray-500">In-person training sessions</div>
         </div>
-        
+
+        {/* Virtual Sessions Card */}
         <div className="bg-gray-900 border-l-2 border-blue-500 p-6 shadow-lg relative">
           <div className="absolute top-0 right-0 mt-4 mr-4">
             <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
@@ -226,9 +249,14 @@ const AnalyticsDashboard: React.FC<DashboardProps> = ({
           </div>
           <h3 className="text-lg font-medium text-gray-300">Virtual Sessions</h3>
           <p className="text-4xl font-bold mt-2 text-white">{totalVirtualSessions}</p>
-          <div className="mt-2 text-sm text-gray-400">Online training sessions</div>
+          <div className="mt-2 text-sm text-gray-400">
+            <span className="text-green-400">Done: {doneVirtual.reduce((a, b) => a + b, 0)}</span> |
+            <span className="text-yellow-400"> To Be Held: {toBeHeldVirtual.reduce((a, b) => a + b, 0)}</span>
+          </div>
+          <div className="mt-2 text-xs text-gray-500">Online training sessions</div>
         </div>
-        
+
+        {/* Peak Month Card */}
         <div className="bg-gray-900 border-l-2 border-green-500 p-6 shadow-lg relative">
           <div className="absolute top-0 right-0 mt-4 mr-4">
             <svg className="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -244,7 +272,7 @@ const AnalyticsDashboard: React.FC<DashboardProps> = ({
       </div>
       
       {/* No data message */}
-      {bookingsData.length === 0 && virtualSessionsData.length === 0 && (
+      {donePhysical.length === 0 && doneVirtual.length === 0 && toBeHeldPhysical.length === 0 && toBeHeldVirtual.length === 0 && (
         <div className="bg-gray-900 p-8 border-l-2 border-red-600 shadow-lg text-center">
           <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -255,7 +283,7 @@ const AnalyticsDashboard: React.FC<DashboardProps> = ({
       )}
 
       {/* Sessions Chart */}
-      {(bookingsData.length > 0 || virtualSessionsData.length > 0) && (
+      {(donePhysical.length > 0 || doneVirtual.length > 0 || toBeHeldPhysical.length > 0 || toBeHeldVirtual.length > 0) && (
         <div className="bg-gray-900 p-6 border-l-2 border-green-500 shadow-lg">
           <div className="flex items-center mb-4">
             <svg className="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
