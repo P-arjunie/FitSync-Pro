@@ -16,7 +16,8 @@ const ImageSchema = new Schema({
     default: 'pending',
   },
   likes: { type: Number, default: 0 },
-  
+  source: { type: String }, // Add source field for filtering (e.g., 'gallery')
+  likedBy: [{ type: String }], // Array of user IDs who liked this image
 }, { timestamps: true });
 
 // ✅ Export Mongoose model
