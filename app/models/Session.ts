@@ -43,14 +43,35 @@ const sessionSchema = new Schema({
     type: String,
     required: false,
   },
-  canceled: {
-    type: Boolean,
-    default: false
+  status: {
+    type: String,
+    enum: ['active', 'cancelled', 'completed'],
+    default: 'active'
+  },
+  cancelledAt: {
+    type: Date,
+    default: null
+  },
+  cancelledBy: {
+    type: String,
+    default: null
   },
   cancellationReason: {
     type: String,
     default: null
   },
+  rescheduledAt: {
+    type: Date,
+    default: null
+  },
+  rescheduledBy: {
+    type: String,
+    default: null
+  },
+  rescheduleReason: {
+    type: String,
+    default: null
+  }
 }, {
   timestamps: true,
 });
