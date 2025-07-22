@@ -23,6 +23,7 @@ interface Session {
   description?: string;
   canceled?: boolean;
   cancellationReason?: string;
+  status?: 'active' | 'cancelled' | 'completed';
 }
 
 const TrainerSessionsPage: React.FC = () => {
@@ -232,11 +233,26 @@ const TrainerSessionsPage: React.FC = () => {
                 <div key={session._id} className="p-4 border rounded-lg bg-gray-50">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
-                      <h3 className="text-lg font-semibold text-black">{session.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-black">{session.title}</h3>
+                        {session.status && (
+                          <Badge
+                            className={`${
+                              session.status === 'cancelled'
+                                ? 'bg-red-100 text-red-800'
+                                : session.status === 'completed'
+                                ? 'bg-gray-200 text-gray-800'
+                                : 'bg-green-100 text-green-800'
+                            } text-xs font-semibold px-2.5 py-0.5 rounded-full`}
+                          >
+                            {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-gray-600">Trainer: {session.trainerName}</span>
                         {session.canceled && session.cancellationReason && (
-                          <span className="ml-2 px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Canceled: {session.cancellationReason}</span>
+                          <span className="ml-2 text-xs text-red-800">Reason: {session.cancellationReason}</span>
                         )}
                       </div>
                     </div>

@@ -9,11 +9,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   try {
     await connectToDatabase();
     const { id } = await params;
-    const { newStart, newEnd, reason, rescheduledBy } = await request.json();
+    const { newStart, newEnd, reason, rescheduledBy, location } = await request.json();
     
-    if (!newStart || !newEnd || !rescheduledBy) {
-      return NextResponse.json({ 
-        error: "New start time, end time, and rescheduled by information required" 
+    if (!newStart || !newEnd || !rescheduledBy || !location) {
+      return NextResponse.json({
+        error: "New start time, end time, location, and rescheduled by information required"
       }, { status: 400 });
     }
 
@@ -114,13 +114,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     // Update session with new times
-    await Session.findByIdAndUpdate(id, {
+    const updatedSession = await Session.findByIdAndUpdate(id, {
       start: newStartTime,
       end: newEndTime,
+      location: location,
       rescheduledAt: new Date(),
       rescheduledBy: rescheduledBy,
       rescheduleReason: reason || 'No reason provided'
-    });
+    }, { new: true });
 
     console.log(`✅ Session rescheduled successfully. ${emailsSent} emails sent, ${emailErrors} failed`);
 
@@ -134,7 +135,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           start: newStartTime,
           end: newEndTime
         }
-      }
+      },
+      updatedSession
     }, { status: 200 });
   } catch (error) {
     console.error("Error rescheduling session:", error);
