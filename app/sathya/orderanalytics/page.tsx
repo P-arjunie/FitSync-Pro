@@ -548,9 +548,9 @@ const OrderAnalyticsPage: React.FC = () => {
         <div className="relative z-10 flex-1">
           <div className="mb-6">
             <span className="inline-block bg-red-600 text-white text-sm font-bold py-1 px-3 border border-red-600">
-              SALES ANALYTICS
+              ORDER ANALYTICS
             </span>
-            <h2 className="text-3xl font-bold mt-2 mb-6 text-gray-800">Analytics Dashboard</h2>
+            <h2 className="text-3xl font-bold mt-2 mb-6 text-gray-800">Order Analytics Dashboard</h2>
           </div>
 
           {error && (
