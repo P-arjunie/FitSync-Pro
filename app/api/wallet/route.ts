@@ -4,8 +4,9 @@ import Wallet from "@/models/Wallet";
 
 const connectToDB = async () => {
   if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.MONGODB_URI!);
-    console.log("✅ MongoDB connected (wallet)");
+    await mongoose.connect(process.env.MONGODB_URI!, { dbName: 'fit-sync' });
+    console.log('✅ MongoDB connected (wallet)');
+    console.log('🔎 [DEBUG] mongoose.connection.name:', mongoose.connection.name);
   }
 };
 
