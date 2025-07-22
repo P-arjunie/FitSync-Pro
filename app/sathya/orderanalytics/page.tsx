@@ -66,7 +66,7 @@ const OrderAnalyticsPage: React.FC = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
 
-  // Fetch order history with date filter
+  // Fetch order history with date filter using /api/analytics/orders
   const fetchOrderHistory = useCallback(async () => {
     if (!historyStartDate || !historyEndDate) return;
     setIsLoadingHistory(true);
@@ -75,16 +75,26 @@ const OrderAnalyticsPage: React.FC = () => {
       const queryParams = new URLSearchParams();
       queryParams.append("startDate", historyStartDate);
       queryParams.append("endDate", historyEndDate);
-      const response = await fetch(`/api/analytics/orders/history?${queryParams.toString()}`);
+      // Optionally filter by status/category if needed
+      queryParams.append("history", "true"); // Custom flag to indicate history request
+      const response = await fetch(`/api/analytics/orders?${queryParams.toString()}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch order history`);
       }
       const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.error || "Failed to fetch order history");
+      // Accept either result.data.history (preferred) or result.data.orders/rawOrders
+      let historyArr = [];
+      if (Array.isArray(result.data?.history)) {
+        historyArr = result.data.history;
+      } else if (Array.isArray(result.data?.orders)) {
+        historyArr = result.data.orders;
+      } else if (Array.isArray(result.data)) {
+        historyArr = result.data;
+      } else if (Array.isArray(result.orders)) {
+        historyArr = result.orders;
       }
-      setOrderHistory(Array.isArray(result.data) ? result.data : []);
+      setOrderHistory(historyArr);
     } catch (err) {
       setHistoryError(err instanceof Error ? err.message : "Failed to fetch order history");
       setOrderHistory([]);
