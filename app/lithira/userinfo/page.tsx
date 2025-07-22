@@ -18,6 +18,9 @@ interface Member {
   lastName: string;
   image: string;
   role: "member";
+  membershipInfo?: {
+    paymentPlan?: string;
+  };
 }
 
 const UserManagement: React.FC = () => {
@@ -216,6 +219,11 @@ const UserManagement: React.FC = () => {
                     className="text-lg font-semibold text-gray-800 mr-2 transition hover:text-red-500 hover:scale-[1.03] focus:outline-none"
                   >
                     {member.firstName} {member.lastName}
+                    {member.membershipInfo?.paymentPlan && (
+                      <span className="ml-2 px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-xs font-semibold">
+                        {member.membershipInfo.paymentPlan}
+                      </span>
+                    )}
                   </button>
 
                   <div className="flex-1 mx-2 h-[2px] bg-gray-600"></div>
