@@ -50,68 +50,63 @@ const Navbar: React.FC = () => {
         <div className="ml-2 flex flex-col text-left"></div>
       </Link>
 
-      {/* Desktop Navigation */}
-      <ul className="hidden md:flex space-x-10">
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
+      <ul className="hidden md:flex space-x-10 items-center text-xl">
+        <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
           <Link href="/">Home</Link>
         </li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
+        <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
           <Link href="/hasini/About_page">About</Link>
         </li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
+        <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
           <Link href="/hasini/Gallery_page">Gallery</Link>
         </li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
-          <Link href="/#fitness-service">Pricing plans</Link>
-        </li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
-          <Link href="/#featured-classes">Classes</Link>
-        </li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
+        <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
           <Link href="/schedule">Schedule</Link>
         </li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
-          <Link href="/pasindi/products">Shop</Link>
+        {/* Purchases Dropdown */}
+        <li className="relative group px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
+          <span className="cursor-pointer select-none">Purchases ▾</span>
+          <ul className="absolute left-0 top-full mt-2 bg-black text-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 min-w-[200px] z-50 text-lg py-2">
+            <li className="px-6 py-3 hover:bg-gray-700 rounded-t-md">
+              <Link href="/#fitness-service">Monthly Plans</Link>
+            </li>
+            <li className="px-6 py-3 hover:bg-gray-700">
+              <Link href="/#featured-classes">Classes</Link>
+            </li>
+            <li className="px-6 py-3 hover:bg-gray-700 rounded-b-md">
+              <Link href="/pasindi/products">Shop</Link>
+            </li>
+          </ul>
         </li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
+        <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
           <Link href="/sathya/trainerDetails">Trainers</Link>
         </li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
+        <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
           <Link href="/sathya/feedback">Feedback</Link>
         </li>
-        <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
+        <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
           <Link href="/hasini/Contact_Page">Contact</Link>
         </li>
         {isLoggedIn && localStorage.getItem("userRole") === "admin" && (
-          <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
-            <Link
-              href="/lithira/admindashboard"
-              className="text-yellow-400 font-semibold"
-              title="Admin Dashboard"
-            >
+          <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
+            <Link href="/lithira/admindashboard" title="Admin Dashboard">
               ⚙️
             </Link>
           </li>
         )}
         {isLoggedIn && localStorage.getItem("userRole") === "member" && (
-          <li className="text-lg hover:bg-gray-700 hover:rounded-md py-1 px-2">
-            <Link
-              href="/lithira/memberdashboard"
-              className="text-blue-400 font-semibold"
-              title="Member Dashboard"
-            >
+          <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
+            <Link href="/lithira/memberdashboard" title="Member Dashboard">
               ⚙️
             </Link>
           </li>
         )}
       </ul>
 
+
       {/* Right Icons */}
       <div className="flex items-center space-x-4">
-        <button onClick={handleCartClick} className="text-white px-2 py-2">
-          {/* <Image src="/cart.png" alt="Cart Icon" width={24} height={24} /> */}
-        </button>
-
+        {/* Cart button removed as requested */}
         <Link href="/">
           <button className="text-white px-2 py-2">
             <Image

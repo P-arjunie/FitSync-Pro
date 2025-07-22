@@ -265,57 +265,6 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Recent Activity Section */}
-        <div className="w-full max-w-6xl mt-8">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Recent Activity
-            </h2>
-            <div className="space-y-3">
-              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-green-500 mr-3">✓</span>
-                <div>
-                  <p className="font-semibold text-gray-800">
-                    New member registration
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    John Doe registered as a member
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 ml-auto">2 min ago</span>
-              </div>
-              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-blue-500 mr-3">📋</span>
-                <div>
-                  <p className="font-semibold text-gray-800">
-                    Trainer application
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Sarah Wilson applied as trainer
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 ml-auto">
-                  15 min ago
-                </span>
-              </div>
-              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-orange-500 mr-3">⭐</span>
-                <div>
-                  <p className="font-semibold text-gray-800">
-                    New review submitted
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    5-star review for Yoga class
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 ml-auto">
-                  1 hour ago
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <Footer1 />

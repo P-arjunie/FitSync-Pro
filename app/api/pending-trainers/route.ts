@@ -44,6 +44,7 @@ export async function POST(req: Request) {
       yearsOfExperience: body.yearsOfExperience,
       availability: body.availability,
       pricingPlan: body.pricingPlan,
+      classes: body.classes, // Add this
       emergencyContact: body.emergencyContact,
       termsAccepted: body.termsAccepted,
       profileImage: body.profileImage,
