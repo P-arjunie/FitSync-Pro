@@ -30,6 +30,7 @@ interface Trainer {
   certifications?: string[];
   preferredTrainingHours?: string;
   pricingPlan?: string;
+  status?: 'pending' | 'approved' | 'suspended';
 }
 
 
@@ -57,15 +58,6 @@ const TrainerReviewsPage = () => {
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState('name');
 
-  // Hardcoded profile images
-  const profileImages = [
-    'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-  ];
 
   // On mount, get user email from localStorage (if logged in)
   useEffect(() => {
@@ -81,13 +73,14 @@ const TrainerReviewsPage = () => {
         const res = await fetch('/api/trainers/getTrainerWithReviews');
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
         const data = await res.json();
-        
-        // Add hardcoded images to trainers
-        const trainersWithImages = data.data.map((trainer: Trainer, index: number) => ({
-          ...trainer,
-          profileImage: profileImages[index % profileImages.length] || "/placeholder.jpg"
-        }));
-        
+        // Use profileImage from backend, fallback to placeholder if missing
+        // Filter out suspended trainers
+        const trainersWithImages = data.data
+          .filter((trainer: Trainer) => trainer.status !== 'suspended')
+          .map((trainer: Trainer) => ({
+            ...trainer,
+            profileImage: trainer.profileImage || "/placeholder.jpg"
+          }));
         setTrainers(trainersWithImages);
         setFilteredTrainers(trainersWithImages);
       } catch (err: any) {
@@ -95,7 +88,6 @@ const TrainerReviewsPage = () => {
         setError("Could not load trainer data.");
       }
     };
-
     fetchData();
   }, []);
 
