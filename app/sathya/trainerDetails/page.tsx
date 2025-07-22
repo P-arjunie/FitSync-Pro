@@ -30,7 +30,7 @@ interface Trainer {
   certifications?: string[];
   preferredTrainingHours?: string;
   pricingPlan?: string;
-  status?: 'pending' | 'approved' | 'suspended';
+  status?: string;
 }
 
 
@@ -74,7 +74,7 @@ const TrainerReviewsPage = () => {
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
         const data = await res.json();
         // Use profileImage from backend, fallback to placeholder if missing
-        // Filter out suspended trainers
+        // Only include trainers that are not suspended
         const trainersWithImages = data.data
           .filter((trainer: Trainer) => trainer.status !== 'suspended')
           .map((trainer: Trainer) => ({
