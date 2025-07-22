@@ -12,7 +12,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const connectToDB = async () => {
   if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.MONGODB_URI!);
+    await mongoose.connect(process.env.MONGODB_URI!, { dbName: 'fit-sync' });
+    console.log('✅ MongoDB connected (payment-intents)');
+    console.log('🔎 [DEBUG] mongoose.connection.name:', mongoose.connection.name);
   }
 };
 
@@ -40,6 +42,7 @@ export async function POST(req: NextRequest) {
     let itemTitle = "";
     let relatedOrderId = null;
     let relatedEnrollmentId = null;
+    let relatedPlanId = null;
 
     if (paymentFor === "order") {
       const order = await Order.findOne({ user: userId }).sort({ createdAt: -1 });
@@ -70,6 +73,8 @@ export async function POST(req: NextRequest) {
       }
       amount = Math.round(plan.amount * 100);
       itemTitle = plan.planName;
+      // Add relatedPlanId for linking
+      relatedPlanId = plan._id;
     } else {
       return NextResponse.json({ error: "Invalid paymentFor value" }, { status: 400 });
     }
@@ -103,7 +108,11 @@ export async function POST(req: NextRequest) {
     if (paymentIntent.status === "succeeded") {
       // Always create a payment record if not exists
       try {
-        const existingPayment = await Payment.findOne({ stripePaymentIntentId: paymentIntent.id });
+        let paymentQuery: any = { userId, paymentFor, amount: amount / 100 };
+        if (relatedOrderId) paymentQuery["relatedOrderId"] = relatedOrderId;
+        if (relatedEnrollmentId) paymentQuery["relatedEnrollmentId"] = relatedEnrollmentId;
+        if (relatedPlanId) paymentQuery["relatedPlanId"] = relatedPlanId;
+        const existingPayment = await Payment.findOne(paymentQuery);
         if (!existingPayment) {
           const paymentDoc: any = {
             firstName: itemTitle,
@@ -128,6 +137,7 @@ export async function POST(req: NextRequest) {
           };
           if (relatedOrderId) paymentDoc.relatedOrderId = relatedOrderId;
           if (relatedEnrollmentId) paymentDoc.relatedEnrollmentId = relatedEnrollmentId;
+          if (relatedPlanId) paymentDoc.relatedPlanId = relatedPlanId;
           await Payment.create(paymentDoc);
           console.log('✅ Payment record created for', paymentFor, paymentIntent.id);
         } else {

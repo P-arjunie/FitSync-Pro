@@ -6,8 +6,9 @@ import Enrollment from "@/models/enrollment";
 
 const connectToDB = async () => {
   if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.MONGODB_URI!);
-    console.log("✅ MongoDB connected (enrollments)");
+    await mongoose.connect(process.env.MONGODB_URI!, { dbName: 'fit-sync' });
+    console.log('✅ MongoDB connected (enrollments)');
+    console.log('🔎 [DEBUG] mongoose.connection.name:', mongoose.connection.name);
   }
 };
 

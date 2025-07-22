@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     if (
       !firstName || !lastName || !dob || !gender || !contactNumber || !email || !address ||
       !emergencyContact?.name || !emergencyContact?.phone || !emergencyContact?.relationship ||
-      !membershipInfo?.plan || !membershipInfo?.startDate ||
+      !membershipInfo?.plan || !membershipInfo?.startDate || !membershipInfo?.paymentPlan ||
       !termsAccepted || !image ||
       currentWeight === undefined || height === undefined || bmi === undefined || goalWeight === undefined
     ) {
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       address,
       image,
       emergencyContact,
-      membershipInfo,
+      membershipInfo, // paymentPlan will be included here
       currentWeight,
       height,
       bmi,

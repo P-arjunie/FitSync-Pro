@@ -15,7 +15,6 @@ export interface ITrainer extends Document {
   preferredTrainingHours: string;
   yearsOfExperience: string;
   availability: string;
-  pricingPlan?: string;
   classes: string[]; // Add this
   emergencyContact: {
     name: string;
@@ -50,7 +49,6 @@ const TrainerSchema = new Schema<ITrainer>({
   preferredTrainingHours: { type: String, required: true },
   yearsOfExperience: { type: String, required: true },
   availability: { type: String, required: true },
-  pricingPlan: { type: String, required: false },
   classes: { type: [String], required: true }, // Add this
   emergencyContact: {
     name: { type: String, required: true },

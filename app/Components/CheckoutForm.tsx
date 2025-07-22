@@ -47,6 +47,9 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   const [message, setMessage] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  // Add a state for store purchase warning
+  const [showStoreWarning, setShowStoreWarning] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -140,6 +143,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
 
     if (data.success) {
       setMessage("✅ Payment succeeded!");
+      setPaymentSuccess(true);
+      if (!enrollmentData && !pricingPlanData) {
+        setShowStoreWarning(true);
+      }
     } else {
       setMessage(`❌ Payment failed: ${data.error || "Unknown error"}`);
     }
@@ -248,15 +255,23 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
           />
         </div>
 
+        {/* Show store purchase warning before payment for shop purchases */}
+        {(!enrollmentData && !pricingPlanData) && (
+          <div style={{ background: '#FEF3C7', color: '#92400e', border: '1px solid #F59E0B', borderRadius: 8, padding: 16, marginTop: 16, textAlign: 'center' }}>
+            <strong>Note:</strong> Store purchases are non-refundable.
+          </div>
+        )}
+
         <button
           type="submit"
-          disabled={!stripe || loading}
+          disabled={!stripe || loading || paymentSuccess}
           className={styles.button}
         >
-          {loading ? "Processing..." : "Pay Now"}
+          {loading ? "Processing..." : paymentSuccess ? "Payment Successful" : "Pay Now"}
         </button>
 
         {message && <p className={styles.error}>{message}</p>}
+        {/* Remove post-payment warning, now always shown above */}
       </form>
       <Footer_02 />
     </div>

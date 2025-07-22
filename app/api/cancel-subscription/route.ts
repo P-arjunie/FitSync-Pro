@@ -9,8 +9,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const connectToDB = async () => {
   if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(process.env.MONGODB_URI!);
-    console.log("✅ MongoDB connected (cancel subscription)");
+    await mongoose.connect(process.env.MONGODB_URI!, { dbName: 'fit-sync' });
+    console.log('✅ MongoDB connected (cancel subscription)');
+    console.log('🔎 [DEBUG] mongoose.connection.name:', mongoose.connection.name);
   }
 };
 
@@ -25,47 +26,73 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Find the pricing plan purchase
+    // Find the pricing plan purchase (paid or active)
     const plan = await PricingPlanPurchase.findOne({ 
       userId, 
       planName,
-      status: "paid"
+      status: { $in: ["paid", "active"] }
     });
 
     if (!plan) {
       return NextResponse.json({ error: "Active subscription not found" }, { status: 404 });
     }
 
-    if (!plan.stripeCustomerId) {
-      return NextResponse.json({ error: "Stripe customer ID not found" }, { status: 400 });
+    // Calculate refund amount (25% of plan amount)
+    const refundAmount = Math.round(plan.amount * 0.25 * 100) / 100;
+    console.log('[DEBUG] Calculated refundAmount:', refundAmount);
+
+    // Update all matching plans to refunded
+    await PricingPlanPurchase.updateMany({
+      userId,
+      planName,
+      status: { $in: ["paid", "active"] }
+    }, {
+      status: "refunded",
+      refundedAt: new Date(),
+    });
+
+    // Also update Payment records for this subscription (by relatedPlanId)
+    const Payment = (await import('@/models/Payment')).default;
+    const payment = await Payment.findOne({ userId, paymentFor: 'pricing-plan', relatedPlanId: plan._id });
+    if (payment) {
+      payment.paymentStatus = 'refunded';
+      payment.refundStatus = 'refunded';
+      payment.refundProcessedAt = new Date();
+      payment.refundAmount = refundAmount;
+      await payment.save();
+      console.log('[DEBUG] Updated Payment:', payment);
+    } else {
+      console.log('[DEBUG] No Payment found for relatedPlanId', plan._id);
     }
 
-    // Get customer's subscriptions from Stripe
-    const subscriptions = await stripe.subscriptions.list({
-      customer: plan.stripeCustomerId,
-      status: 'active',
-    });
-
-    if (subscriptions.data.length === 0) {
-      return NextResponse.json({ error: "No active subscription found" }, { status: 404 });
-    }
-
-    // Cancel the subscription at period end
-    const subscription = await stripe.subscriptions.update(subscriptions.data[0].id, {
-      cancel_at_period_end: true,
-    });
-
-    // Update the plan status in database
-    await PricingPlanPurchase.findByIdAndUpdate(plan._id, {
-      status: "cancelled",
-      cancelledAt: new Date(),
-    });
+    // Add refund to wallet
+    const Wallet = (await import('@/models/Wallet')).default;
+    const walletBefore = await Wallet.findOne({ userId });
+    console.log('[DEBUG] Wallet before update:', walletBefore);
+    await Wallet.updateOne(
+      { userId },
+      {
+        $inc: { balance: refundAmount },
+        $push: {
+          transactions: {
+            type: 'refund',
+            amount: refundAmount,
+            description: `Refund for subscription: ${planName}`,
+            purchaseId: plan._id.toString(),
+            status: 'completed',
+            createdAt: new Date(),
+          },
+        },
+      },
+      { upsert: true }
+    );
+    const walletAfter = await Wallet.findOne({ userId });
+    console.log('[DEBUG] Wallet after update:', walletAfter);
 
     return NextResponse.json({ 
       success: true, 
-      message: "Subscription cancelled successfully",
-      subscriptionId: subscription.id,
-      currentPeriodEnd: (subscription as any).current_period_end
+      message: "Subscription cancelled and refunded successfully",
+      refundAmount
     });
 
   } catch (error: any) {

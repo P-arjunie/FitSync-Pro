@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 
 export async function GET(req: NextRequest) {
-  await mongoose.connect(process.env.MONGODB_URI!);
+  await mongoose.connect(process.env.MONGODB_URI!, { dbName: 'fit-sync' });
   const userId = req.nextUrl.searchParams.get("userId");
   if (!userId) return NextResponse.json({ error: "No userId" }, { status: 400 });
   let objectId;

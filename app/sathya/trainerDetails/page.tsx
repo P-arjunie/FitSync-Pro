@@ -29,6 +29,8 @@ interface Trainer {
   skills?: { name: string; level: number }[];
   certifications?: string[];
   preferredTrainingHours?: string;
+  pricingPlan?: string;
+  status?: 'pending' | 'approved' | 'suspended';
 }
 
 
@@ -52,18 +54,10 @@ const TrainerReviewsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCertification, setSelectedCertification] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('');
+  const [selectedPricingPlan, setSelectedPricingPlan] = useState('');
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState('name');
 
-  // Hardcoded profile images
-  const profileImages = [
-    'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-    'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60'
-  ];
 
   // On mount, get user email from localStorage (if logged in)
   useEffect(() => {
@@ -79,13 +73,14 @@ const TrainerReviewsPage = () => {
         const res = await fetch('/api/trainers/getTrainerWithReviews');
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
         const data = await res.json();
-        
-        // Add hardcoded images to trainers
-        const trainersWithImages = data.data.map((trainer: Trainer, index: number) => ({
-          ...trainer,
-          profileImage: profileImages[index % profileImages.length] || "/placeholder.jpg"
-        }));
-        
+        // Use profileImage from backend, fallback to placeholder if missing
+        // Filter out suspended trainers
+        const trainersWithImages = data.data
+          .filter((trainer: Trainer) => trainer.status !== 'suspended')
+          .map((trainer: Trainer) => ({
+            ...trainer,
+            profileImage: trainer.profileImage || "/placeholder.jpg"
+          }));
         setTrainers(trainersWithImages);
         setFilteredTrainers(trainersWithImages);
       } catch (err: any) {
@@ -93,13 +88,13 @@ const TrainerReviewsPage = () => {
         setError("Could not load trainer data.");
       }
     };
-
     fetchData();
   }, []);
 
-  // Get unique certifications and skills for filter dropdowns
+  // Get unique certifications, skills, and pricing plans for filter dropdowns
   const allCertifications = [...new Set(trainers.flatMap(trainer => trainer.certifications || []))];
   const allSkills = [...new Set(trainers.flatMap(trainer => trainer.skills?.map(skill => skill.name) || []))];
+  const allPricingPlans = [...new Set(trainers.map(trainer => trainer.pricingPlan).filter(Boolean))];
 
   // Filter and search logic
   useEffect(() => {
@@ -128,6 +123,11 @@ const TrainerReviewsPage = () => {
       );
     }
 
+    // Filter by pricing plan
+    if (selectedPricingPlan) {
+      filtered = filtered.filter(trainer => trainer.pricingPlan === selectedPricingPlan);
+    }
+
     // Filter by minimum rating
     if (minRating > 0) {
       filtered = filtered.filter(trainer =>
@@ -150,17 +150,18 @@ const TrainerReviewsPage = () => {
     });
 
     setFilteredTrainers(filtered);
-  }, [trainers, searchTerm, selectedCertification, selectedSkill, minRating, sortBy]);
+  }, [trainers, searchTerm, selectedCertification, selectedSkill, selectedPricingPlan, minRating, sortBy]);
 
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedCertification('');
     setSelectedSkill('');
+    setSelectedPricingPlan('');
     setMinRating(0);
     setSortBy('name');
   };
 
-  const activeFiltersCount = [searchTerm, selectedCertification, selectedSkill, minRating > 0].filter(Boolean).length;
+  const activeFiltersCount = [searchTerm, selectedCertification, selectedSkill, selectedPricingPlan, minRating > 0].filter(Boolean).length;
 
   // Delete review handler
   const handleDeleteReview = async (reviewId: string) => {
@@ -319,7 +320,7 @@ const TrainerReviewsPage = () => {
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="bg-gray-800 rounded-lg p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gray-800 rounded-lg p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Certification Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -352,6 +353,23 @@ const TrainerReviewsPage = () => {
                 <option value="">All Skills</option>
                 {allSkills.map(skill => (
                   <option key={skill} value={skill}>{skill}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Pricing Plan Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                💲 Pricing Plan
+              </label>
+              <select
+                value={selectedPricingPlan}
+                onChange={(e) => setSelectedPricingPlan(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-700 text-white rounded-md border border-gray-600 focus:border-red-600 focus:outline-none"
+              >
+                <option value="">All Pricing Plans</option>
+                {allPricingPlans.map(plan => (
+                  <option key={plan} value={plan}>{plan}</option>
                 ))}
               </select>
             </div>
@@ -417,6 +435,7 @@ const TrainerReviewsPage = () => {
             <h3 className="text-xl font-bold text-gray-900">{trainer.fullName}</h3>
             <p className="text-sm text-gray-700">{trainer.email}</p>
             <p className="text-sm text-gray-700 mb-2">{trainer.phone}</p>
+            <p className="text-sm text-gray-700 mb-2 font-semibold">💲 Pricing Plan: <span className="text-red-600">{trainer.pricingPlan || 'N/A'}</span></p>
             <p className="text-red-600 text-sm font-semibold mb-2">⭐ {trainer.averageRating} / 5</p>
             
             {/* Skills Preview */}
@@ -511,6 +530,7 @@ const TrainerReviewsPage = () => {
               <p className="text-gray-600">{selectedTrainer.phone}</p>
               <p className="text-red-600 font-semibold mt-2">⭐ {selectedTrainer.averageRating} / 5</p>
               <p className="text-sm text-gray-500">{selectedTrainer.reviews.length} review{selectedTrainer.reviews.length !== 1 ? 's' : ''}</p>
+              <p className="text-sm text-gray-700 font-semibold mt-2">💲 Pricing Plan: <span className="text-red-600">{selectedTrainer.pricingPlan || 'N/A'}</span></p>
 
               <div className="mt-6">
                 <h4 className="text-lg font-bold mb-2">Class Schedule</h4>
