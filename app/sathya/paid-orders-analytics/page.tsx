@@ -408,9 +408,9 @@ const PaidOrdersAnalyticsPage = () => {
         <div className="relative z-10 flex-1">
           <div className="mb-6">
             <span className="inline-block bg-red-600 text-white text-sm font-bold py-1 px-3 border border-red-600">
-             ORDER REVENUE ANALYTICS
+              PAID ORDERS ANALYTICS
             </span>
-            <h2 className="text-3xl font-bold mt-2 mb-6 text-gray-800">Order Revenue Analytics Dashboard</h2>
+            <h2 className="text-3xl font-bold mt-2 mb-6 text-gray-800">Paid Orders Dashboard</h2>
           </div>
 
           {error && (
