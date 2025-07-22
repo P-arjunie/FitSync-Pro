@@ -23,7 +23,12 @@ const TrainerProfilePage = () => {
         if (!res.ok) throw new Error(data.message || "Failed to fetch trainer");
 
         setTrainerData(data.data);
-        setFormData(data.data);
+        setFormData({
+          ...data.data,
+          emergencyName: data.data.emergencyContact?.name || "",
+          emergencyPhone: data.data.emergencyContact?.phone || "",
+          relationship: data.data.emergencyContact?.relationship || "",
+        });
       } catch (err: any) {
         console.error("Error fetching trainer profile:", err);
         setError(err.message || "Unknown error");
@@ -118,12 +123,21 @@ const TrainerProfilePage = () => {
       return;
     }
 
+    // Prepare data with nested emergencyContact
+    const dataToSend = {
+      ...formData,
+      emergencyContact: {
+        name: formData.emergencyName || "",
+        phone: formData.emergencyPhone || "",
+        relationship: formData.relationship || "",
+      },
+    };
     const res = await fetch(`/api/trainer/profile?email=${email}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(dataToSend),
     });
 
     const result = await res.json();
@@ -257,44 +271,41 @@ const TrainerProfilePage = () => {
             </div>
 
             {/* Emergency Info */}
-            <div>
-              <label className="block font-semibold">
-                Emergency Contact Name:
-              </label>
-              <input
-                type="text"
-                name="emergencyName"
-                value={formData.emergencyName || ""}
-                onChange={handleInputChange}
-                disabled={!editMode}
-                className="input input-bordered w-full"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold">
-                Emergency Contact Phone:
-              </label>
-              <input
-                type="text"
-                name="emergencyPhone"
-                value={formData.emergencyPhone || ""}
-                onChange={handleInputChange}
-                disabled={!editMode}
-                className="input input-bordered w-full"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold">
-                Relationship with Emergency Contact:
-              </label>
-              <input
-                type="text"
-                name="relationship"
-                value={formData.relationship || ""}
-                onChange={handleInputChange}
-                disabled={!editMode}
-                className="input input-bordered w-full"
-              />
+            <div className="mt-6 p-4 bg-gray-100 rounded-lg border">
+              <h3 className="font-bold mb-2 text-lg">Emergency Contact</h3>
+              <div>
+                <label className="block font-semibold">Name:</label>
+                <input
+                  type="text"
+                  name="emergencyName"
+                  value={formData.emergencyName || ""}
+                  onChange={handleInputChange}
+                  disabled={!editMode}
+                  className="input input-bordered w-full"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold">Phone:</label>
+                <input
+                  type="text"
+                  name="emergencyPhone"
+                  value={formData.emergencyPhone || ""}
+                  onChange={handleInputChange}
+                  disabled={!editMode}
+                  className="input input-bordered w-full"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold">Relationship:</label>
+                <input
+                  type="text"
+                  name="relationship"
+                  value={formData.relationship || ""}
+                  onChange={handleInputChange}
+                  disabled={!editMode}
+                  className="input input-bordered w-full"
+                />
+              </div>
             </div>
 
             {/* Professional Info */}
