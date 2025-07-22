@@ -104,6 +104,11 @@ const PurchaseHistoryPage = () => {
 
         if (walletRes.ok) {
           setWalletData(walletData.wallet);
+          // If wallet modal is open, force it to close and reopen to refresh UI
+          if (showWalletModal) {
+            setShowWalletModal(false);
+            setTimeout(() => setShowWalletModal(true), 0);
+          }
         }
 
       } catch (err: any) {
@@ -118,9 +123,12 @@ const PurchaseHistoryPage = () => {
   }, [userId]);
 
   const filteredPurchases = purchaseHistory.filter(purchase => {
-    const matchesSearch = purchase.itemDetails?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      purchase.itemType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      purchase.paymentId?.toLowerCase().includes(searchTerm.toLowerCase());
+    const title = purchase.itemDetails?.title || '';
+    const itemType = purchase.itemType || '';
+    const paymentId = purchase.paymentId || '';
+    const matchesSearch = title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      itemType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      paymentId.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesFilter = selectedFilter === 'all' ||
       (selectedFilter === 'store' && purchase.paymentFor === 'order') ||
@@ -199,7 +207,7 @@ const PurchaseHistoryPage = () => {
           }),
         });
       } else {
-        // Class enrollment - process refund and add to wallet
+        // Class enrollment or subscription - process refund and add to wallet
         res = await fetch('/api/refund-request', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -214,21 +222,6 @@ const PurchaseHistoryPage = () => {
             itemTitle: selectedPurchase.itemDetails?.title
           }),
         });
-
-        if (res.ok) {
-          // Add refund to wallet for class enrollments
-          await fetch('/api/wallet', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId,
-              type: 'refund',
-              amount: selectedPurchase.refundAmount,
-              description: `Refund for ${selectedPurchase.itemDetails?.title}`,
-              purchaseId: selectedPurchase.paymentId
-            }),
-          });
-        }
       }
 
       const data = await res.json();
@@ -243,34 +236,8 @@ const PurchaseHistoryPage = () => {
           } else {
             alert(`Refund request sent successfully! $${selectedPurchase.refundAmount.toFixed(2)} added to your wallet.`);
           }
-
-          // Refresh wallet data for class refunds
-          const walletRes = await fetch(`/api/wallet?userId=${userId}`);
-          const walletData = await walletRes.json();
-          if (walletRes.ok) {
-            setWalletData(walletData.wallet);
-          }
         }
-
-        // Update purchaseHistory state instantly
-        setPurchaseHistory((prev) => prev.map((p) => {
-          if (p.id === selectedPurchase.id) {
-            // For shop refund, set status to requested
-            if (selectedPurchase.paymentFor === 'order') {
-              return { ...p, refundStatus: 'requested', refundRequestedAt: new Date().toISOString() };
-            } else if (selectedPurchase.paymentFor === 'enrollment') {
-              // For class refund, set status to refunded
-              return { ...p, refundStatus: 'refunded', refundProcessedAt: new Date().toISOString() };
-            } else if (selectedPurchase.paymentFor === 'pricing-plan') {
-              // For subscription refund, set status to refunded
-              return { ...p, refundStatus: 'refunded', refundProcessedAt: new Date().toISOString() };
-            }
-          }
-          return p;
-        }));
-        setShowRefundModal(false);
-        setSelectedPurchase(null);
-        setRefundReason('');
+        window.location.reload();
       } else {
         alert(data.error || 'Failed to process refund request');
       }
@@ -283,10 +250,6 @@ const PurchaseHistoryPage = () => {
 
   const handleCancelSubscription = async (purchase: PurchaseItem) => {
     if (!purchase.itemDetails?.planName) return;
-
-    if (!confirm(`Are you sure you want to cancel your ${purchase.itemDetails.planName} subscription?`)) {
-      return;
-    }
 
     setProcessingCancel(true);
     try {
@@ -303,12 +266,7 @@ const PurchaseHistoryPage = () => {
 
       if (res.ok) {
         alert('Subscription cancelled successfully! It will remain active until the end of the current billing period.');
-        // Refresh purchase history
-        const historyRes = await fetch(`/api/purchase-history?userId=${userId}`);
-        const historyData = await historyRes.json();
-        if (historyRes.ok) {
-          setPurchaseHistory(historyData.purchaseHistory || []);
-        }
+        window.location.reload();
       } else {
         alert(data.error || 'Failed to cancel subscription');
       }
@@ -600,16 +558,16 @@ const PurchaseHistoryPage = () => {
                     <p className="text-2xl font-bold text-gray-900">
                       ${purchase.amount.toFixed(2)}
                     </p>
-                    <p className="text-gray-500 text-sm">{purchase.currency.toUpperCase()}</p>
+                    <p className="text-gray-500 text-sm">{(purchase.currency || '').toUpperCase()}</p>
                   </div>
 
                   <div className="flex items-center gap-2">
                     {getStatusIcon(purchase.status)}
                     <span className={`text-sm font-medium ${purchase.status.toLowerCase() === 'succeeded' || purchase.status.toLowerCase() === 'paid'
-                        ? 'text-green-600'
-                        : purchase.status.toLowerCase() === 'pending'
-                          ? 'text-yellow-600'
-                          : 'text-gray-600'
+                      ? 'text-green-600'
+                      : purchase.status.toLowerCase() === 'pending'
+                        ? 'text-yellow-600'
+                        : 'text-gray-600'
                       }`}>
                       {purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
                     </span>
@@ -618,37 +576,10 @@ const PurchaseHistoryPage = () => {
                   {/* Action buttons */}
                   <div className="flex flex-col gap-2">
                     {/* Shop purchases - email only */}
-                    {purchase.paymentFor === 'order' && purchase.refundStatus === 'none' && (
-                      <button
-                        onClick={() => {
-                          setSelectedPurchase(purchase);
-                          setShowRefundModal(true);
-                        }}
-                        className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all duration-300 text-sm font-medium"
-                      >
-                        Request Refund (Email Admin)
-                      </button>
-                    )}
 
                     {/* Shop purchases - refunded status */}
-                    {purchase.paymentFor === 'order' && purchase.refundStatus === 'refunded' && (
-                      <button
-                        disabled
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium opacity-75 cursor-not-allowed"
-                      >
-                        Refunded
-                      </button>
-                    )}
 
                     {/* Shop purchases - denied status */}
-                    {purchase.paymentFor === 'order' && purchase.refundStatus === 'denied' && (
-                      <button
-                        disabled
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium opacity-75 cursor-not-allowed"
-                      >
-                        Refund Denied
-                      </button>
-                    )}
 
                     {/* Class enrollments - refund to wallet */}
                     {purchase.paymentFor === 'enrollment' && purchase.canRefund && purchase.refundStatus === 'none' && (
@@ -718,6 +649,16 @@ const PurchaseHistoryPage = () => {
               </div>
 
               {/* Additional details for store purchases */}
+              {purchase.paymentFor === 'order' && (
+                <div className="w-full flex justify-center">
+                  <div style={{ display: "inline-flex" }} className="items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1 text-yellow-700">
+                    <AlertCircle size={16} />
+                    <span className="font-medium">
+                      Store purchases are non-refundable.
+                    </span>
+                  </div>
+                </div>
+              )}
               {purchase.paymentFor === 'order' && purchase.itemDetails?.items && (
                 <div className="mt-6 pt-6 border-t border-gray-100">
                   <h4 className="font-semibold text-gray-800 mb-3">Items Purchased:</h4>
@@ -853,8 +794,8 @@ const PurchaseHistoryPage = () => {
                       </div>
                       <div className="text-right">
                         <p className={`font-bold ${transaction.type === 'refund' || transaction.type === 'credit'
-                            ? 'text-green-600'
-                            : 'text-red-600'
+                          ? 'text-green-600'
+                          : 'text-red-600'
                           }`}>
                           {transaction.type === 'refund' || transaction.type === 'credit' ? '+' : '-'}${transaction.amount.toFixed(2)}
                         </p>

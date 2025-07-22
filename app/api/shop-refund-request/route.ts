@@ -24,9 +24,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Find and update payment record
-    const payment = await Payment.findOne({ stripePaymentIntentId: purchaseId });
+    const mongoose = require('mongoose');
+    // DEBUG: Log all Payment records for this user/type
+    const allPayments = await Payment.find({ userId, paymentFor: 'order' });
+    console.log('[DEBUG] All Payment records for userId', userId, 'paymentFor', 'order', allPayments.map(p => ({_id: p._id, relatedOrderId: p.relatedOrderId, amount: p.amount, refundStatus: p.refundStatus})));
+    // DEBUG: Log the query being run
+    console.log('[DEBUG] Shop refund query', { userId, paymentFor: 'order', relatedOrderId: purchaseId });
+    const payment = await Payment.findOne({ userId, paymentFor: 'order', relatedOrderId: new mongoose.Types.ObjectId(purchaseId) });
     if (!payment) {
-      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
     }
 
     // Check if refund already requested
