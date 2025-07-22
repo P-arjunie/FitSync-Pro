@@ -9,7 +9,7 @@ export async function GET() {
     await connectToDatabase();
 
     // Retrieve all pending members, selecting only specific fields for preview/list
-    const pendingMembers = await PendingMember.find().select("firstName lastName image role");
+    const pendingMembers = await PendingMember.find().select("firstName lastName image role membershipInfo");
     
     // Return the list of pending members as JSON
     return NextResponse.json(pendingMembers);

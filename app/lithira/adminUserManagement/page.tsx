@@ -101,10 +101,22 @@ export default function AdminUserManagement() {
 
   // Handle changes in editable input fields
   const handleInputChange = (field: string, value: any) => {
-    setEditedData((prev: any) => ({
-      ...prev,
-      [field]: value,
-    }));
+    // Support nested fields for membershipInfo
+    if (field.startsWith("membershipInfo.")) {
+      const key = field.split(".")[1];
+      setEditedData((prev: any) => ({
+        ...prev,
+        membershipInfo: {
+          ...prev.membershipInfo,
+          [key]: value,
+        },
+      }));
+    } else {
+      setEditedData((prev: any) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
   };
 
   const handleViewDetails = (id: string, role: "member" | "trainer") => {
@@ -304,18 +316,36 @@ export default function AdminUserManagement() {
 
   // Render an editable input cell
   const editableCell = (field: string, value: any) => {
-    if (field === "pricingPlan") {
+    if (field === "membershipInfo.paymentPlan") {
       return (
         <select
-          value={editedData[field] || ""}
-          onChange={e => handleInputChange(field, e.target.value)}
+          value={editedData.membershipInfo?.paymentPlan || ""}
+          onChange={e => handleInputChange("membershipInfo.paymentPlan", e.target.value)}
           className="border border-red-500 p-2 rounded"
         >
-          <option value="">Select a plan</option>
+          <option value="">Select a package</option>
           <option value="Standard">Standard</option>
           <option value="Popular">Popular</option>
           <option value="Golden">Golden</option>
           <option value="Professional">Professional</option>
+        </select>
+      );
+    }
+    if (field === "pricingPlans") {
+      const options = ["Standard", "Popular", "Golden", "Professional"];
+      return (
+        <select
+          multiple
+          value={editedData.pricingPlans || []}
+          onChange={e => {
+            const selected = Array.from(e.target.selectedOptions, option => option.value);
+            handleInputChange("pricingPlans", selected);
+          }}
+          className="border border-red-500 p-2 rounded min-w-[120px]"
+        >
+          {options.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
         </select>
       );
     }
@@ -452,6 +482,9 @@ export default function AdminUserManagement() {
                               Membership Type
                             </TableHead>
                             <TableHead className="text-red-600">
+                              Price Package
+                            </TableHead>
+                            <TableHead className="text-red-600">
                               Start Date
                             </TableHead>
                             <TableHead className="text-red-600">
@@ -546,6 +579,11 @@ export default function AdminUserManagement() {
                                 <TableCell>{member.bmi}</TableCell>
                                 <TableCell>
                                   {member.membershipInfo?.plan || "N/A"}
+                                </TableCell>
+                                <TableCell>
+                                  {isEditing
+                                    ? editableCell("membershipInfo.paymentPlan", member.membershipInfo?.paymentPlan)
+                                    : member.membershipInfo?.paymentPlan || "N/A"}
                                 </TableCell>
                                 <TableCell>
                                   {member.membershipInfo?.startDate || "N/A"}
@@ -774,10 +812,12 @@ export default function AdminUserManagement() {
                                 <TableCell>
                                   {isEditing
                                     ? editableCell(
-                                        "pricingPlan",
-                                        trainer.pricingPlan
+                                        "pricingPlans",
+                                        trainer.pricingPlans
                                       )
-                                    : trainer.pricingPlan}
+                                    : Array.isArray(trainer.pricingPlans) && trainer.pricingPlans.length > 0
+                                     ? trainer.pricingPlans.join(", ")
+                                     : "-"}
                                 </TableCell>
                                 <TableCell>
                                   {isEditing
