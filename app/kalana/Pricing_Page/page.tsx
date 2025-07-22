@@ -57,7 +57,13 @@ export default function PricingPage() {
       if (res.ok && data.planId) {
         router.push(`/kalana/checkout?paymentFor=pricing-plan&pricingPlanId=${data.planId}`);
       } else {
-        alert("Failed to start payment. Try again.");
+        if (data.error && data.error.includes('active subscription plan')) {
+          alert(data.error);
+        } else if (data.error) {
+          alert(data.error);
+        } else {
+          alert("Failed to start payment. Try again.");
+        }
       }
     } catch (error) {
       alert("Something went wrong. Please try again.");

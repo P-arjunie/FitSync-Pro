@@ -20,12 +20,14 @@ export interface IPayment extends Document {
   paymentFor: 'order' | 'enrollment' | 'pricing-plan' | 'monthly-plan';
   relatedOrderId?: mongoose.Types.ObjectId | null;
   relatedEnrollmentId?: mongoose.Types.ObjectId | null;
+  relatedPlanId?: mongoose.Types.ObjectId | null;
   stripePaymentIntentId?: string;
   refundStatus?: 'none' | 'requested' | 'refunded' | 'denied';
   refundRequestedAt?: Date;
   refundProcessedAt?: Date;
   refundAmount?: number;
   refundReason?: string;
+  hiddenForUser: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -62,6 +64,11 @@ const paymentSchema = new Schema<IPayment>(
       ref: 'Enrollment',
       default: null,
     },
+    relatedPlanId: {
+      type: Schema.Types.ObjectId,
+      ref: 'PricingPlanPurchase',
+      default: null,
+    },
     stripePaymentIntentId: {
       type: String,
     },
@@ -81,6 +88,10 @@ const paymentSchema = new Schema<IPayment>(
     },
     refundReason: {
       type: String,
+    },
+    hiddenForUser: {
+      type: Boolean,
+      default: false,
     },
   },
   {

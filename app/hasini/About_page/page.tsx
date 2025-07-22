@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Navbar from "@/Components/navbar";
 import Footer1 from '@/Components/footer_01';
+import Link from "next/link";
 
 const AboutVisionMission = () => {
   return (
@@ -43,9 +44,11 @@ const AboutVisionMission = () => {
               <li>✔ Community-driven approach for motivation</li>
               <li>✔ Cutting-edge tech integrated into your workouts</li>
             </ul>
-            <button className="mt-6 px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700">
-              Contact Us
-            </button>
+            <Link href="/hasini/Contact_Page">
+              <button className="mt-6 px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700">
+                Contact Us
+              </button>
+            </Link>
           </div>
         </div>
 

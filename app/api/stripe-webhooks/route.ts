@@ -50,20 +50,19 @@ export async function POST(req: NextRequest) {
           updatedAt: new Date(),
         });
         console.log(`✅ Updated pricing plan ${planId} to paid`);
-      } else if (userId && planName) {
-        await PricingPlanPurchase.updateOne(
-          { userId, planName },
-          { $set: { status: "paid", updatedAt: new Date() } }
-        );
-        console.log(`✅ Updated pricing plan for user ${userId}, plan ${planName} to paid`);
       }
 
       // Create payment record if not exists
-      const existingPayment = await Payment.findOne({ stripePaymentIntentId: paymentIntentId });
+      const existingPayment = await Payment.findOne({
+        stripePaymentIntentId: paymentIntentId,
+        userId,
+        paymentFor: 'pricing-plan',
+        amount
+      });
       if (!existingPayment) {
         await Payment.create({
-          firstName: "Subscription",
-          lastName: "User",
+          firstName: planName,
+          lastName: userId,
           email,
           company: "FitSync Pro",
           amount,
@@ -141,14 +140,17 @@ export async function POST(req: NextRequest) {
 
         // Check if payment record already exists
         const existingPayment = await Payment.findOne({ 
-          stripePaymentIntentId: paymentIntentId 
+          stripePaymentIntentId: paymentIntentId,
+          userId,
+          paymentFor: 'pricing-plan',
+          amount
         });
 
         if (!existingPayment) {
           // Insert payment record
           await Payment.create({
-            firstName: "Subscription",
-            lastName: "User",
+            firstName: planName,
+            lastName: userId,
             email: "subscription@fitsync.pro",
             company: "FitSync Pro",
             amount,
@@ -174,13 +176,16 @@ export async function POST(req: NextRequest) {
         
         // Still create payment record even if plan not found
         const existingPayment = await Payment.findOne({ 
-          stripePaymentIntentId: paymentIntentId 
+          stripePaymentIntentId: paymentIntentId,
+          userId,
+          paymentFor: 'pricing-plan',
+          amount
         });
 
         if (!existingPayment) {
           await Payment.create({
-            firstName: "Subscription",
-            lastName: "User",
+            firstName: planName,
+            lastName: userId,
             email: "subscription@fitsync.pro",
             company: "FitSync Pro",
             amount,

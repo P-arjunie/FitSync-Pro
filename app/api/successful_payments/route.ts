@@ -4,7 +4,9 @@ import Payment from "@/models/Payment"; // adjust path if needed
 
 const connectToDB = async () => {
   if (mongoose.connections[0].readyState === 0) {
-    await mongoose.connect(process.env.MONGODB_URI!);
+    await mongoose.connect(process.env.MONGODB_URI!, { dbName: 'fit-sync' });
+    console.log('✅ MongoDB connected (successful_payments)');
+    console.log('🔎 [DEBUG] mongoose.connection.name:', mongoose.connection.name);
   }
 };
 
