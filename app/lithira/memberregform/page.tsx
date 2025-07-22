@@ -325,7 +325,7 @@ const MemberRegistrationForm: React.FC = () => {
             <div>
               <span className="font-semibold">Choose Membership Type:</span>
               <div className="flex gap-4 mt-2">
-                {["Monthly Membership", "Annual Membership", "Day Pass"].map(
+                {["Monthly Membership", "Annual Membership"].map(
                   (type) => (
                     <label key={type} className="flex items-center gap-2">
                       <input
