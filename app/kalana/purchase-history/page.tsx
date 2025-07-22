@@ -650,8 +650,8 @@ const PurchaseHistoryPage = () => {
 
               {/* Additional details for store purchases */}
               {purchase.paymentFor === 'order' && (
-                <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <div className="flex items-center gap-2 text-yellow-700">
+                <div className="w-full flex justify-center">
+                  <div style={{ display: "inline-flex" }} className="items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1 text-yellow-700">
                     <AlertCircle size={16} />
                     <span className="font-medium">
                       Store purchases are non-refundable.
