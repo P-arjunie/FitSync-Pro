@@ -1,7 +1,7 @@
 // Components/MiniCart.tsx
 "use client";
 
-import { useShoppingCartStore } from '../pasindi/ShoppingCart/page';
+import { useShoppingCartStore } from '../user-order-management/ShoppingCart/page';
 import { ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 
@@ -11,7 +11,7 @@ export default function MiniCart() {
   const cartTotal = getCartTotal();
 
   return (
-    <Link href="/pasindi/cart">
+    <Link href="/user-order-management/cart">
       <button className="relative group flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
         <ShoppingCart className="w-5 h-5 text-gray-700 group-hover:text-red-600 transition-colors" />
         
