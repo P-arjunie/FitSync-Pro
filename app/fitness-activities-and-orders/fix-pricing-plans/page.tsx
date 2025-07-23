@@ -15,7 +15,7 @@ export default function FixPricingPlansPage() {
   useEffect(() => {
     const id = localStorage.getItem("userId");
     if (!id) {
-      router.push('/lithira/Authform');
+      router.push('/member-system-management/Authform');
       return;
     }
     setUserId(id);

@@ -121,7 +121,7 @@ export default function AdminUserManagement() {
 
   const handleViewDetails = (id: string, role: "member" | "trainer") => {
     const basePath =
-      role === "member" ? "/lithira/memberdetails" : "/lithira/trainerdetails";
+      role === "member" ? "/member-system-management/memberdetails" : "/member-system-management/trainerdetails";
     router.push(`${basePath}?id=${id}`);
   };
 

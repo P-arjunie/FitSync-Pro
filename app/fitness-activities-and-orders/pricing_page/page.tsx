@@ -46,7 +46,7 @@ export default function PricingPage() {
   const handleSelectPlan = async (planName: string, amount: number) => {
     const userId = localStorage.getItem("userId");
     if (!userId) {
-      router.push("/lithira/Authform");
+      router.push("/member-system-management/Authform");
       return;
     }
 

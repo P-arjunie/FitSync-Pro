@@ -111,7 +111,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
       localStorage.setItem("userName", "Admin");
       localStorage.setItem("userId", "admin_001");
       localStorage.setItem("adminLoginTimestamp", Date.now().toString());
-      router.push("/lithira/admindashboard");
+      router.push("/member-system-management/admindashboard");
       return;
     }
 
@@ -292,8 +292,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
 
         router.push(
           signUpData.role === "trainer"
-            ? "/lithira/trainerregform"
-            : "/lithira/memberregform"
+            ? "/member-system-management/trainerregform"
+            : "/member-system-management/memberregform"
         );
       } else {
         alert(data.error);
