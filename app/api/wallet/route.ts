@@ -33,12 +33,26 @@ export async function GET(req: NextRequest) {
       await wallet.save();
     }
 
+    // Only include transactions for payments that still exist in purchase history
+    const Payment = (await import('@/models/Payment')).default;
+    const validPaymentIds = (await Payment.find({ userId }, { _id: 1 })).map((p: any) => String(p._id));
+    const filteredTransactions = wallet.transactions.filter(t => !t.purchaseId || validPaymentIds.includes(String(t.purchaseId)));
+    // Recalculate balance
+    let recalculatedBalance = 0;
+    for (const t of filteredTransactions) {
+      if (t.type === 'refund' || t.type === 'credit') {
+        recalculatedBalance += t.amount;
+      } else if (t.type === 'withdrawal') {
+        recalculatedBalance -= t.amount;
+      }
+    }
+
     return NextResponse.json({ 
       success: true, 
       wallet: {
-        balance: wallet.balance,
+        balance: recalculatedBalance,
         currency: wallet.currency,
-        transactions: wallet.transactions
+        transactions: filteredTransactions
       }
     });
 
