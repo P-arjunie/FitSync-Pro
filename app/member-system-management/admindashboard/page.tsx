@@ -142,7 +142,7 @@ const AdminDashboard: React.FC = () => {
       description: "Manage gallery images and content",
       icon: "🖼️",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/communication-and-notifications/adminGallery",
+      link: "/hasini/adminGallery",
     },
     {
       title: "Refund Requests",
