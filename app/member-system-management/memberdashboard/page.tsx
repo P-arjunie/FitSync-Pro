@@ -62,13 +62,13 @@ const MemberDashboard: React.FC = () => {
 
   const dashboardCards = [
     {
-      title: "My Orders",
-      description: "View and manage your orders",
+      title: "My Purchases",
+      description: "View and manage your purchases",
       icon: "📦",
       color: "bg-red-600 hover:bg-red-700",
       link: "/fitness-activities-and-orders/purchase-history", // Updated link
     },
-    {
+    {                                                             
       title: "Sessions",
       description: "View your training sessions",
       icon: "🏋️",
@@ -88,6 +88,13 @@ const MemberDashboard: React.FC = () => {
       icon: "👤",
       color: "bg-gray-800 hover:bg-gray-900",
       link: "/member-system-management/MemberProfilePage",
+    },
+    {
+      title: "My Orders",
+      description: "View and manage your orders",
+      icon: "📦",
+      color: "bg-red-600 hover:bg-red-700",
+      link: ".", // Updated link
     },
   ];
 
