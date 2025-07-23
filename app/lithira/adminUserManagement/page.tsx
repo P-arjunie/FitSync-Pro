@@ -479,12 +479,6 @@ export default function AdminUserManagement() {
                             </TableHead>
                             <TableHead className="text-red-600">BMI</TableHead>
                             <TableHead className="text-red-600">
-                              Membership Type
-                            </TableHead>
-                            <TableHead className="text-red-600">
-                              Price Package
-                            </TableHead>
-                            <TableHead className="text-red-600">
                               Start Date
                             </TableHead>
                             <TableHead className="text-red-600">
@@ -577,14 +571,6 @@ export default function AdminUserManagement() {
                                     : member.currentWeight}
                                 </TableCell>
                                 <TableCell>{member.bmi}</TableCell>
-                                <TableCell>
-                                  {member.membershipInfo?.plan || "N/A"}
-                                </TableCell>
-                                <TableCell>
-                                  {isEditing
-                                    ? editableCell("membershipInfo.paymentPlan", member.membershipInfo?.paymentPlan)
-                                    : member.membershipInfo?.paymentPlan || "N/A"}
-                                </TableCell>
                                 <TableCell>
                                   {member.membershipInfo?.startDate || "N/A"}
                                 </TableCell>

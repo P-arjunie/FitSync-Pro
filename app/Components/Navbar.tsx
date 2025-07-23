@@ -5,11 +5,34 @@ import Link from "next/link";
 import Image from "next/image";
 import MiniCart from "./MiniCart"; // Adjust if needed pasindi
 import { useRouter } from "next/navigation";
+// For dynamic logo
+interface SiteSettings {
+  logoUrl: string;
+}
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [logoLoading, setLogoLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      setLogoLoading(true);
+      try {
+        const res = await fetch('/api/settings');
+        if (!res.ok) throw new Error('Failed to fetch settings');
+        const data = await res.json();
+        setSettings({ logoUrl: data.logoUrl || "/Logo.png" });
+      } catch (err) {
+        setSettings({ logoUrl: "/Logo.png" });
+      } finally {
+        setLogoLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   useEffect(() => {
     const userRole = localStorage.getItem("userRole");
@@ -42,12 +65,16 @@ const Navbar: React.FC = () => {
     <nav className="bg-black text-white py-7 px-2 flex items-center justify-between w-full border-b border-black">
       {/* Logo */}
       <Link href="/" className="flex items-center">
-        <Image
-          src="/Logo.png"
-          alt="FitSync Pro Logo"
-          width={150}
-          height={100}
-        />
+        {logoLoading ? (
+          <div className="w-[150px] h-[100px] bg-gray-200 animate-pulse rounded" />
+        ) : (
+          <Image
+            src={settings?.logoUrl || "/Logo.png"}
+            alt="FitSync Pro Logo"
+            width={150}
+            height={100}
+          />
+        )}
         <div className="ml-2 flex flex-col text-left"></div>
       </Link>
 
