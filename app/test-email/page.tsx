@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Mail, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 export default function TestEmailPage() {
-  const [testEmail, setTestEmail] = useState('kalanam890@gmail.com');
+  const [testEmail, setTestEmail] = useState('fitsync.test@gmail.com');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 

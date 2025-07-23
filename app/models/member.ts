@@ -15,9 +15,7 @@ export interface IMember extends Document {
     phone: string;
   };
   membershipInfo: {
-    plan: string;
     startDate: string;
-    paymentPlan: string;
   };
   image: string;
   currentWeight: number;
@@ -50,9 +48,7 @@ const memberSchema: Schema = new Schema(
       phone: String,
     },
     membershipInfo: {
-      plan: String,
       startDate: String,
-      paymentPlan: String,
     },
     image: String,
     currentWeight: Number,

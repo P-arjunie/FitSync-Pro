@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Navbar from "@/Components/Navbar";
 import Footer1 from '@/Components/Footer_01';
+import Image from 'next/image';
 
 // Interface for form data
 interface FormData {
@@ -34,6 +35,32 @@ export default function Contact() {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Settings state
+  const [contactInfo, setContactInfo] = useState({ address: '', phone: '', email: '' });
+  const [social, setSocial] = useState({ facebook: '', instagram: '', linkedin: '', whatsapp: '' });
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [workingHours, setWorkingHours] = useState({ weekdays: '', saturday: '', sunday: '' });
+  useEffect(() => {
+    const fetchSettings = async () => {
+      setSettingsLoading(true);
+      try {
+        const res = await fetch('/api/settings');
+        if (!res.ok) throw new Error('Failed to fetch settings');
+        const data = await res.json();
+        setContactInfo(data.contact || { address: '', phone: '', email: '' });
+        setSocial(data.social || { facebook: '', instagram: '', linkedin: '', whatsapp: '' });
+        setWorkingHours(data.workingHours || { weekdays: '', saturday: '', sunday: '' });
+      } catch (err) {
+        setContactInfo({ address: '', phone: '', email: '' });
+        setSocial({ facebook: '', instagram: '', linkedin: '', whatsapp: '' });
+        setWorkingHours({ weekdays: '', saturday: '', sunday: '' });
+      } finally {
+        setSettingsLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -209,61 +236,71 @@ export default function Contact() {
             </p>
             <div style={{ height: '0.1rem' }} />
 
-            {/* 2x2 Info Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-              {/* Phone Number */}
-              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
-                <span className="mb-3">
-                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M22 16.92V19a2 2 0 0 1-2.18 2A19.72 19.72 0 0 1 3 5.18 2 2 0 0 1 5 3h2.09a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11l-.27.27a16 16 0 0 0 6.29 6.29l.27-.27a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 21 16.91z" /></svg>
-                </span>
-                <h2 className="text-lg font-semibold mb-1 text-black">Phone Number</h2>
-                <p className="text-gray-700 text-center">+94 71 2781 444</p>
-              </div>
-              {/* Follow Us */}
-              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
-                <span className="mb-3">
-                  {/* Share/Network icon for Follow Us */}
-                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                </span>
-                <h2 className="text-lg font-semibold mb-3 text-black">Follow Us</h2>
-                <div className="flex items-center space-x-4">
-                  <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                    <img src="/linkedin.png" alt="LinkedIn" className="w-8 h-8" style={{ filter: 'none' }} />
-                  </a>
-                  <a href="https://wa.me/+94712781444" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-                    <img src="/whatsapp.png" alt="WhatsApp" className="w-8 h-8" style={{ filter: 'none' }} />
-                  </a>
-                  <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                    <img src="/facebook.png" alt="Facebook" className="w-8 h-8" style={{ filter: 'none' }} />
-                  </a>
-                  <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                    <img src="/insta.png" alt="Instagram" className="w-8 h-8" style={{ filter: 'none' }} />
-                  </a>
+            {settingsLoading ? (
+              <div className="text-gray-500">Loading contact info...</div>
+            ) : (
+              <>
+                {/* 2x2 Info Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                  {/* Phone Number */}
+                  <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
+                    <span className="mb-3">
+                      <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M22 16.92V19a2 2 0 0 1-2.18 2A19.72 19.72 0 0 1 3 5.18 2 2 0 0 1 5 3h2.09a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.34a2 2 0 0 1-.45 2.11l-.27.27a16 16 0 0 0 6.29 6.29l.27-.27a2 2 0 0 1 2.11-.45c.74.32 1.53.55 2.34.68A2 2 0 0 1 21 16.91z" /></svg>
+                    </span>
+                    <h2 className="text-lg font-semibold mb-1 text-black">Phone Number</h2>
+                    <p className="text-gray-700 text-center">
+                      <a href={`tel:${contactInfo.phone}`}>{contactInfo.phone || "+94 71 2781 444"}</a>
+                    </p>
+                  </div>
+                  {/* Follow Us */}
+                  <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
+                    <span className="mb-3">
+                      {/* Share/Network icon for Follow Us */}
+                      <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    </span>
+                    <h2 className="text-lg font-semibold mb-3 text-black">Follow Us</h2>
+                    <div className="flex items-center space-x-4">
+                      <a href={social.linkedin || "https://www.linkedin.com"} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                        <Image src="/linkedin.png" alt="LinkedIn" width={32} height={32} style={{ filter: 'none' }} />
+                      </a>
+                      <a href={social.whatsapp || "https://wa.me/+94712781444"} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+                        <Image src="/whatsapp.png" alt="WhatsApp" width={32} height={32} style={{ filter: 'none' }} />
+                      </a>
+                      <a href={social.facebook || "https://www.facebook.com"} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                        <Image src="/facebook.png" alt="Facebook" width={32} height={32} style={{ filter: 'none' }} />
+                      </a>
+                      <a href={social.instagram || "https://www.instagram.com"} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                        <Image src="/insta.png" alt="Instagram" width={32} height={32} style={{ filter: 'none' }} />
+                      </a>
+                    </div>
+                  </div>
+                  {/* Working Hours */}
+                  <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
+                    <span className="mb-3">
+                      <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" /></svg>
+                    </span>
+                    <h2 className="text-lg font-semibold mb-1 text-black">Opening Hours</h2>
+                    <div className="text-gray-700 text-center">
+                      <div>Monday to Friday</div>
+                      <div className="pl-2">{workingHours.weekdays || "7:30 AM-1:00 AM"}</div>
+                      <div className="mt-2">Saturday</div>
+                      <div className="pl-2">{workingHours.saturday || "8:00 AM-11:00 PM"}</div>
+                      <div className="mt-2">Sunday</div>
+                      <div className="pl-2">{workingHours.sunday || "8:00 AM-11:00 PM"}</div>
+                    </div>
+                  </div>
+                  {/* Location */}
+                  <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
+                    <span className="mb-3">
+                      {/* Map Pin icon for Location */}
+                      <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21C12 21 7 16.5 7 12A5 5 0 0 1 17 12C17 16.5 12 21 12 21Z" /><circle cx="12" cy="12" r="2.5" /></svg>
+                    </span>
+                    <h2 className="text-lg font-semibold mb-1 text-black">Location</h2>
+                    <p className="text-gray-700 text-center">{contactInfo.address || "4/1, Sapumal Place, Colombo, Sri Lanka"}</p>
+                  </div>
                 </div>
-              </div>
-              {/* Working Hours */}
-              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
-                <span className="mb-3">
-                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" /></svg>
-                </span>
-                <h2 className="text-lg font-semibold mb-1 text-black">Opening Hours</h2>
-                <div className="text-gray-700 text-center">
-                  <div>Monday to Friday</div>
-                  <div className="pl-2">7:30 AM-1:00 AM</div>
-                  <div className="mt-2">Saturday to Sunday</div>
-                  <div className="pl-2">8:00 AM-11:00 PM</div>
-                </div>
-              </div>
-              {/* Location */}
-              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 bg-gray-50">
-                <span className="mb-3">
-                  {/* Map Pin icon for Location */}
-                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21C12 21 7 16.5 7 12A5 5 0 0 1 17 12C17 16.5 12 21 12 21Z" /><circle cx="12" cy="12" r="2.5" /></svg>
-                </span>
-                <h2 className="text-lg font-semibold mb-1 text-black">Location</h2>
-                <p className="text-gray-700 text-center">4/1, Sapumal Place, Colombo, Sri Lanka</p>
-              </div>
-            </div>
+              </>
+            )}
           </div>
 
           {/* Right Section - Contact Form (now styled to match left) */}

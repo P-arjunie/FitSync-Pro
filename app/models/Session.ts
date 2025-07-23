@@ -48,6 +48,10 @@ const sessionSchema = new Schema({
     enum: ['active', 'cancelled', 'completed'],
     default: 'active'
   },
+  canceled: {
+    type: Boolean,
+    default: false
+  },
   cancelledAt: {
     type: Date,
     default: null

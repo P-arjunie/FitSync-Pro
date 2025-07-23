@@ -66,21 +66,21 @@ const MemberDashboard: React.FC = () => {
       description: "View and manage your orders",
       icon: "📦",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/kalana/purchase-history", // Updated link
+      link: "/fitness-activities-and-orders/purchase-history", // Updated link
     },
     {
       title: "Sessions",
       description: "View your training sessions",
       icon: "🏋️",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/pasindi/all-sessions",
+      link: "/trainer-sessions/all-sessions",
     },
     {
       title: "Request Sessions",
       description: "Book new training sessions",
       icon: "📅",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/pasindi/schedule",
+      link: "/trainer-sessions/schedule",
     },
     {
       title: "My Profile",
@@ -157,97 +157,6 @@ const MemberDashboard: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Quick Stats Section */}
-        <div className="w-full max-w-6xl mt-8">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              My Activity Overview
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                <div className="flex items-center">
-                  <span className="text-2xl mr-3">📦</span>
-                  <div>
-                    <p className="text-sm text-gray-600">Total Orders</p>
-                    <p className="text-xl font-bold text-red-600">
-                      {isLoading ? "Loading..." : memberStats.totalOrders}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div className="flex items-center">
-                  <span className="text-2xl mr-3">🏋️</span>
-                  <div>
-                    <p className="text-sm text-gray-600">Active Sessions</p>
-                    <p className="text-xl font-bold text-gray-700">
-                      {isLoading ? "Loading..." : memberStats.activeSessions}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                <div className="flex items-center">
-                  <span className="text-2xl mr-3">✅</span>
-                  <div>
-                    <p className="text-sm text-gray-600">Completed Sessions</p>
-                    <p className="text-xl font-bold text-red-700">
-                      {isLoading ? "Loading..." : memberStats.completedSessions}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity Section */}
-        <div className="w-full max-w-6xl mt-8">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Recent Activity
-            </h2>
-            <div className="space-y-3">
-              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-green-500 mr-3">✓</span>
-                <div>
-                  <p className="font-semibold text-gray-800">
-                    Session completed
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Yoga session with Sarah Wilson
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 ml-auto">
-                  2 hours ago
-                </span>
-              </div>
-              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-blue-500 mr-3">📅</span>
-                <div>
-                  <p className="font-semibold text-gray-800">Session booked</p>
-                  <p className="text-sm text-gray-600">
-                    Power Lifting session for tomorrow
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 ml-auto">1 day ago</span>
-              </div>
-              <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-orange-500 mr-3">📦</span>
-                <div>
-                  <p className="font-semibold text-gray-800">Order placed</p>
-                  <p className="text-sm text-gray-600">
-                    Premium membership plan
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 ml-auto">
-                  3 days ago
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

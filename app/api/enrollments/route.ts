@@ -25,6 +25,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Check for active (not refunded) enrollments
+    const Payment = (await import('@/models/Payment')).default;
+    const activeEnrollments = await Payment.countDocuments({
+      userId,
+      paymentFor: 'enrollment',
+      paymentStatus: { $in: ['paid', 'succeeded', 'active'] },
+      $or: [
+        { refundStatus: { $in: [null, 'none'] } },
+        { refundStatus: { $exists: false } }
+      ]
+    });
+    if (activeEnrollments >= 2) {
+      return NextResponse.json(
+        { error: 'You are already engaged in 2 classes. Please refund one to continue.' },
+        { status: 400 }
+      );
+    }
+
+    // Check for active (not refunded) enrollments for the same class
+    const existingClassEnrollment = await Payment.findOne({
+      userId,
+      paymentFor: 'enrollment',
+      paymentStatus: { $in: ['paid', 'succeeded', 'active'] },
+      $or: [
+        { refundStatus: { $in: [null, 'none'] } },
+        { refundStatus: { $exists: false } }
+      ],
+      firstName: className
+    });
+    if (existingClassEnrollment) {
+      return NextResponse.json(
+        { error: 'You are already enrolled in this class. Please refund to enroll again.' },
+        { status: 400 }
+      );
+    }
+
     const newEnrollment = new Enrollment({
       userId,
       className,

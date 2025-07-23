@@ -97,7 +97,7 @@ export async function GET(request: Request) {
         },
         {
           $lookup: {
-            from: 'kalana_paymentsses',
+            from: 'fitsync_paymentsses',
             localField: '_id',
             foreignField: 'relatedOrderId',
             as: 'payments'
@@ -128,7 +128,7 @@ export async function GET(request: Request) {
         },
         {
           $lookup: {
-            from: 'kalana_paymentsses',
+            from: 'fitsync_paymentsses',
             localField: '_id',
             foreignField: 'relatedEnrollmentId',
             as: 'payments'

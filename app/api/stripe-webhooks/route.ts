@@ -167,61 +167,6 @@ export async function POST(req: NextRequest) {
             paymentFor: "pricing-plan",
             stripePaymentIntentId: paymentIntentId,
           });
-          console.log(`✅ Created payment record in kalana_paymentsses`);
+          console.log(`✅ Created payment record in fitsync_paymentsses`);
         } else {
-          console.log(`ℹ️ Payment record already exists`);
-        }
-      } else {
-        console.warn(`⚠️ No pricing plan found for user ${userId}, plan ${planName}, amount ${amount}`);
-        
-        // Still create payment record even if plan not found
-        const existingPayment = await Payment.findOne({ 
-          stripePaymentIntentId: paymentIntentId,
-          userId,
-          paymentFor: 'pricing-plan',
-          amount
-        });
-
-        if (!existingPayment) {
-          await Payment.create({
-            firstName: planName,
-            lastName: userId,
-            email: "subscription@fitsync.pro",
-            company: "FitSync Pro",
-            amount,
-            currency: "usd",
-            paymentStatus: "paid",
-            paymentMethodId: "stripe-subscription",
-            billingAddress: {
-              zip: "00000",
-              country: "US",
-              city: "N/A",
-              street: "N/A",
-            },
-            userId,
-            paymentFor: "pricing-plan",
-            stripePaymentIntentId: paymentIntentId,
-          });
-          console.log(`✅ Created payment record without matching plan`);
-        }
-      }
-
-      console.log(`✅ Subscription payment processed for user ${userId}`);
-      break;
-    }
-    case "invoice.payment_failed": {
-      const invoice = event.data.object as any;
-      const subscriptionId =
-        typeof invoice.subscription === "string"
-          ? invoice.subscription
-          : invoice.subscription?.id;
-
-      console.log(`❌ Invoice payment failed for subscription ${subscriptionId}`);
-      break;
-    }
-    default:
-      console.log(`ℹ️ Unhandled event type: ${event.type}`);
-  }
-
-  return NextResponse.json({ received: true });
-}
+          console.log(`
