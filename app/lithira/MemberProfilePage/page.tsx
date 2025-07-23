@@ -399,7 +399,7 @@ const MemberProfilePage = () => {
         <div className="mt-6 flex flex-col sm:flex-row justify-between gap-4">
           <div className="flex gap-4">
             <button
-              onClick={() => window.location.href = '/kalana/purchase-history'}
+              onClick={() => window.location.href = '/fitness-activities-and-orders/purchase-history'}
               className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

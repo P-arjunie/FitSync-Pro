@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
       subscription_data: {
         metadata: { userId, planId, planName },
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/kalana/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/kalana/pricing_page`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/fitness-activities-and-orders/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/fitness-activities-and-orders/pricing_page`,
     });
 
     return NextResponse.json({ sessionId: session.id });

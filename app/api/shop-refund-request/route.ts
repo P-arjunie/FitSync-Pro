@@ -148,7 +148,7 @@ Note: This is a shop purchase refund request. Please review and process manually
       // Send email
       await transporter.sendMail({
         from: `"FitSync Pro" <${process.env.EMAIL_USER}>`,
-        to: "kalanam890@gmail.com",
+        to: "fitsync.test@gmail.com",
         subject: emailSubject,
         text: emailText,
         html: emailHtml,

@@ -61,7 +61,7 @@ export default function SuccessPage() {
             </Link>
             
             <Link
-              href="/kalana/pricing_page"
+              href="/fitness-activities-and-orders/pricing_page"
               className="block w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200"
             >
               View All Plans

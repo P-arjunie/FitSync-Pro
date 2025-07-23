@@ -6,9 +6,8 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/Components/Navbar';
 import Footer1 from '@/Components/Footer_01';
 import { getAuthUser } from '@/lib/auth';
-import { createSubscription, redirectToSubscriptionCheckout } from '@/lib/subscription';
 
-const YogaClassPage = () => {
+const MeditationClassPage = () => {
   const router = useRouter();
   const [authUser, setAuthUser] = useState(getAuthUser());
   const [isLoading, setIsLoading] = useState(true);
@@ -39,8 +38,8 @@ const YogaClassPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: authUser.userId,
-          className: "Yoga",
-          totalAmount: 10,
+          className: "meditation", 
+          totalAmount: 10,     
         }),
       });
 
@@ -51,12 +50,13 @@ const YogaClassPage = () => {
         throw new Error(data.error || "Failed to create enrollment");
       }
 
-      router.push(`/kalana/checkout?enrollmentId=${data._id}`);
+      router.push(`/fitness-activities-and-orders/checkout?enrollmentId=${data._id}`);
     } catch (error) {
       console.error("Enrollment creation failed", error);
       alert("Could not create enrollment, please try again.");
     }
   };
+
 
   return (
     <>
@@ -67,8 +67,8 @@ const YogaClassPage = () => {
           <button onClick={goBackToClasses} className="back-btn" type="button">
             ← Back to Classes
           </button>
-          <h1 className="class-title">YOGA</h1>
-          <p className="class-subtitle">Enhance Flexibility & Inner Peace</p>
+          <h1 className="class-title">MEDITATION</h1>
+          <p className="class-subtitle">Find Inner Peace & Mental Clarity</p>
         </div>
       </header>
 
@@ -76,15 +76,16 @@ const YogaClassPage = () => {
         <div className="main-content">
           <div className="class-image-section">
             <Image
-              src="/yoga.jpg"
-              alt="Yoga Class"
+              src="/meditation.jpg"
+              alt="Meditation Class"
               className="class-hero-image"
               width={1000}
               height={500}
+              priority
             />
             <div className="image-overlay">
               <h3>Next Session</h3>
-              <div className="schedule-badge">Wednesday | 6:30 AM</div>
+              <div className="schedule-badge">Thursday | 7:00 AM</div>
             </div>
           </div>
 
@@ -92,21 +93,21 @@ const YogaClassPage = () => {
             <div className="details-section">
               <h2 className="section-title">About This Class</h2>
               <p className="description">
-                Our yoga sessions focus on enhancing flexibility, balance, and mindfulness.
-                With a blend of physical postures, breathing exercises, and guided relaxation,
-                this class is perfect for both beginners and seasoned practitioners.
+                Discover the transformative power of meditation in our peaceful, guided sessions. Learn
+                various meditation techniques including mindfulness, breathing exercises, and visualization
+                to reduce stress and enhance mental well-being.
               </p>
             </div>
 
             <div className="details-section">
               <h2 className="section-title">Class Benefits</h2>
               <ul className="benefits-list">
-                <li>Improved flexibility and posture</li>
-                <li>Reduced stress and tension</li>
-                <li>Better breathing and lung capacity</li>
-                <li>Enhanced mental clarity</li>
-                <li>Boosted energy levels</li>
-                <li>Increased body awareness</li>
+                <li>Reduce stress and anxiety</li>
+                <li>Improve focus and concentration</li>
+                <li>Better sleep quality</li>
+                <li>Enhanced emotional regulation</li>
+                <li>Increased self-awareness</li>
+                <li>Lower blood pressure</li>
               </ul>
             </div>
           </div>
@@ -116,19 +117,19 @@ const YogaClassPage = () => {
           <div className="info-grid">
             <div className="info-item">
               <div className="info-label">Duration</div>
-              <div className="info-value">60 Minutes</div>
+              <div className="info-value">45 Minutes</div>
             </div>
             <div className="info-item">
               <div className="info-label">Intensity</div>
-              <div className="info-value">Moderate</div>
+              <div className="info-value">Relaxing</div>
             </div>
             <div className="info-item">
               <div className="info-label">Equipment</div>
-              <div className="info-value">Yoga Mats Provided</div>
+              <div className="info-value">Mats Provided</div>
             </div>
             <div className="info-item">
               <div className="info-label">Max Capacity</div>
-              <div className="info-value">20 People</div>
+              <div className="info-value">25 People</div>
             </div>
           </div>
         </div>
@@ -146,12 +147,11 @@ const YogaClassPage = () => {
                       <div className="enrollment-benefits">
               <h4>What's Included:</h4>
               <ul>
-                <li>Unlimited monthly yoga classes</li>
-                <li>Certified yoga instructors</li>
-                <li>Relaxing environment</li>
-                <li>Support for all skill levels</li>
-                <li>Mind-body wellness tools</li>
-
+                <li>Unlimited monthly classes</li>
+                <li>Expert meditation guidance</li>
+                <li>Peaceful environment</li>
+                <li>Various meditation techniques</li>
+                <li>Stress reduction tools</li>
               </ul>
             </div>
         </div>
@@ -191,7 +191,7 @@ const YogaClassPage = () => {
         .header::before {
           content: '';
           position: absolute;
-          inset: 0;
+          top: 0; left: 0; right: 0; bottom: 0;
           background: linear-gradient(45deg, rgba(220, 20, 60, 0.1) 0%, transparent 50%);
         }
         .header > .container {
@@ -226,7 +226,7 @@ const YogaClassPage = () => {
           color: #dc143c;
           text-align: center;
           margin-bottom: 10px;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
         .class-subtitle {
           font-size: 1.5rem;
@@ -257,7 +257,7 @@ const YogaClassPage = () => {
           bottom: 0;
           left: 0;
           right: 0;
-          background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+          background: linear-gradient(transparent, rgba(0,0,0,0.8));
           padding: 30px;
           color: #fff;
         }
@@ -371,19 +371,16 @@ const YogaClassPage = () => {
           transition: all 0.3s ease;
           text-transform: uppercase;
           letter-spacing: 1px;
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         .enroll-btn:hover {
           transform: translateY(-3px);
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 10px 25px rgba(0,0,0,0.4);
           background: #f0f0f0;
         }
         .enrollment-benefits {
           margin-top: 30px;
           color: #ffcccb;
-          max-width: 400px;
-          margin-left: auto;
-          margin-right: auto;
         }
         .enrollment-benefits ul {
           list-style: none;
@@ -421,4 +418,4 @@ const YogaClassPage = () => {
   );
 };
 
-export default YogaClassPage;
+export default MeditationClassPage;

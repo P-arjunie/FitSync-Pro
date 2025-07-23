@@ -32,7 +32,7 @@ const Navbar: React.FC = () => {
   const handleCartClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isLoggedIn) {
-      router.push("/kalana/cart");
+      router.push("/fitness-activities-and-orders/cart");
     } else {
       router.push("/login");
     }
