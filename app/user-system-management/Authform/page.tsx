@@ -155,6 +155,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ onNewUser }) => {
         // Set login timestamp for member users
         if (data.user.role === "member") {
           localStorage.setItem("memberLoginTimestamp", Date.now().toString());
+          alert("Login successful!");
+          router.push("/user-system-management/memberdashboard");
+          return;
         }
 
         console.log("Login successful, stored role:", data.user.role); // Debug log
