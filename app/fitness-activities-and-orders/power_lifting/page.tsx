@@ -28,7 +28,7 @@ const PowerLiftingClassPage = () => {
 
   const enrollNow = async () => {
     if (!authUser) {
-      router.push("/lithira/Authform");
+      router.push("/member-system-management/Authform");
       return;
     }
 
