@@ -410,7 +410,7 @@ export default function PricingPage() {
           <p className={styles.discountText}>
             Receive a <strong>45% Discount</strong> on all membership plans during our exclusive summer promotion.
           </p>
-          <Link href="/hasini/Contact_Page" className={styles.contactButton}>
+          <Link href="/communication-and-notifications/Contact_Page" className={styles.contactButton}>
             Contact Us
           </Link>
         </section>
