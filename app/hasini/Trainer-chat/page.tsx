@@ -6,7 +6,9 @@ import { Input } from "@/Components/ui/input"
 import { Avatar, AvatarFallback } from "@/Components/ui/avatar"
 import { Badge } from "@/Components/ui/badge"
 import { Send, Users } from "lucide-react"
-import { listenToMessages, sendMessage as sendFirestoreMessage, fetchAllMembers, setUserOnlineStatus } from "@/lib/chatService"
+import { listenToMessages, sendMessage as sendFirestoreMessage, fetchAllMembers, setUserOnlineStatus, deleteMessage, editMessage } from "@/lib/chatService"
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 type Message = {
   id: string
@@ -46,13 +48,14 @@ export default function TrainerChatPage() {
   const [members, setMembers] = useState<Member[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [search, setSearch] = useState("");
-
-  // Replace currentTrainer with real user info from Firebase Auth in production
   const currentTrainer = {
-    id: "trainer-1", // TODO: Replace with real user ID
-    name: "Dr. Sarah Johnson", // TODO: Replace with real user name
+    id: "trainer-1",
+    name: "Trainer John",
     type: "trainer" as const,
   };
+  const [userDetails, setUserDetails] = useState<any>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
 
   useEffect(() => {
     if (!selectedMember) return;
@@ -77,6 +80,14 @@ export default function TrainerChatPage() {
       window.removeEventListener("beforeunload", handleUnload);
     };
   }, []);
+
+  useEffect(() => {
+    if (!currentTrainer.id) return;
+    const ref = doc(db, "trainers", currentTrainer.id);
+    getDoc(ref).then((snap) => {
+      if (snap.exists()) setUserDetails(snap.data());
+    });
+  }, [currentTrainer.id]);
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
@@ -149,13 +160,27 @@ export default function TrainerChatPage() {
       {/* Members Sidebar */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">
+          {userDetails && (
+            <div className="mb-4 p-3 rounded" style={{ background: '#e53935' }}>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-white text-lg">{userDetails.name}</span>
+                <span className="flex items-center gap-1">
+                  <span className={`inline-block w-3 h-3 rounded-full border-2 border-white ${userDetails.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                  <span className="text-xs text-white">{userDetails.isOnline ? 'Online' : 'Offline'}</span>
+                </span>
+              </div>
+              {userDetails.specialty && (
+                <div className="mt-1 inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                  {userDetails.specialty}
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-2 mb-2">
-            <Users className="h-5 w-5 text-blue-600" />
+            <Users className="h-5 w-5" style={{ color: '#e53935' }} />
             <h2 className="text-lg font-semibold text-gray-900">My Members</h2>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Firestore Chat</span>
-          </div>
+         
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -181,7 +206,7 @@ export default function TrainerChatPage() {
                     >
                       <div className="relative">
                         <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-blue-100 text-blue-600">
+                          <AvatarFallback className="bg-red-600 text-white font-bold">
                             {member.name
                               .split(" ")
                               .map((n) => n[0])
@@ -215,7 +240,7 @@ export default function TrainerChatPage() {
                 >
                   <div className="relative">
                     <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                      <AvatarFallback className="bg-red-600 text-white font-bold">
                         {member.name
                           .split(" ")
                           .map((n) => n[0])
@@ -246,10 +271,10 @@ export default function TrainerChatPage() {
         {selectedMemberInfo ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 bg-white border-b border-gray-200">
+            <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                  <AvatarFallback className="bg-red-600 text-white font-bold">
                     {selectedMemberInfo.name
                       .split(" ")
                       .map((n) => n[0])
@@ -261,50 +286,84 @@ export default function TrainerChatPage() {
                   <p className="text-sm text-gray-500">{selectedMemberInfo.isOnline ? "Online" : "Offline"}</p>
                 </div>
               </div>
+              <button onClick={() => setSelectedMember(null)} className="text-red-600 text-xl font-bold px-2 hover:bg-red-100 rounded">×</button>
             </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages
-                .filter(
-                  (msg) =>
-                    msg.roomId === `${currentTrainer.id}-${selectedMember}` ||
-                    msg.roomId === `${selectedMember}-${currentTrainer.id}`,
-                )
+                .filter((msg) => selectedMember && msg.roomId === getChatId(currentTrainer.id, selectedMember))
                 .map((message) => (
                   <div
                     key={message.id}
                     className={`flex ${message.senderId === currentTrainer.id ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                        message.senderId === currentTrainer.id ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-900"
+                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl relative group ${
+                        message.senderId === currentTrainer.id ? "bg-red-600 text-white" : "bg-[#e0e0e0] text-gray-900"
                       }`}
                     >
-                      <p className="text-sm">{message.text}</p>
-                      <p
-                        className={`text-xs mt-1 ${
-                          message.senderId === currentTrainer.id ? "text-blue-100" : "text-gray-500"
-                        }`}
-                      >
-                        {(() => {
-                          let dateObj;
-                          if (isFirestoreTimestamp(message.timestamp)) {
-                            dateObj = message.timestamp.toDate();
-                          } else if (
-                            typeof message.timestamp === "string" ||
-                            typeof message.timestamp === "number" ||
-                            Object.prototype.toString.call(message.timestamp) === "[object Date]"
-                          ) {
-                            dateObj = new Date(message.timestamp);
-                          } else {
-                            dateObj = null;
-                          }
-                          return dateObj
-                            ? dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                            : "—";
-                        })()}
-                      </p>
+                      {editingMessageId === message.id ? (
+                        <form
+                          onSubmit={async (e) => {
+                            e.preventDefault();
+                            await editMessage(getChatId(currentTrainer.id, selectedMember!), message.id, editText);
+                            setEditingMessageId(null);
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          <input
+                            value={editText}
+                            onChange={e => setEditText(e.target.value)}
+                            className="flex-1 px-2 py-1 rounded text-black"
+                            autoFocus
+                          />
+                          <button type="submit" className="text-xs text-white font-bold">Save</button>
+                          <button type="button" onClick={() => setEditingMessageId(null)} className="text-xs text-white">Cancel</button>
+                        </form>
+                      ) : (
+                        <>
+                          <p className="text-sm">{message.text}</p>
+                          <p className="text-xs mt-1">
+                            {(() => {
+                              let dateObj;
+                              if (isFirestoreTimestamp(message.timestamp)) {
+                                dateObj = message.timestamp.toDate();
+                              } else if (
+                                typeof message.timestamp === "string" ||
+                                typeof message.timestamp === "number" ||
+                                Object.prototype.toString.call(message.timestamp) === "[object Date]"
+                              ) {
+                                dateObj = new Date(message.timestamp);
+                              } else {
+                                dateObj = null;
+                              }
+                              return dateObj
+                                ? dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                                : "—";
+                            })()}
+                          </p>
+                          {message.senderId === currentTrainer.id && (
+                            <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                              <button
+                                onClick={() => {
+                                  setEditingMessageId(message.id);
+                                  setEditText(message.text);
+                                }}
+                                className="text-xs text-white bg-black/30 rounded px-1"
+                                title="Edit"
+                              >✎</button>
+                              <button
+                                onClick={async () => {
+                                  await deleteMessage(getChatId(currentTrainer.id, selectedMember!), message.id);
+                                }}
+                                className="text-xs text-white bg-black/30 rounded px-1"
+                                title="Delete"
+                              >🗑</button>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -330,9 +389,9 @@ export default function TrainerChatPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center bg-gray-50">
             <div className="text-center">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a member to start chatting</h3>
-              <p className="text-gray-500">Choose a member from the sidebar to begin your conversation</p>
+              <Users className="h-12 w-12 text-red-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Welcome to FitSync Chat</h3>
+              <p className="text-gray-500">Select a member from the sidebar to start chatting.</p>
             </div>
           </div>
         )}

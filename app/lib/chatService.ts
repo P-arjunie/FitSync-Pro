@@ -1,4 +1,4 @@
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 // Listen to messages in real-time for a chat room
@@ -22,6 +22,16 @@ export async function sendMessage(chatId: string, senderId: string, senderName: 
     timestamp: serverTimestamp(),
     roomId: chatId,
   });
+}
+
+export async function deleteMessage(chatId: string, messageId: string) {
+  const ref = doc(db, "chats", chatId, "messages", messageId);
+  await deleteDoc(ref);
+}
+
+export async function editMessage(chatId: string, messageId: string, newText: string) {
+  const ref = doc(db, "chats", chatId, "messages", messageId);
+  await updateDoc(ref, { text: newText });
 }
 
 export async function fetchAllTrainers() {
