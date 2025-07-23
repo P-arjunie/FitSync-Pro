@@ -78,7 +78,7 @@ const PurchaseHistoryPage = () => {
     const name = localStorage.getItem("userName");
 
     if (!id) {
-      router.push('/lithira/Authform');
+      router.push('/user-system-management/Authform');
       return;
     }
     setUserId(id);

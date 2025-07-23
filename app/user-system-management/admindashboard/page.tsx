@@ -107,14 +107,14 @@ const AdminDashboard: React.FC = () => {
       description: "Manage pending user requests",
       icon: "📋",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/lithira/userinfo",
+      link: "/user-system-management/userinfo",
     },
     {
       title: "User Management",
       description: "Manage approved users and trainers",
       icon: "👥",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/lithira/adminUserManagement",
+      link: "/user-system-management/adminUserManagement",
     },
     {
       title: "Analytics",
@@ -156,7 +156,7 @@ const AdminDashboard: React.FC = () => {
       description: "Manage system logo, footer, and other settings",
       icon: "🛠️",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/lithira/settings",
+      link: "/user-system-management/settings",
     },
   ];
 

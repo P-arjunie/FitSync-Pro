@@ -14,7 +14,7 @@ export default function DebugPaymentsPage() {
   useEffect(() => {
     const id = localStorage.getItem("userId");
     if (!id) {
-      router.push('/lithira/Authform');
+      router.push('/user-system-management/Authform');
       return;
     }
     setUserId(id);

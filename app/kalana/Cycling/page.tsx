@@ -29,7 +29,7 @@ const CyclingClassPage = () => {
 
   const enrollNow = async () => {
     if (!authUser) {
-      router.push("/lithira/Authform");
+      router.push("/user-system-management/Authform");
       return;
     }
 

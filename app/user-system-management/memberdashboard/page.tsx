@@ -62,11 +62,18 @@ const MemberDashboard: React.FC = () => {
 
   const dashboardCards = [
     {
-      title: "My Orders",
-      description: "View and manage your orders",
+      title: "Purchase History",
+      description: "View and manage your purchase history",
       icon: "📦",
       color: "bg-red-600 hover:bg-red-700",
       link: "/kalana/purchase-history", // Updated link
+    },
+    {
+      title: "My Orders",
+      description: "See your current and past orders",
+      icon: "📝",
+      color: "bg-gray-800 hover:bg-gray-900",
+      link: "/pasindi/my-orders", // Placeholder link, update as needed
     },
     {
       title: "Sessions",
@@ -86,8 +93,8 @@ const MemberDashboard: React.FC = () => {
       title: "My Profile",
       description: "Manage your profile and settings",
       icon: "👤",
-      color: "bg-gray-800 hover:bg-gray-900",
-      link: "/lithira/MemberProfilePage",
+      color: "bg-red-600 hover:bg-red-700",
+      link: "/user-system-management/MemberProfilePage",
     },
   ];
 
