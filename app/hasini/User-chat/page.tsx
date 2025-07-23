@@ -1,11 +1,14 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useMemo } from "react"
 import { Button } from "@/Components/ui/button"
 import { Input } from "@/Components/ui/input"
 import { Avatar, AvatarFallback } from "@/Components/ui/avatar"
 import { Badge } from "@/Components/ui/badge"
 import { Send, UserCheck } from "lucide-react"
+import { listenToMessages, sendMessage as sendFirestoreMessage, fetchAllTrainers, setUserOnlineStatus, deleteMessage, editMessage } from "@/lib/chatService"
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 type Message = {
   id: string
@@ -26,81 +29,101 @@ type Trainer = {
   unreadCount: number
 }
 
+function isFirestoreTimestamp(obj: any): obj is { toDate: () => Date } {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    typeof obj.toDate === "function" &&
+    Object.prototype.toString.call(obj) !== "[object Date]"
+  );
+}
+
+function getChatId(trainerId: string, memberId: string) {
+  return `${trainerId}-${memberId}`;
+}
+
 export default function MemberChatPage() {
   const [selectedTrainer, setSelectedTrainer] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [trainers, setTrainers] = useState<Trainer[]>([])
-  const [isConnected, setIsConnected] = useState(false)
-  const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // Current member info (in real app, get from auth)
+  const [search, setSearch] = useState("");
   const currentMember = {
     id: "member-1",
-    name: "John Smith",
+    name: "Member Smith",
     type: "member" as const,
-  }
+  };
+  const [userDetails, setUserDetails] = useState<any>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
 
   useEffect(() => {
-    // Initialize WebSocket connection
-    const ws = new WebSocket("ws://localhost:3001")
-    wsRef.current = ws
-
-    ws.onopen = () => {
-      setIsConnected(true)
-      // Register as member
-      ws.send(
-        JSON.stringify({
-          type: "register",
-          userId: currentMember.id,
-          userType: "member",
-          userName: currentMember.name,
-        }),
-      )
-    }
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-
-      switch (data.type) {
-        case "message":
-          setMessages((prev) => [...prev, data.message])
-          // Update unread count for the sender
-          if (data.message.senderId !== selectedTrainer) {
-            setTrainers((prev) =>
-              prev.map((trainer) =>
-                trainer.id === data.message.senderId ? { ...trainer, unreadCount: trainer.unreadCount + 1 } : trainer,
-              ),
-            )
-          }
-          break
-        case "trainers_list":
-          setTrainers(data.trainers)
-          break
-        case "user_status":
-          setTrainers((prev) =>
-            prev.map((trainer) =>
-              trainer.id === data.userId
-                ? { ...trainer, isOnline: data.isOnline, lastSeen: data.lastSeen ? new Date(data.lastSeen) : undefined }
-                : trainer,
-            ),
-          )
-          break
-        case "chat_history":
-          setMessages(data.messages)
-          break
-      }
-    }
-
-    ws.onclose = () => {
-      setIsConnected(false)
-    }
-
+    if (!selectedTrainer) return;
+    const chatId = getChatId(selectedTrainer, currentMember.id);
+    const unsub = listenToMessages(chatId, (msgs) => setMessages(msgs));
     return () => {
-      ws.close()
-    }
-  }, [])
+      unsub();
+    };
+  }, [selectedTrainer]);
+
+  useEffect(() => {
+    if (!selectedTrainer) return;
+    const ref = doc(db, "members", currentMember.id);
+    getDoc(ref).then((snap) => {
+      if (snap.exists()) setUserDetails(snap.data());
+    });
+  }, [selectedTrainer]);
+
+  // Compute recently chatted trainers based on messages
+  const recentlyChattedIds = useMemo(() => {
+    const ids = Array.from(
+      new Set(
+        messages
+          .map((msg) => {
+            // Get the other participant's ID
+            if (msg.senderId === currentMember.id) {
+              // Sent by member
+              return msg.roomId.replace(`${currentMember.id}-`, "").replace(`-${currentMember.id}`, "");
+            } else {
+              // Received by member
+              return msg.senderId;
+            }
+          })
+          .filter((id) => id && id !== currentMember.id)
+          .reverse()
+      )
+    );
+    return ids;
+  }, [messages, currentMember.id]);
+
+  // Filter and sort trainers
+  const filteredTrainers = useMemo(() => {
+    return trainers
+      .filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [trainers, search]);
+
+  // Recently chatted trainers
+  const recentlyChattedTrainers = recentlyChattedIds
+    .map((id) => trainers.find((t) => t.id === id))
+    .filter(Boolean) as Trainer[];
+  const otherTrainers = filteredTrainers.filter((t) => !recentlyChattedIds.includes(t.id));
+
+  useEffect(() => {
+    // Fetch trainers from Firestore
+    fetchAllTrainers().then(setTrainers);
+  }, []);
+
+  useEffect(() => {
+    setUserOnlineStatus(currentMember.id, "member", true);
+    const handleUnload = () => setUserOnlineStatus(currentMember.id, "member", false);
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      setUserOnlineStatus(currentMember.id, "member", false);
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, []);
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
@@ -114,38 +137,21 @@ export default function MemberChatPage() {
     setTrainers((prev) => prev.map((trainer) => (trainer.id === trainerId ? { ...trainer, unreadCount: 0 } : trainer)))
 
     // Request chat history
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({
-          type: "get_chat_history",
-          roomId: `${trainerId}-${currentMember.id}`,
-        }),
-      )
-    }
+    // This part is no longer needed as messages are real-time
   }
 
-  const sendMessage = () => {
-    if (!newMessage.trim() || !selectedTrainer || !wsRef.current) return
-
-    const message: Omit<Message, "id"> = {
-      senderId: currentMember.id,
-      senderName: currentMember.name,
-      senderType: "member",
-      text: newMessage.trim(),
-      timestamp: new Date(),
-      roomId: `${selectedTrainer}-${currentMember.id}`,
-    }
-
-    wsRef.current.send(
-      JSON.stringify({
-        type: "send_message",
-        message,
-        recipientId: selectedTrainer,
-      }),
-    )
-
-    setNewMessage("")
-  }
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !selectedTrainer) return;
+    const chatId = getChatId(selectedTrainer, currentMember.id);
+    await sendFirestoreMessage(
+      chatId,
+      currentMember.id,
+      currentMember.name,
+      "member",
+      newMessage.trim()
+    );
+    setNewMessage("");
+  };
 
   const selectedTrainerInfo = trainers.find((t) => t.id === selectedTrainer)
 
@@ -154,22 +160,42 @@ export default function MemberChatPage() {
       {/* Trainers Sidebar */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">
+          {userDetails && (
+            <div className="mb-4 p-3 rounded" style={{ background: '#e53935' }}>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-white text-lg">{userDetails.name}</span>
+                <span className="flex items-center gap-1">
+                  <span className={`inline-block w-3 h-3 rounded-full border-2 border-white ${userDetails.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                  <span className="text-xs text-white">{userDetails.isOnline ? 'Online' : 'Offline'}</span>
+                </span>
+              </div>
+              {(userDetails.specialty || userDetails.role) && (
+                <div className="mt-1 inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                  {userDetails.specialty || userDetails.role}
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-2 mb-2">
-            <UserCheck className="h-5 w-5 text-green-600" />
+            <UserCheck className="h-5 w-5" style={{ color: '#e53935' }} />
             <h2 className="text-lg font-semibold text-gray-900">Available Trainers</h2>
           </div>
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`} />
-            <span className="text-sm text-gray-600">{isConnected ? "Connected" : "Disconnected"}</span>
-          </div>
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search trainers..."
+            className="mt-3"
+          />
         </div>
-
         <div className="flex-1 overflow-y-auto">
-          {trainers.length === 0 ? (
+          {filteredTrainers.length === 0 ? (
             <div className="p-4 text-center text-gray-500">No trainers available</div>
           ) : (
             <div className="p-2">
-              {trainers.map((trainer) => (
+              {recentlyChattedTrainers.length > 0 && (
+                <>
+                  <div className="text-xs text-gray-500 mb-1 ml-1">Recently Chatted</div>
+                  {recentlyChattedTrainers.map((trainer) => (
                 <div
                   key={trainer.id}
                   onClick={() => selectTrainer(trainer.id)}
@@ -179,7 +205,7 @@ export default function MemberChatPage() {
                 >
                   <div className="relative">
                     <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-green-100 text-green-600">
+                      <AvatarFallback className="bg-red-600 text-white font-bold">
                         {trainer.name
                           .split(" ")
                           .map((n) => n[0])
@@ -192,7 +218,46 @@ export default function MemberChatPage() {
                       }`}
                     />
                   </div>
-
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-gray-900 truncate">{trainer.name}</p>
+                          {trainer.unreadCount > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              {trainer.unreadCount}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500 truncate">{trainer.specialty}</p>
+                        <p className="text-xs text-gray-400">{trainer.isOnline ? "Online" : "Offline"}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="border-b border-gray-200 my-2" />
+                </>
+              )}
+              {otherTrainers.map((trainer) => (
+                <div
+                  key={trainer.id}
+                  onClick={() => selectTrainer(trainer.id)}
+                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                    selectedTrainer === trainer.id ? "bg-green-50 border border-green-200" : "hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="relative">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-red-600 text-white font-bold">
+                        {trainer.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div
+                      className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
+                        trainer.isOnline ? "bg-green-500" : "bg-gray-400"}
+                      `}
+                    />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-gray-900 truncate">{trainer.name}</p>
@@ -217,10 +282,10 @@ export default function MemberChatPage() {
         {selectedTrainerInfo ? (
           <>
             {/* Chat Header */}
-            <div className="p-4 bg-white border-b border-gray-200">
+            <div className="p-4 bg-white border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-green-100 text-green-600">
+                  <AvatarFallback className="bg-red-600 text-white font-bold">
                     {selectedTrainerInfo.name
                       .split(" ")
                       .map((n) => n[0])
@@ -234,37 +299,84 @@ export default function MemberChatPage() {
                   </p>
                 </div>
               </div>
+              <button onClick={() => setSelectedTrainer(null)} className="text-red-600 text-xl font-bold px-2 hover:bg-red-100 rounded">×</button>
             </div>
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages
-                .filter(
-                  (msg) =>
-                    msg.roomId === `${selectedTrainer}-${currentMember.id}` ||
-                    msg.roomId === `${currentMember.id}-${selectedTrainer}`,
-                )
+                .filter((msg) => selectedTrainer && msg.roomId === getChatId(selectedTrainer, currentMember.id))
                 .map((message) => (
                   <div
                     key={message.id}
                     className={`flex ${message.senderId === currentMember.id ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                        message.senderId === currentMember.id ? "bg-green-600 text-white" : "bg-gray-200 text-gray-900"
+                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl relative group ${
+                        message.senderId === currentMember.id ? "bg-red-600 text-white" : "bg-[#e0e0e0] text-gray-900"
                       }`}
                     >
-                      <p className="text-sm">{message.text}</p>
-                      <p
-                        className={`text-xs mt-1 ${
-                          message.senderId === currentMember.id ? "text-green-100" : "text-gray-500"
-                        }`}
-                      >
-                        {new Date(message.timestamp).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
+                      {editingMessageId === message.id ? (
+                        <form
+                          onSubmit={async (e) => {
+                            e.preventDefault();
+                            await editMessage(getChatId(selectedTrainer!, currentMember.id), message.id, editText);
+                            setEditingMessageId(null);
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          <input
+                            value={editText}
+                            onChange={e => setEditText(e.target.value)}
+                            className="flex-1 px-2 py-1 rounded text-black"
+                            autoFocus
+                          />
+                          <button type="submit" className="text-xs text-white font-bold">Save</button>
+                          <button type="button" onClick={() => setEditingMessageId(null)} className="text-xs text-white">Cancel</button>
+                        </form>
+                      ) : (
+                        <>
+                          <p className="text-sm">{message.text}</p>
+                          <p className="text-xs mt-1">
+                            {(() => {
+                              let dateObj;
+                              if (isFirestoreTimestamp(message.timestamp)) {
+                                dateObj = message.timestamp.toDate();
+                              } else if (
+                                typeof message.timestamp === "string" ||
+                                typeof message.timestamp === "number" ||
+                                Object.prototype.toString.call(message.timestamp) === "[object Date]"
+                              ) {
+                                dateObj = new Date(message.timestamp);
+                              } else {
+                                dateObj = null;
+                              }
+                              return dateObj
+                                ? dateObj.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                                : "—";
+                            })()}
+                          </p>
+                          {message.senderId === currentMember.id && (
+                            <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                              <button
+                                onClick={() => {
+                                  setEditingMessageId(message.id);
+                                  setEditText(message.text);
+                                }}
+                                className="text-xs text-white bg-black/30 rounded px-1"
+                                title="Edit"
+                              >✎</button>
+                              <button
+                                onClick={async () => {
+                                  await deleteMessage(getChatId(selectedTrainer!, currentMember.id), message.id);
+                                }}
+                                className="text-xs text-white bg-black/30 rounded px-1"
+                                title="Delete"
+                              >🗑</button>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -290,9 +402,9 @@ export default function MemberChatPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center bg-gray-50">
             <div className="text-center">
-              <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a trainer to start chatting</h3>
-              <p className="text-gray-500">Choose a trainer from the sidebar to begin your conversation</p>
+              <UserCheck className="h-12 w-12 text-red-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Welcome to FitSync Chat</h3>
+              <p className="text-gray-500">Select a trainer from the sidebar to start chatting.</p>
             </div>
           </div>
         )}
