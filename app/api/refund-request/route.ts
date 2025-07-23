@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     // DEBUG: Log the query being run
     console.log('[DEBUG] Refund query', { userId, paymentFor, purchaseId });
 
-    // Find and update payment record in kalana_paymentsses
+    // Find and update payment record in fitsync_paymentsses
     const mongoose = require('mongoose');
     let payment = null;
     let debugPayments = await Payment.find({ userId, paymentFor });
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     if (!payment) {
       console.error('❌ Payment not found. Existing payments for user/type:', debugPayments);
       console.error('❌ Query used:', debugQuery);
-      return NextResponse.json({ error: `Payment not found in kalana_paymentsses for userId=${userId}, paymentFor=${paymentFor}, purchaseId=${purchaseId}`, debugPayments, debugQuery }, { status: 404 });
+      return NextResponse.json({ error: `Payment not found in fitsync_paymentsses for userId=${userId}, paymentFor=${paymentFor}, purchaseId=${purchaseId}`, debugPayments, debugQuery }, { status: 404 });
     }
 
     // Check if refund already requested
@@ -196,6 +196,19 @@ Refund Processed:
       }, {
         status: 'refunded',
         refundedAt: new Date(),
+      });
+    }
+    // If enrollment, also update Enrollment to refunded
+    if (paymentFor === 'enrollment') {
+      const Enrollment = (await import('@/models/enrollment')).default;
+      const enrollmentId = payment.relatedEnrollmentId || purchaseId;
+      await Enrollment.updateMany({
+        _id: enrollmentId,
+        userId,
+        status: { $in: ['paid', 'active'] }
+      }, {
+        status: 'refunded',
+        updatedAt: new Date(),
       });
     }
     await payment.save();

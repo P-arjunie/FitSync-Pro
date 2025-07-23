@@ -260,7 +260,7 @@ const EditProduct = () => {
             <div className="flex justify-end gap-4">
               <button
                 type="button"
-                onClick={() => router.push("/pasindi/admin-products-dashboard")}
+                onClick={() => router.push("/admin-order-management/admin-products-dashboard")}
                 className="px-6 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
               >
                 Cancel

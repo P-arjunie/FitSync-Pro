@@ -66,21 +66,21 @@ const MemberDashboard: React.FC = () => {
       description: "View and manage your orders",
       icon: "📦",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/kalana/purchase-history", // Updated link
+      link: "/fitness-activities-and-orders/purchase-history", // Updated link
     },
     {
       title: "Sessions",
       description: "View your training sessions",
       icon: "🏋️",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/pasindi/all-sessions",
+      link: "/trainer-sessions/all-sessions",
     },
     {
       title: "Request Sessions",
       description: "Book new training sessions",
       icon: "📅",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/pasindi/schedule",
+      link: "/trainer-sessions/schedule",
     },
     {
       title: "My Profile",

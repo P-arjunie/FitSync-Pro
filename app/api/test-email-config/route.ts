@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Send test email
-    const testEmailAddress = testEmail || "kalanam890@gmail.com";
+    const testEmailAddress = testEmail || "fitsync.test@gmail.com";
     
     const emailSubject = "🧪 FitSync Pro - Email Test";
     const emailText = `

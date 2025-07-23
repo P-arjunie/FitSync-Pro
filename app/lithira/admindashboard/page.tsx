@@ -135,7 +135,7 @@ const AdminDashboard: React.FC = () => {
       description: "Manage products and inventory",
       icon: "🛍️",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/pasindi/admin-products-dashboard",
+      link: "/admin-order-management/admin-products-dashboard",
     },
     {
       title: "Gallery Management",

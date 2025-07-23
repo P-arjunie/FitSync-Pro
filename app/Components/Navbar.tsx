@@ -55,7 +55,7 @@ const Navbar: React.FC = () => {
   const handleCartClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isLoggedIn) {
-      router.push("/kalana/cart");
+      router.push("/fitness-activities-and-orders/cart");
     } else {
       router.push("/login");
     }
@@ -102,7 +102,7 @@ const Navbar: React.FC = () => {
               <Link href="/#featured-classes">Classes</Link>
             </li>
             <li className="px-6 py-3 hover:bg-gray-700 rounded-b-md">
-              <Link href="/pasindi/products">Shop</Link>
+              <Link href="/user-order-management/products">Shop</Link>
             </li>
           </ul>
         </li>
@@ -178,7 +178,7 @@ const Navbar: React.FC = () => {
             <Link href="/schedule">Schedule</Link>
           </li>
           <li>
-            <Link href="/pasindi/products">Shop</Link>
+            <Link href="/user-order-management/products">Shop</Link>
           </li>
           <li>
             <Link href="/hasini/Contact_Page">Contact</Link>
