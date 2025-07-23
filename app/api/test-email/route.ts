@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
     // Test email
     await transporter.sendMail({
       from: `"FitSync Pro Test" <${process.env.EMAIL_USER}>`,
-      to: "kalanam890@gmail.com",
+      to: "fitsync.test@gmail.com",
       subject: "Test Email from FitSync Pro",
       text: "This is a test email to verify email configuration.",
       html: "<h1>Test Email</h1><p>This is a test email to verify email configuration.</p>",

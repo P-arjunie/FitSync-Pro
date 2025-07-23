@@ -50,7 +50,7 @@ const PowerLiftingClassPage = () => {
         throw new Error(data.error || "Failed to create enrollment");
       }
 
-      router.push(`/kalana/checkout?enrollmentId=${data._id}`);
+      router.push(`/fitness-activities-and-orders/checkout?enrollmentId=${data._id}`);
     } catch (error) {
       console.error("Enrollment creation failed", error);
       alert("Could not create enrollment, please try again.");

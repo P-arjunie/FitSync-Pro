@@ -1,4 +1,3 @@
-// app/kalana/checkout/page.tsx
 'use client';
 
 import { useEffect, useState } from "react";

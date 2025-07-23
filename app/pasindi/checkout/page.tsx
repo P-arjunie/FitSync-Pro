@@ -77,7 +77,7 @@ export default function CheckoutPage() {
 
   const handleProceedToPayment = () => {
     if (orderId) {
-      window.location.href = `/kalana/checkout?orderId=${orderId}`;
+      window.location.href = `/fitness-activities-and-orders/checkout?orderId=${orderId}`;
     }
   };
 
@@ -117,7 +117,7 @@ export default function CheckoutPage() {
               >
                 Proceed to Payment
               </button>
-              <Link href="/pasindi/my-orders">
+              <Link href="/fitness-activities-and-orders/my-orders">
                 <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                   View All Orders
                 </button>

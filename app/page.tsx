@@ -377,7 +377,7 @@ const HomePage: React.FC = () => {
               athlete, we provide diverse routines that target all aspects of
               fitness, from strength training to cardiovascular endurance.
             </p>
-            <Link href="/kalana/pricing_page">
+            <Link href="/fitness-activities-and-orders/pricing_page">
               <button className="read-more-button">Pricing Plans</button>
             </Link>
           </div>
@@ -459,7 +459,7 @@ const HomePage: React.FC = () => {
                     alt="Body Building Machine"
                     className="icon-image2"
                   />
-                  <Link href="/kalana/pricing_page">
+                  <Link href="/fitness-activities-and-orders/pricing_page">
                     <p className="icon-text cursor-pointer hover:underline">
                       Body Building
                     </p>
@@ -493,7 +493,7 @@ const HomePage: React.FC = () => {
                   <p className="class-text">Cycling</p>
                   <button
                     className="date-button"
-                    onClick={() => router.push("/kalana/cycling")}
+                    onClick={() => router.push("/fitness-activities-and-orders/cycling")}
                   >
                     Monday | 7:00 AM
                   </button>
@@ -513,7 +513,7 @@ const HomePage: React.FC = () => {
                   <p className="class-text">Workout</p>
                   <button
                     className="date-button"
-                    onClick={() => router.push("/kalana/workout")}
+                    onClick={() => router.push("/fitness-activities-and-orders/workout")}
                   >
                     Tuesday | 6:00 PM
                   </button>
@@ -533,7 +533,7 @@ const HomePage: React.FC = () => {
                   <p className="class-text">Power Lifting</p>
                   <button
                     className="date-button"
-                    onClick={() => router.push("/kalana/power_lifting")}
+                    onClick={() => router.push("/fitness-activities-and-orders/power_lifting")}
                   >
                     Wednesday | 8:00 PM
                   </button>
@@ -553,7 +553,7 @@ const HomePage: React.FC = () => {
                   <p className="class-text">Meditation</p>
                   <button
                     className="date-button"
-                    onClick={() => router.push("/kalana/meditation")}
+                    onClick={() => router.push("/fitness-activities-and-orders/meditation")}
                   >
                     Thursday | 7:00 AM
                   </button>
@@ -569,7 +569,7 @@ const HomePage: React.FC = () => {
                   <p className="class-text">Yoga</p>
                   <button
                     className="date-button"
-                    onClick={() => router.push("/kalana/yoga")}
+                    onClick={() => router.push("/fitness-activities-and-orders/yoga")}
                   >
                     Friday | 7:30 AM
                   </button>
@@ -585,7 +585,7 @@ const HomePage: React.FC = () => {
                   <p className="class-text">MMA</p>
                   <button
                     className="date-button"
-                    onClick={() => router.push("/kalana/mma")}
+                    onClick={() => router.push("/fitness-activities-and-orders/mma")}
                   >
                     Saturday | 5:00 PM
                   </button>
@@ -612,7 +612,7 @@ const HomePage: React.FC = () => {
                 designed to suit your needs. From basic access to full-featured
                 memberships, select the plan that empowers your transformation.
               </p>
-              <a href="/kalana/pricing_page">
+              <a href="/fitness-activities-and-orders/pricing_page">
                 <button className="button">VIEW PRICING PLANS</button>
               </a>
             </div>

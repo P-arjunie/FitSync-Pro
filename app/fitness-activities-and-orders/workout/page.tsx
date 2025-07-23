@@ -6,9 +6,8 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/Components/Navbar';
 import Footer1 from '@/Components/Footer_01';
 import { getAuthUser } from '@/lib/auth';
-import { createSubscription, redirectToSubscriptionCheckout } from '@/lib/subscription';
 
-const CyclingClassPage = () => {
+const WorkoutClassPage = () => {
   const router = useRouter();
   const [authUser, setAuthUser] = useState(getAuthUser());
   const [isLoading, setIsLoading] = useState(true);
@@ -24,7 +23,7 @@ const CyclingClassPage = () => {
   }, []);
 
   const goBackToClasses = () => {
-    router.push('/#featured-classes');
+    router.push('/#featured-classes');  // Same as cycling back button
   };
 
   const enrollNow = async () => {
@@ -39,8 +38,8 @@ const CyclingClassPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: authUser.userId,
-          className: "cycling", 
-          totalAmount: 10, 
+          className: "Workout",
+          totalAmount: 10,
         }),
       });
 
@@ -51,13 +50,12 @@ const CyclingClassPage = () => {
         throw new Error(data.error || "Failed to create enrollment");
       }
 
-      router.push(`/kalana/checkout?enrollmentId=${data._id}`);
+      router.push(`/fitness-activities-and-orders/checkout?enrollmentId=${data._id}`);
     } catch (error) {
       console.error("Enrollment creation failed", error);
       alert("Could not create enrollment, please try again.");
     }
   };
-
 
   return (
     <>
@@ -68,8 +66,8 @@ const CyclingClassPage = () => {
           <button onClick={goBackToClasses} className="back-btn" type="button">
             ← Back to Classes
           </button>
-          <h1 className="class-title">CYCLING</h1>
-          <p className="class-subtitle">High-Energy Indoor Cycling Experience</p>
+          <h1 className="class-title">WORKOUT</h1>
+          <p className="class-subtitle">Full-Body Strength Training & Conditioning</p>
         </div>
       </header>
 
@@ -77,15 +75,15 @@ const CyclingClassPage = () => {
         <div className="main-content">
           <div className="class-image-section">
             <Image
-              src="/cycling.png"
-              alt="Cycling Class"
+              src="/workout2.jpg"
+              alt="Workout Class"
               className="class-hero-image"
               width={1000}
               height={500}
             />
             <div className="image-overlay">
               <h3>Next Session</h3>
-              <div className="schedule-badge">Monday | 7:00 AM</div>
+              <div className="schedule-badge">Tuesday | 6:00 PM</div>
             </div>
           </div>
 
@@ -93,22 +91,21 @@ const CyclingClassPage = () => {
             <div className="details-section">
               <h2 className="section-title">About This Class</h2>
               <p className="description">
-                Experience the ultimate cardiovascular workout with our high-energy cycling
-                classes. Led by certified instructors, these sessions combine motivating music,
-                challenging intervals, and immersive lighting to create an unforgettable fitness
-                experience.
+                Push your limits with our comprehensive workout sessions designed to build strength, 
+                endurance, and muscle definition. Our expert trainers guide you through varied 
+                exercises targeting all major muscle groups for maximum results.
               </p>
             </div>
 
             <div className="details-section">
               <h2 className="section-title">Class Benefits</h2>
               <ul className="benefits-list">
-                <li>Burns 400-600 calories per session</li>
-                <li>Improves cardiovascular endurance</li>
-                <li>Low-impact, joint-friendly workout</li>
-                <li>Builds leg strength and power</li>
-                <li>Boosts mental health and mood</li>
-                <li>Group motivation and energy</li>
+                <li>Full-body muscle development</li>
+                <li>Increased strength and power</li>
+                <li>Improved muscle definition</li>
+                <li>Enhanced metabolic rate</li>
+                <li>Better functional movement</li>
+                <li>Progressive overload training</li>
               </ul>
             </div>
           </div>
@@ -118,7 +115,7 @@ const CyclingClassPage = () => {
           <div className="info-grid">
             <div className="info-item">
               <div className="info-label">Duration</div>
-              <div className="info-value">45 Minutes</div>
+              <div className="info-value">60 Minutes</div>
             </div>
             <div className="info-item">
               <div className="info-label">Intensity</div>
@@ -130,7 +127,7 @@ const CyclingClassPage = () => {
             </div>
             <div className="info-item">
               <div className="info-label">Max Capacity</div>
-              <div className="info-value">20 People</div>
+              <div className="info-value">15 People</div>
             </div>
           </div>
         </div>
@@ -148,12 +145,11 @@ const CyclingClassPage = () => {
                       <div className="enrollment-benefits">
               <h4>What's Included:</h4>
               <ul>
-                <li>Unlimited monthly cycling classes</li>
+                <li>Unlimited monthly classes</li>
                 <li>Professional instruction</li>
                 <li>All equipment provided</li>
-                <li>Locker room access</li>
+                <li>Personalized guidance</li>
                 <li>Progress tracking</li>
-
               </ul>
             </div>
         </div>
@@ -425,4 +421,4 @@ const CyclingClassPage = () => {
   );
 };
 
-export default CyclingClassPage;
+export default WorkoutClassPage;

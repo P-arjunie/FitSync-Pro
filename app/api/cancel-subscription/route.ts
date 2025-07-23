@@ -114,7 +114,7 @@ Refund Processed:
         `;
         await transporter.sendMail({
           from: `FitSync Pro <${process.env.EMAIL_USER}>`,
-          to: 'kalanam890@gmail.com',
+          to: 'fitsync.test@gmail.com',
           subject: emailSubject,
           text: emailText,
         });

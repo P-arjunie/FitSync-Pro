@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     // DEBUG: Log the query being run
     console.log('[DEBUG] Refund query', { userId, paymentFor, purchaseId });
 
-    // Find and update payment record in kalana_paymentsses
+    // Find and update payment record in fitsync_paymentsses
     const mongoose = require('mongoose');
     let payment = null;
     let debugPayments = await Payment.find({ userId, paymentFor });
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     if (!payment) {
       console.error('❌ Payment not found. Existing payments for user/type:', debugPayments);
       console.error('❌ Query used:', debugQuery);
-      return NextResponse.json({ error: `Payment not found in kalana_paymentsses for userId=${userId}, paymentFor=${paymentFor}, purchaseId=${purchaseId}`, debugPayments, debugQuery }, { status: 404 });
+      return NextResponse.json({ error: `Payment not found in fitsync_paymentsses for userId=${userId}, paymentFor=${paymentFor}, purchaseId=${purchaseId}`, debugPayments, debugQuery }, { status: 404 });
     }
 
     // Check if refund already requested
@@ -167,7 +167,7 @@ Refund Processed:
           `;
           await transporter.sendMail({
             from: `FitSync Pro <${process.env.EMAIL_USER}>`,
-            to: 'kalanam890@gmail.com',
+            to: 'fitsync.test@gmail.com',
             subject: emailSubject,
             text: emailText,
           });
