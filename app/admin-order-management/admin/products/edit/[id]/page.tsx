@@ -128,7 +128,7 @@ const EditProduct = () => {
       }
 
       // navigate back to admin dashboard
-      router.push("/admin/products")
+      router.push("/admin-order-management/admin-products-dashboard")
     } catch (error) {
       console.error("Error updating product:", error)
       setError(error instanceof Error ? error.message : "An unknown error occurred")

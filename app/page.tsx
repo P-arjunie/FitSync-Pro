@@ -399,7 +399,7 @@ const HomePage: React.FC = () => {
               of protein, carbohydrates, and healthy fats to support muscle
               growth and recovery.
             </p>
-            <Link href="/pasindi/products">
+            <Link href="/user-order-management/products">
               <button className="read-more-button">Shop</button>
             </Link>
           </div>
@@ -444,7 +444,7 @@ const HomePage: React.FC = () => {
                     alt="Modern Equipment"
                     className="icon-image2"
                   />
-                  <Link href="/pasindi/products">
+                  <Link href="/user-order-management/products">
                     <p className="icon-text cursor-pointer hover:underline">
                       Modern Equipment
                     </p>
