@@ -77,7 +77,7 @@ export default function MyOrdersPage() {
   }
 
   const handlePayment = (orderId: string) => {
-    window.location.href = `/kalana/checkout?orderId=${orderId}`;
+    window.location.href = `/fitness-activities-and-orders/checkout?orderId=${orderId}`;
   }
 
   return (

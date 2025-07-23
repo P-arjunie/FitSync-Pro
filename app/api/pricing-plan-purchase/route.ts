@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       userId,
       status: { $in: ['paid', 'active'] }
     });
-    // Also check in Payment (kalana_paymentsses)
+    // Also check in Payment (fitsync_paymentsses)
     const Payment = (await import('@/models/Payment')).default;
     const existingActivePayment = await Payment.findOne({
       userId,

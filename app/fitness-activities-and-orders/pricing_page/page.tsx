@@ -55,7 +55,7 @@ export default function PricingPage() {
       const data = await res.json();
 
       if (res.ok && data.planId) {
-        router.push(`/kalana/checkout?paymentFor=pricing-plan&pricingPlanId=${data.planId}`);
+        router.push(`/fitness-activities-and-orders/checkout?paymentFor=pricing-plan&pricingPlanId=${data.planId}`);
       } else {
         if (data.error && data.error.includes('active subscription plan')) {
           alert(data.error);

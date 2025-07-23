@@ -67,6 +67,9 @@ const PurchaseHistoryPage = () => {
   const [refundReason, setRefundReason] = useState('');
   const [processingRefund, setProcessingRefund] = useState(false);
   const [processingCancel, setProcessingCancel] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelPurchase, setCancelPurchase] = useState<PurchaseItem | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -248,7 +251,7 @@ const PurchaseHistoryPage = () => {
     }
   };
 
-  const handleCancelSubscription = async (purchase: PurchaseItem) => {
+  const handleCancelSubscription = async (purchase: PurchaseItem, reason?: string) => {
     if (!purchase.itemDetails?.planName) return;
 
     setProcessingCancel(true);
@@ -258,7 +261,8 @@ const PurchaseHistoryPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
-          planName: purchase.itemDetails.planName
+          planName: purchase.itemDetails.planName,
+          reason: reason || '',
         }),
       });
 
@@ -274,6 +278,9 @@ const PurchaseHistoryPage = () => {
       alert('Failed to cancel subscription');
     } finally {
       setProcessingCancel(false);
+      setShowCancelModal(false);
+      setCancelReason('');
+      setCancelPurchase(null);
     }
   };
 
@@ -628,7 +635,10 @@ const PurchaseHistoryPage = () => {
                     {/* Pricing plans - cancel subscription */}
                     {purchase.paymentFor === 'pricing-plan' && purchase.isActive && purchase.refundStatus === 'none' && (
                       <button
-                        onClick={() => handleCancelSubscription(purchase)}
+                        onClick={() => {
+                          setCancelPurchase(purchase);
+                          setShowCancelModal(true);
+                        }}
                         disabled={processingCancel}
                         className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-300 text-sm font-medium disabled:opacity-50"
                       >
@@ -807,6 +817,54 @@ const PurchaseHistoryPage = () => {
               ) : (
                 <p className="text-gray-500 text-center py-8">No transactions yet</p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Subscription Modal for Pricing Plans */}
+      {showCancelModal && cancelPurchase && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Cancel Subscription</h3>
+              <button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setCancelReason('');
+                  setCancelPurchase(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <label className="block mb-2 font-medium text-gray-700">Reason for cancellation</label>
+            <textarea
+              value={cancelReason}
+              onChange={e => setCancelReason(e.target.value)}
+              className="border p-2 rounded w-full mb-4"
+              rows={3}
+              placeholder="Please provide a reason for cancelling your subscription"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setCancelReason('');
+                  setCancelPurchase(null);
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleCancelSubscription(cancelPurchase, cancelReason)}
+                disabled={processingCancel || !cancelReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium disabled:opacity-50"
+              >
+                {processingCancel ? 'Cancelling...' : 'Confirm Cancellation'}
+              </button>
             </div>
           </div>
         </div>
