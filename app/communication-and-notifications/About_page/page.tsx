@@ -44,7 +44,7 @@ const AboutVisionMission = () => {
               <li>✔ Community-driven approach for motivation</li>
               <li>✔ Cutting-edge tech integrated into your workouts</li>
             </ul>
-            <Link href="/hasini/Contact_Page">
+            <Link href="/communication-and-notifications/Contact_Page">
               <button className="mt-6 px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700">
                 Contact Us
               </button>
