@@ -107,10 +107,10 @@ const Navbar: React.FC = () => {
           </ul>
         </li>
         <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
-          <Link href="/sathya/trainerDetails">Trainers</Link>
+          <Link href="/Analytics&Feedbacks/trainerDetails">Trainers</Link>
         </li>
         <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
-          <Link href="/sathya/feedback">Feedback</Link>
+          <Link href="/Analytics&Feedbacks/feedback">Feedback</Link>
         </li>
         <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
           <Link href="/hasini/Contact_Page">Contact</Link>

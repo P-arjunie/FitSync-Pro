@@ -34,4 +34,3 @@ export const connectToDatabase = async () => {
 
 export const connectDB = connectToDatabase;
 
-
