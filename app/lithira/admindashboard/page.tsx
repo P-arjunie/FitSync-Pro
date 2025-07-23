@@ -121,14 +121,14 @@ const AdminDashboard: React.FC = () => {
       description: "View platform analytics and insights",
       icon: "📊",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/sathya/analytics",
+      link: "/Analytics&Feedbacks/analytics",
     },
     {
       title: "Feedback Management",
       description: "Manage user feedback and reviews",
       icon: "💬",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/sathya/traineeReviwsediting",
+      link: "/Analytics&Feedbacks/traineeReviwsediting",
     },
     {
       title: "Product Management",
