@@ -59,6 +59,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       approvedAt: new Date()
     });
 
+    // Increment currentParticipants in the session
+    await Session.findByIdAndUpdate(id, { $inc: { currentParticipants: 1 } });
+
     // Send approval email to member
     if (participant.userEmail) {
       try {

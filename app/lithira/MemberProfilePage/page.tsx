@@ -309,23 +309,6 @@ const MemberProfilePage = () => {
             <h3 className="font-semibold text-lg">Membership Info</h3>
 
             <div>
-              <label className="block font-semibold">Plan:</label>
-              <input
-                type="text"
-                value={formData.membershipInfo?.plan || ""}
-                onChange={(e) =>
-                  handleNestedInputChange(
-                    "membershipInfo",
-                    "plan",
-                    e.target.value
-                  )
-                }
-                disabled={!editMode}
-                className="input input-bordered w-full"
-              />
-            </div>
-
-            <div>
               <label className="block font-semibold">Start Date:</label>
               <input
                 type="date"

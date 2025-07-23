@@ -120,6 +120,53 @@ export async function GET(req: NextRequest) {
       return date.toLocaleString('default', { month: 'long', year: 'numeric' });
     });
 
+    // Calculate additional analytics fields for frontend compatibility
+    const totalSessions = sessions.length + virtualSessions.length;
+    // Calculate average sessions per day
+    let averageSessionsPerDay = 0;
+    if (allSessions.length > 0) {
+      // Find unique days in the range, skip invalid dates
+      const daySet = new Set<string>();
+      allSessions.forEach(s => {
+        const d = new Date(s.start || s.date);
+        if (!isNaN(d.getTime())) {
+          daySet.add(d.toISOString().split('T')[0]);
+        }
+      });
+      if (daySet.size > 0) {
+        averageSessionsPerDay = totalSessions / daySet.size;
+      } else {
+        averageSessionsPerDay = 0;
+      }
+      // Ensure it's a valid number
+      if (!isFinite(averageSessionsPerDay) || isNaN(averageSessionsPerDay)) {
+        averageSessionsPerDay = 0;
+      }
+    }
+    // Trainer breakdown
+    const trainerBreakdown: Record<string, number> = {};
+    sessions.forEach(s => {
+      const name = s.trainerName || '';
+      if (name) trainerBreakdown[name] = (trainerBreakdown[name] || 0) + 1;
+    });
+    virtualSessions.forEach(s => {
+      const name = s.trainer || '';
+      if (name) trainerBreakdown[name] = (trainerBreakdown[name] || 0) + 1;
+    });
+    // Busiest days
+    const dayCounts: Record<string, number> = {};
+    allSessions.forEach(s => {
+      const d = new Date(s.start || s.date);
+      if (!isNaN(d.getTime())) {
+        const dayStr = d.toLocaleDateString('en-CA');
+        dayCounts[dayStr] = (dayCounts[dayStr] || 0) + 1;
+      }
+    });
+    const busiestDays = Object.entries(dayCounts)
+      .map(([day, count]) => ({ day, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
     return NextResponse.json({
       success: true,
       data: {
@@ -128,7 +175,13 @@ export async function GET(req: NextRequest) {
         toBeHeldPhysical: toBeHeldPhysicalCounts,
         doneVirtual: doneVirtualCounts,
         toBeHeldVirtual: toBeHeldVirtualCounts,
-        trainers: uniqueTrainers
+        trainers: uniqueTrainers,
+        bookings: donePhysicalCounts,
+        virtualBookings: doneVirtualCounts,
+        totalSessions,
+        averageSessionsPerDay,
+        trainerBreakdown,
+        busiestDays
       }
     });
   } catch (error) {

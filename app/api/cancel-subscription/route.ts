@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     await connectToDB();
 
     const body = await req.json();
-    const { userId, planName } = body;
+    const { userId, planName, reason } = body;
 
     if (!userId || !planName) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
       payment.refundStatus = 'refunded';
       payment.refundProcessedAt = new Date();
       payment.refundAmount = refundAmount;
+      payment.refundReason = reason;
       await payment.save();
       console.log('[DEBUG] Updated Payment:', payment);
     } else {
@@ -88,6 +89,40 @@ export async function POST(req: NextRequest) {
     );
     const walletAfter = await Wallet.findOne({ userId });
     console.log('[DEBUG] Wallet after update:', walletAfter);
+
+    // Send admin email for subscription refund
+    try {
+      if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+        const emailSubject = `Refund Processed - Subscription Plan`;
+        const emailText = `
+Refund Processed:
+- User ID: ${userId}
+- Plan Name: ${planName}
+- Purchase ID: ${plan._id}
+- Original Amount: $${plan.amount.toFixed(2)}
+- Refund Amount: $${refundAmount.toFixed(2)}
+- Reason: ${reason || 'N/A'}
+- Processed At: ${new Date().toLocaleString()}
+        `;
+        await transporter.sendMail({
+          from: `FitSync Pro <${process.env.EMAIL_USER}>`,
+          to: 'kalanam890@gmail.com',
+          subject: emailSubject,
+          text: emailText,
+        });
+        console.log('📧 Subscription refund processed email sent to admin');
+      }
+    } catch (emailErr) {
+      console.error('❌ Failed to send admin subscription refund email:', emailErr);
+    }
 
     return NextResponse.json({ 
       success: true, 
