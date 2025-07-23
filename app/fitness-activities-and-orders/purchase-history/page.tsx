@@ -70,6 +70,7 @@ const PurchaseHistoryPage = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelPurchase, setCancelPurchase] = useState<PurchaseItem | null>(null);
+  const [summary, setSummary] = useState<any>({});
   const router = useRouter();
 
   useEffect(() => {
@@ -100,6 +101,7 @@ const PurchaseHistoryPage = () => {
         }
 
         setPurchaseHistory(historyData.purchaseHistory || []);
+        setSummary(historyData.summary || {});
 
         // Fetch wallet data
         const walletRes = await fetch(`/api/wallet?userId=${userId}`);
@@ -341,12 +343,12 @@ const PurchaseHistoryPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-12">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">Total Spent</p>
-                <p className="text-3xl font-bold text-gray-900">${getTotalSpent().toFixed(2)}</p>
+                <p className="text-3xl font-bold text-gray-900">${summary.totalSpent?.toFixed(2) || '0.00'}</p>
               </div>
               <DollarSign className="text-green-500" size={40} />
             </div>
@@ -356,7 +358,7 @@ const PurchaseHistoryPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">Total Purchases</p>
-                <p className="text-3xl font-bold text-gray-900">{getPurchaseCount()}</p>
+                <p className="text-3xl font-bold text-gray-900">{summary.totalPurchases || 0}</p>
               </div>
               <ShoppingBag className="text-blue-500" size={40} />
             </div>
@@ -366,9 +368,7 @@ const PurchaseHistoryPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">Active Subscriptions</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {purchaseHistory.filter(p => (p.paymentFor === 'pricing-plan' || p.paymentFor === 'monthly-plan') && p.isActive).length}
-                </p>
+                <p className="text-3xl font-bold text-gray-900">{summary.activeSubscriptions || 0}</p>
               </div>
               <TrendingUp className="text-purple-500" size={40} />
             </div>
@@ -381,6 +381,48 @@ const PurchaseHistoryPage = () => {
                 <p className="text-3xl font-bold text-gray-900">${walletData?.balance.toFixed(2) || '0.00'}</p>
               </div>
               <Wallet className="text-green-500" size={40} />
+            </div>
+          </div>
+
+          {/* Currently Purchased Classes (names) */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium">Currently Purchased Classes</p>
+                <div className="text-gray-900 font-bold text-lg">
+                  {(summary.activeClassNames && summary.activeClassNames.length > 0)
+                    ? summary.activeClassNames.join(', ')
+                    : (() => {
+                        // fallback: compute from purchaseHistory
+                        const names = purchaseHistory.filter(p => p.paymentFor === 'enrollment' && p.isActive && p.itemDetails?.className)
+                          .map(p => p.itemDetails.className);
+                        return names.length > 0 ? names.join(', ') : 'None';
+                      })()
+                  }
+                </div>
+              </div>
+              <Package className="text-purple-500" size={40} />
+            </div>
+          </div>
+
+          {/* Currently Active Subscriptions (names) */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-600 text-sm font-medium">Currently Active Subscriptions</p>
+                <div className="text-gray-900 font-bold text-lg">
+                  {(summary.activeSubscriptionNames && summary.activeSubscriptionNames.length > 0)
+                    ? summary.activeSubscriptionNames.join(', ')
+                    : (() => {
+                        // fallback: compute from purchaseHistory
+                        const names = purchaseHistory.filter(p => p.paymentFor === 'pricing-plan' && p.isActive && p.itemDetails?.planName)
+                          .map(p => p.itemDetails.planName);
+                        return names.length > 0 ? names.join(', ') : 'None';
+                      })()
+                  }
+                </div>
+              </div>
+              <TrendingUp className="text-green-500" size={40} />
             </div>
           </div>
         </div>

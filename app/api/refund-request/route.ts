@@ -167,7 +167,7 @@ Refund Processed:
           `;
           await transporter.sendMail({
             from: `FitSync Pro <${process.env.EMAIL_USER}>`,
-            to: 'fitsync.test@gmail.com',
+            to: 'kalanam890@gmail.com',
             subject: emailSubject,
             text: emailText,
           });
@@ -196,6 +196,19 @@ Refund Processed:
       }, {
         status: 'refunded',
         refundedAt: new Date(),
+      });
+    }
+    // If enrollment, also update Enrollment to refunded
+    if (paymentFor === 'enrollment') {
+      const Enrollment = (await import('@/models/enrollment')).default;
+      const enrollmentId = payment.relatedEnrollmentId || purchaseId;
+      await Enrollment.updateMany({
+        _id: enrollmentId,
+        userId,
+        status: { $in: ['paid', 'active'] }
+      }, {
+        status: 'refunded',
+        updatedAt: new Date(),
       });
     }
     await payment.save();

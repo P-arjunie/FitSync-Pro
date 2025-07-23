@@ -48,6 +48,10 @@ const MMAClassPage = () => {
 
       if (!res.ok) {
         console.error("🔴 Server responded with error:", data);
+        if (data.error && data.error.includes('engaged in 2 classes')) {
+          alert('You are already engaged in 2 classes. Please refund one to continue.');
+          return;
+        }
         throw new Error(data.error || "Failed to create enrollment");
       }
 
