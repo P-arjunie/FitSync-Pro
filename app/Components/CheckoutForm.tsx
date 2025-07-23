@@ -257,8 +257,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
 
         {/* Show store purchase warning before payment for shop purchases */}
         {(!enrollmentData && !pricingPlanData) && (
-          <div style={{ background: '#FEF3C7', color: '#92400e', border: '1px solid #F59E0B', borderRadius: 8, padding: 16, marginTop: 16, textAlign: 'center' }}>
-            <strong>Note:</strong> Store purchases are non-refundable.
+          <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-1 text-yellow-700 mt-4 mb-4 mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z" />
+            </svg>
+            <span className="font-medium">Note: Store purchases are non-refundable.</span>
           </div>
         )}
 

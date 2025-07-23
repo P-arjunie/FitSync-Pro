@@ -9,6 +9,7 @@ import { Clock, MapPin, Users } from "lucide-react";
 import moment from "moment";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "../../Components/ui/dialog";
 import { Button } from "../../Components/ui/button";
+import { Users as UsersIcon } from "lucide-react";
 
 interface Session {
   _id: string;
@@ -22,6 +23,7 @@ interface Session {
   description?: string;
   canceled?: boolean;
   cancellationReason?: string;
+  status?: 'active' | 'cancelled' | 'completed';
 }
 
 const TrainerSessionsPage: React.FC = () => {
@@ -38,6 +40,9 @@ const TrainerSessionsPage: React.FC = () => {
   const [cancelSession, setCancelSession] = useState<Session | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [participantsSession, setParticipantsSession] = useState<Session | null>(null);
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [participantsLoading, setParticipantsLoading] = useState(false);
 
   useEffect(() => {
     // Get trainer info from localStorage
@@ -128,14 +133,19 @@ const TrainerSessionsPage: React.FC = () => {
     if (!rescheduleSession) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/sessions/${rescheduleSession._id}`, {
+      const res = await fetch(`/api/sessions/${rescheduleSession._id}/reschedule`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ start: rescheduleStart, end: rescheduleEnd, location: rescheduleLocation })
+        body: JSON.stringify({
+            newStart: rescheduleStart,
+            newEnd: rescheduleEnd,
+            location: rescheduleLocation,
+            rescheduledBy: user?.name || "Trainer"
+        })
       });
       if (res.ok) {
-        const updated = await res.json();
-        setSessions(sessions => sessions.map(s => s._id === updated._id ? updated : s));
+        const data = await res.json();
+        setSessions(sessions => sessions.map(s => s._id === data.updatedSession._id ? data.updatedSession : s));
         setRescheduleSession(null);
       }
     } finally {
@@ -155,16 +165,53 @@ const TrainerSessionsPage: React.FC = () => {
       const res = await fetch(`/api/sessions/${cancelSession._id}/cancel`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cancellationReason: cancelReason })
+        body: JSON.stringify({ reason: cancelReason, cancelledBy: user?.name || "Trainer" })
       });
       if (res.ok) {
-        const updated = await res.json();
-        setSessions(sessions => sessions.map(s => s._id === updated._id ? updated : s));
+        const data = await res.json();
+        setSessions(sessions => sessions.map(s => s._id === data.updatedSession._id ? data.updatedSession : s));
         setCancelSession(null);
       }
     } finally {
       setActionLoading(false);
     }
+  };
+
+  // View Participants
+  const handleViewParticipants = async (session: Session) => {
+    setParticipantsSession(session);
+    setParticipantsLoading(true);
+    try {
+      const res = await fetch(`/api/sessions/${session._id}/participants`);
+      if (res.ok) {
+        const data = await res.json();
+        setParticipants(Array.isArray(data) ? data : data.all || []);
+      } else {
+        setParticipants([]);
+      }
+    } finally {
+      setParticipantsLoading(false);
+    }
+  };
+
+  // Approve/Reject
+  const handleApprove = async (participantId: string) => {
+    if (!participantsSession) return;
+    await fetch(`/api/sessions/${participantsSession._id}/approve-booking`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participantId })
+    });
+    handleViewParticipants(participantsSession); // Refresh
+  };
+  const handleReject = async (participantId: string) => {
+    if (!participantsSession) return;
+    await fetch(`/api/sessions/${participantsSession._id}/reject-booking`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participantId })
+    });
+    handleViewParticipants(participantsSession); // Refresh
   };
 
   return (
@@ -186,11 +233,26 @@ const TrainerSessionsPage: React.FC = () => {
                 <div key={session._id} className="p-4 border rounded-lg bg-gray-50">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
-                      <h3 className="text-lg font-semibold text-black">{session.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-black">{session.title}</h3>
+                        {session.status && (
+                          <Badge
+                            className={`${
+                              session.status === 'cancelled'
+                                ? 'bg-red-100 text-red-800'
+                                : session.status === 'completed'
+                                ? 'bg-gray-200 text-gray-800'
+                                : 'bg-green-100 text-green-800'
+                            } text-xs font-semibold px-2.5 py-0.5 rounded-full`}
+                          >
+                            {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-gray-600">Trainer: {session.trainerName}</span>
                         {session.canceled && session.cancellationReason && (
-                          <span className="ml-2 px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Canceled: {session.cancellationReason}</span>
+                          <span className="ml-2 text-xs text-red-800">Reason: {session.cancellationReason}</span>
                         )}
                       </div>
                     </div>
@@ -199,6 +261,9 @@ const TrainerSessionsPage: React.FC = () => {
                       <span className="text-gray-700">
                         {session.currentParticipants || 0} / {session.maxParticipants} participants
                       </span>
+                      <Button size="sm" variant="outline" onClick={() => handleViewParticipants(session)}>
+                        <UsersIcon className="w-4 h-4 mr-1" /> View Participants
+                      </Button>
                     </div>
                   </div>
                   <Separator className="my-2 bg-gray-200" />
@@ -236,6 +301,49 @@ const TrainerSessionsPage: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Participants Modal */}
+      <Dialog open={!!participantsSession} onOpenChange={open => !open && setParticipantsSession(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Participants for {participantsSession?.title}</DialogTitle>
+          </DialogHeader>
+          {participantsLoading ? (
+            <div className="flex items-center justify-center h-24">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-500"></div>
+            </div>
+          ) : participants.length === 0 ? (
+            <div className="text-center text-gray-500 py-4">No participants yet.</div>
+          ) : (
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {participants.map((p) => (
+                <div key={p._id} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div>
+                    <div className="font-medium text-black">{p.userName}</div>
+                    <div className="text-xs text-gray-500">{p.userEmail}</div>
+                    <div className="text-xs text-gray-400">{new Date(p.joinedAt).toLocaleDateString()}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      p.status === 'approved' ? 'bg-green-100 text-green-800' :
+                      p.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {p.status}
+                    </span>
+                    {p.status === 'pending' && (
+                      <>
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApprove(p._id)}>Approve</Button>
+                        <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => handleReject(p._id)}>Reject</Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Modal */}
       <Dialog open={!!editSession} onOpenChange={open => !open && setEditSession(null)}>

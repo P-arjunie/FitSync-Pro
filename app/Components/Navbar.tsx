@@ -91,14 +91,14 @@ const Navbar: React.FC = () => {
         {isLoggedIn && localStorage.getItem("userRole") === "admin" && (
           <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
             <Link href="/lithira/admindashboard" title="Admin Dashboard">
-              ⚙️
+              🛡️
             </Link>
           </li>
         )}
         {isLoggedIn && localStorage.getItem("userRole") === "member" && (
           <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
             <Link href="/lithira/memberdashboard" title="Member Dashboard">
-              ⚙️
+              👤
             </Link>
           </li>
         )}
@@ -163,7 +163,7 @@ const Navbar: React.FC = () => {
                 className="text-yellow-400 font-semibold"
                 title="Admin Dashboard"
               >
-                ⚙️ Admin Dashboard
+                🛡️ Admin Dashboard
               </Link>
             </li>
           )}
@@ -174,7 +174,7 @@ const Navbar: React.FC = () => {
                 className="text-blue-400 font-semibold"
                 title="Member Dashboard"
               >
-                ⚙️ Member Dashboard
+                👤 Member Dashboard
               </Link>
             </li>
           )}

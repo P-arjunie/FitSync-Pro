@@ -147,8 +147,13 @@ const AnalyticsPage: React.FC = () => {
         doneVirtual: Array.isArray(result.data?.doneVirtual) ? result.data.doneVirtual.map((count: any) => Number(count) || 0) : [],
         toBeHeldVirtual: Array.isArray(result.data?.toBeHeldVirtual) ? result.data.toBeHeldVirtual.map((count: any) => Number(count) || 0) : [],
         trainers: Array.isArray(result.data?.trainers) ? result.data.trainers : [],
+        bookings: Array.isArray(result.data?.bookings) ? result.data.bookings : [],
+        virtualBookings: Array.isArray(result.data?.virtualBookings) ? result.data.virtualBookings : [],
+        totalSessions: typeof result.data?.totalSessions === 'number' ? result.data.totalSessions : 0,
+        averageSessionsPerDay: typeof result.data?.averageSessionsPerDay === 'number' ? result.data.averageSessionsPerDay : 0,
+        trainerBreakdown: (result.data?.trainerBreakdown && typeof result.data.trainerBreakdown === 'object') ? result.data.trainerBreakdown : {},
+        busiestDays: Array.isArray(result.data?.busiestDays) ? result.data.busiestDays : [],
       };
-      
       setAnalyticsData(data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";

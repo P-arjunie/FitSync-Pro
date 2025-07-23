@@ -110,6 +110,7 @@ export async function GET(request: NextRequest) {
     // Transform physical sessions to include sessionType
     const transformedPhysicalSessions = physicalSessions.map(ps => ({
       ...ps.toObject(),
+      status: ps.status,
       sessionType: 'physical'
     }));
     

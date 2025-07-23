@@ -50,7 +50,8 @@ export default function JoinableSessionCalendar({ trainerId, height = 600 }: Joi
   const [sessions, setSessions] = useState<Session[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [currentView, setCurrentView] = useState<View>(Views.WEEK)
-  const [currentDate, setCurrentDate] = useState(new Date())
+  // Initialize currentDate with a fixed date to prevent hydration mismatch [^1]
+  const [currentDate, setCurrentDate] = useState<Date>(new Date(2000, 0, 1))
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isJoining, setIsJoining] = useState(false)
@@ -58,23 +59,32 @@ export default function JoinableSessionCalendar({ trainerId, height = 600 }: Joi
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [isDayDialogOpen, setIsDayDialogOpen] = useState(false)
 
+  // Set the actual current date only on the client after hydration [^1]
   useEffect(() => {
-    let isMounted = true;
+    setCurrentDate(new Date())
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
     const fetchSessions = async () => {
       try {
-        setIsLoading(true);
-        const response = await fetch(`/api/sessions?trainerId=${trainerId}`);
-        const data = await response.json();
-        const userId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+        setIsLoading(true)
+        const response = await fetch(`/api/sessions?trainerId=${trainerId}`)
+        const data = await response.json()
+        const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null
 
         // Fetch participants for each session in parallel
         const sessionsWithParticipants = await Promise.all(
           data.map(async (session: any) => {
             // Fetch participants for this session
-            const participantsRes = await fetch(`/api/sessions/${session._id}/participants`);
-            const participants = await participantsRes.json();
+            const participantsRes = await fetch(`/api/sessions/${session._id}/participants`)
+            const participants = await participantsRes.json()
+
+            // Ensure participants is an array before using .some() [^2]
+            const safeParticipants = Array.isArray(participants) ? participants : []
+
             // Check if user has joined
-            const hasJoined = userId && participants.some((p: any) => p.userId === userId);
+            const hasJoined = userId && safeParticipants.some((p: any) => p.userId === userId)
             return {
               ...session,
               start: moment(session.start).toDate(),
@@ -83,24 +93,25 @@ export default function JoinableSessionCalendar({ trainerId, height = 600 }: Joi
               title: session.title || "Unnamed Session",
               currentParticipants: session.currentParticipants || 0,
               hasJoined,
-            };
-          })
-        );
-
+            }
+          }),
+        )
         if (isMounted) {
-          setSessions(sessionsWithParticipants);
+          setSessions(sessionsWithParticipants)
         }
       } catch (error) {
-        console.error("Error loading sessions:", error);
+        console.error("Error loading sessions:", error)
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted) setIsLoading(false)
       }
-    };
-    fetchSessions();
+    }
+
+    fetchSessions()
+
     return () => {
-      isMounted = false;
-    };
-  }, [trainerId]);
+      isMounted = false
+    }
+  }, [trainerId])
 
   // Debug current view and date
   useEffect(() => {
@@ -117,10 +128,10 @@ export default function JoinableSessionCalendar({ trainerId, height = 600 }: Joi
 
   // After sessions are loaded, if in month view and no sessions in current month, go to first session's month
   useEffect(() => {
-    if (sessions.length > 0 && currentView === Views.MONTH) {
+    // Only run this effect if currentDate has been properly set on the client
+    if (currentDate.getFullYear() !== 2000 && sessions.length > 0 && currentView === Views.MONTH) {
       const currentMonth = currentDate.getMonth()
       const currentYear = currentDate.getFullYear()
-
       // Check if any session exists in the current month
       const hasSessionsInCurrentMonth = sessions.some((session) => {
         const sessionMonth = session.start.getMonth()
@@ -144,9 +155,10 @@ export default function JoinableSessionCalendar({ trainerId, height = 600 }: Joi
   const handleJoinSession = async () => {
     if (!selectedSession) return
     if (selectedSession.hasJoined) {
-      alert('You have already joined this session.')
+      alert("You have already joined this session.")
       return
     }
+
     setIsJoining(true)
     try {
       const userId = localStorage.getItem("userId")
@@ -158,11 +170,12 @@ export default function JoinableSessionCalendar({ trainerId, height = 600 }: Joi
         },
         body: JSON.stringify({ userId, userName }),
       })
+
       if (response.ok) {
         setSessions((prev) =>
           prev.map((session) =>
             session._id === selectedSession._id
-              ? { ...session, currentParticipants: (session.currentParticipants || 0) + 1 }
+              ? { ...session, currentParticipants: (session.currentParticipants || 0) + 1, hasJoined: true }
               : session,
           ),
         )
@@ -171,6 +184,7 @@ export default function JoinableSessionCalendar({ trainerId, height = 600 }: Joi
             ? {
                 ...prev,
                 currentParticipants: (prev.currentParticipants || 0) + 1,
+                hasJoined: true,
               }
             : null,
         )
@@ -227,7 +241,6 @@ export default function JoinableSessionCalendar({ trainerId, height = 600 }: Joi
           </span>
         </div>
       )}
-
       {isLoading ? (
         <div className="flex items-center justify-center h-full">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
@@ -267,7 +280,6 @@ export default function JoinableSessionCalendar({ trainerId, height = 600 }: Joi
           // No custom components prop
         />
       )}
-
       {/* Session Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md bg-white border-gray-200">
@@ -332,9 +344,17 @@ export default function JoinableSessionCalendar({ trainerId, height = 600 }: Joi
               <div className="flex gap-2">
                 <Button
                   onClick={handleJoinSession}
-                  disabled={isJoining || isSessionFull(selectedSession) || isSessionPast(selectedSession) || selectedSession.hasJoined}
+                  disabled={
+                    isJoining ||
+                    isSessionFull(selectedSession) ||
+                    isSessionPast(selectedSession) ||
+                    selectedSession.hasJoined
+                  }
                   className={`flex-1 ${
-                    isJoining || isSessionFull(selectedSession) || isSessionPast(selectedSession) || selectedSession.hasJoined
+                    isJoining ||
+                    isSessionFull(selectedSession) ||
+                    isSessionPast(selectedSession) ||
+                    selectedSession.hasJoined
                       ? "bg-gray-400 hover:bg-gray-400"
                       : "bg-green-600 hover:bg-green-700"
                   } text-white`}
