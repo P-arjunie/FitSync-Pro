@@ -261,16 +261,16 @@ export default function Contact() {
                     <h2 className="text-lg font-semibold mb-3 text-black">Follow Us</h2>
                     <div className="flex items-center space-x-4">
                       <a href={social.linkedin || "https://www.linkedin.com"} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                        <img src="/linkedin.png" alt="LinkedIn" className="w-8 h-8" style={{ filter: 'none' }} />
+                        <Image src="/linkedin.png" alt="LinkedIn" width={32} height={32} style={{ filter: 'none' }} />
                       </a>
                       <a href={social.whatsapp || "https://wa.me/+94712781444"} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
-                        <img src="/whatsapp.png" alt="WhatsApp" className="w-8 h-8" style={{ filter: 'none' }} />
+                        <Image src="/whatsapp.png" alt="WhatsApp" width={32} height={32} style={{ filter: 'none' }} />
                       </a>
                       <a href={social.facebook || "https://www.facebook.com"} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                        <img src="/facebook.png" alt="Facebook" className="w-8 h-8" style={{ filter: 'none' }} />
+                        <Image src="/facebook.png" alt="Facebook" width={32} height={32} style={{ filter: 'none' }} />
                       </a>
                       <a href={social.instagram || "https://www.instagram.com"} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                        <img src="/insta.png" alt="Instagram" className="w-8 h-8" style={{ filter: 'none' }} />
+                        <Image src="/insta.png" alt="Instagram" width={32} height={32} style={{ filter: 'none' }} />
                       </a>
                     </div>
                   </div>
