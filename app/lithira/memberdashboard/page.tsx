@@ -73,14 +73,14 @@ const MemberDashboard: React.FC = () => {
       description: "View your training sessions",
       icon: "🏋️",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/pasindi/all-sessions",
+      link: "/trainer-sessions/all-sessions",
     },
     {
       title: "Request Sessions",
       description: "Book new training sessions",
       icon: "📅",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/pasindi/schedule",
+      link: "/trainer-sessions/schedule",
     },
     {
       title: "My Profile",

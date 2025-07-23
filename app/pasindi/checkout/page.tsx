@@ -31,7 +31,7 @@ export default function CheckoutPage() {
     
     // Redirect if cart is empty
     if (items.length === 0 && !success) {
-      router.push('/pasindi/cart');
+      router.push('/user-order-management/cart');
     }
   }, [items.length, router, success]);
 

@@ -135,10 +135,10 @@ const AdminDashboard: React.FC = () => {
       description: "Manage products and inventory",
       icon: "🛍️",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/pasindi/admin-products-dashboard",
+      link: "/admin-order-management/admin-products-dashboard",
     },
     {
-      title: "Gallery",
+      title: "Gallery Management",
       description: "Manage gallery images and content",
       icon: "🖼️",
       color: "bg-gray-800 hover:bg-gray-900",
@@ -150,6 +150,13 @@ const AdminDashboard: React.FC = () => {
       icon: "💰",
       color: "bg-red-600 hover:bg-red-700",
       link: "/admin/refund-requests",
+    },
+    {
+      title: "System Settings",
+      description: "Manage system logo, footer, and other settings",
+      icon: "🛠️",
+      color: "bg-gray-800 hover:bg-gray-900",
+      link: "/lithira/settings",
     },
   ];
 

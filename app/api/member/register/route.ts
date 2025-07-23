@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     if (
       !firstName || !lastName || !dob || !gender || !contactNumber || !email || !address ||
       !emergencyContact?.name || !emergencyContact?.phone || !emergencyContact?.relationship ||
-      !membershipInfo?.plan || !membershipInfo?.startDate || !membershipInfo?.paymentPlan ||
+      !membershipInfo?.startDate ||
       !termsAccepted || !image ||
       currentWeight === undefined || height === undefined || bmi === undefined || goalWeight === undefined
     ) {
