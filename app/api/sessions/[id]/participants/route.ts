@@ -43,9 +43,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
     console.error("❌ Error fetching participants:", error);
+    let errorMessage = "Unknown error";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
     return NextResponse.json({ 
       error: "Failed to fetch participants",
-      details: error.message 
+      details: errorMessage
     }, { status: 500 });
   }
 }
