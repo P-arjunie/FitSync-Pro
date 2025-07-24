@@ -87,7 +87,7 @@ const MemberDashboard: React.FC = () => {
       description: "Manage your profile and settings",
       icon: "👤",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/lithira/MemberProfilePage",
+      link: "/member-system-management/MemberProfilePage",
     },
   ];
 

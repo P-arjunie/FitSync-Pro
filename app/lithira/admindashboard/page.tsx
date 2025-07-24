@@ -107,28 +107,28 @@ const AdminDashboard: React.FC = () => {
       description: "Manage pending user requests",
       icon: "📋",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/lithira/userinfo",
+      link: "/member-system-management/userinfo",
     },
     {
       title: "User Management",
       description: "Manage approved users and trainers",
       icon: "👥",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/lithira/adminUserManagement",
+      link: "/member-system-management/adminUserManagement",
     },
     {
       title: "Analytics",
       description: "View platform analytics and insights",
       icon: "📊",
       color: "bg-red-600 hover:bg-red-700",
-      link: "/sathya/analytics",
+      link: "/Analytics&Feedbacks/analytics",
     },
     {
       title: "Feedback Management",
       description: "Manage user feedback and reviews",
       icon: "💬",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/sathya/traineeReviwsediting",
+      link: "/Analytics&Feedbacks/traineeReviwsediting",
     },
     {
       title: "Product Management",
@@ -142,7 +142,7 @@ const AdminDashboard: React.FC = () => {
       description: "Manage gallery images and content",
       icon: "🖼️",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/hasini/adminGallery",
+      link: "/communication-and-notifications/adminGallery",
     },
     {
       title: "Refund Requests",
@@ -152,11 +152,11 @@ const AdminDashboard: React.FC = () => {
       link: "/admin/refund-requests",
     },
     {
-      title: "System Settings",
-      description: "Manage system logo, footer, and other settings",
-      icon: "🛠️",
+      title: "Settings",
+      description: "Manage platform settings",
+      icon: "⚙️",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/lithira/settings",
+      link: "/member-system-management/settings",
     },
   ];
 
