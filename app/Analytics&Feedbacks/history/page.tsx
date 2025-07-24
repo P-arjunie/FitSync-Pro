@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
 import {
   Calendar,
   Download,
@@ -519,6 +521,8 @@ const AdminHistoryDashboard = () => {
   };
 
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
       <div className="bg-black text-white p-8">
@@ -714,6 +718,8 @@ const AdminHistoryDashboard = () => {
 
       {renderReportModal()}
     </div>
+      <Footer />
+    </>
   );
 };
 

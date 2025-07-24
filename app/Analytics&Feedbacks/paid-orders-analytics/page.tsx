@@ -9,6 +9,8 @@ import { format, subMonths } from 'date-fns';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import AnalyticsSidebar from '@/Components/analytics/AnalyticsSidebar';
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
 
 interface AnalyticsData {
   labels: string[];
@@ -391,6 +393,9 @@ const PaidOrdersAnalyticsPage = () => {
   }
 
   return (
+    
+<>
+      <Navbar />
     <div className="min-h-screen flex">
       <AnalyticsSidebar />
       <div 
@@ -599,6 +604,8 @@ const PaidOrdersAnalyticsPage = () => {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 
