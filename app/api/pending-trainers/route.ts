@@ -46,7 +46,6 @@ export async function POST(req: Request) {
       pricingPlan: body.pricingPlan,
       classes: body.classes, // Add this
       emergencyContact: body.emergencyContact,
-      termsAccepted: body.termsAccepted,
       profileImage: body.profileImage,
       biography: body.biography,
       skills: body.skills,

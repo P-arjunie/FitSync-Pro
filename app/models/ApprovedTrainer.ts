@@ -22,7 +22,6 @@ export interface IApprovedTrainer extends Document {
     relationship: string;
   };
   startDate?: Date;
-  termsAccepted: boolean;
   profileImage: string;
   submittedAt: Date;
   biography?: string;
@@ -52,7 +51,6 @@ const approvedTrainerSchema = new Schema<IApprovedTrainer>({
   relationship: { type: String, required: true },
   },
   startDate: { type: Date },
-  termsAccepted: { type: Boolean, required: true },
   profileImage: { type: String, required: true },
   submittedAt: { type: Date, default: Date.now },
   biography: { type: String, default: "" },
