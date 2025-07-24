@@ -88,7 +88,7 @@ export default function ResetPassword() {
       if (res.ok) {
         setMessage("Password reset successful! Redirecting to login...");
         setTimeout(() => {
-          router.push("/lithira/Authform");
+          router.push("/member-system-management/Authform");
         }, 2000);
       } else {
         setMessage(data.error || "Failed to reset password.");
@@ -102,7 +102,7 @@ export default function ResetPassword() {
   };
 
   const handleRequestNewReset = () => {
-    router.push("/lithira/Authform");
+    router.push("/member-system-management/Authform");
   };
 
   if (tokenExpired || !token) {

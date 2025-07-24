@@ -76,7 +76,7 @@ const HomePage: React.FC = () => {
           ) {
             // Clear the timestamp and redirect only if it's a fresh login (within 5 seconds)
             localStorage.removeItem("adminLoginTimestamp");
-            router.push("/lithira/admindashboard");
+            router.push("/member-system-management/admindashboard");
             return;
           }
 
@@ -87,7 +87,7 @@ const HomePage: React.FC = () => {
           ) {
             // Clear the timestamp and redirect only if it's a fresh login (within 5 seconds)
             localStorage.removeItem("memberLoginTimestamp");
-            router.push("/lithira/memberdashboard");
+            router.push("/member-system-management/memberdashboard");
             return;
           }
         }
@@ -102,15 +102,15 @@ const HomePage: React.FC = () => {
 
   // Navigation handlers
   const handleAuthNavigation = () => {
-    router.push("/lithira/Authform");
+    router.push("/member-system-management/Authform");
   };
 
   const handleAdminUserManagement = () => {
-    router.push("/lithira/adminUserManagement");
+    router.push("/member-system-management/adminUserManagement");
   };
 
   const handleUserInfo = () => {
-    router.push("/lithira/userinfo");
+    router.push("/member-system-management/userinfo");
   };
 
   const handleLogout = () => {
@@ -240,7 +240,7 @@ const HomePage: React.FC = () => {
           <div className="hero-button-container">
             <button
               className="button"
-              onClick={() => router.push("/lithira/admindashboard")}
+              onClick={() => router.push("/member-system-management/admindashboard")}
             >
               Admin Dashboard
             </button>
@@ -256,7 +256,7 @@ const HomePage: React.FC = () => {
             <div className="hero-button-container">
               <button
                 className="button"
-                onClick={() => router.push("/lithira/memberdashboard")}
+                onClick={() => router.push("/member-system-management/memberdashboard")}
               >
                 Member Dashboard
               </button>
@@ -270,7 +270,7 @@ const HomePage: React.FC = () => {
             <div className="hero-button-container">
               <button
                 className="button"
-                onClick={() => router.push("/lithira/TrainerProfilePage")}
+                onClick={() => router.push("/member-system-management/TrainerProfilePage")}
               >
                 Profile
               </button>
@@ -360,7 +360,7 @@ const HomePage: React.FC = () => {
               endurance, seeing measurable progress keeps you motivated and
               focused on your journey. Celebrate each milestone along the way!
             </p>
-            <Link href="/lithira/Authform">
+            <Link href="/member-system-management/Authform">
               <button className="read-more-button">Sign Up</button>
             </Link>
           </div>

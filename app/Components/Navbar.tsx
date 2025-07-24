@@ -83,10 +83,10 @@ const Navbar: React.FC = () => {
           <Link href="/">Home</Link>
         </li>
         <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
-          <Link href="/hasini/About_page">About</Link>
+          <Link href="/communication-and-notifications/About_page">About</Link>
         </li>
         <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
-          <Link href="/hasini/Gallery_page">Gallery</Link>
+          <Link href="/communication-and-notifications/Gallery_page">Gallery</Link>
         </li>
         <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
           <Link href="/schedule">Schedule</Link>
@@ -113,18 +113,18 @@ const Navbar: React.FC = () => {
           <Link href="/Analytics&Feedbacks/feedback">Feedback</Link>
         </li>
         <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
-          <Link href="/hasini/Contact_Page">Contact</Link>
+          <Link href="/communication-and-notifications/Contact_Page">Contact</Link>
         </li>
         {isLoggedIn && localStorage.getItem("userRole") === "admin" && (
           <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
-            <Link href="/lithira/admindashboard" title="Admin Dashboard">
+            <Link href="/member-system-management/admindashboard" title="Admin Dashboard">
               🛡️
             </Link>
           </li>
         )}
         {isLoggedIn && localStorage.getItem("userRole") === "member" && (
           <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
-            <Link href="/lithira/memberdashboard" title="Member Dashboard">
+            <Link href="/member-system-management/memberdashboard" title="Member Dashboard">
               👤
             </Link>
           </li>
@@ -166,10 +166,10 @@ const Navbar: React.FC = () => {
             <Link href="/">Home</Link>
           </li>
           <li>
-            <Link href="/hasini/About_page">About</Link>
+            <Link href="/communication-and-notifications/About_page">About</Link>
           </li>
           <li>
-            <Link href="/hasini/Gallery_page">Gallery</Link>
+            <Link href="/communication-and-notifications/Gallery_page">Gallery</Link>
           </li>
           <li>
             <Link href="/class">Class</Link>
@@ -181,12 +181,12 @@ const Navbar: React.FC = () => {
             <Link href="/user-order-management/products">Shop</Link>
           </li>
           <li>
-            <Link href="/hasini/Contact_Page">Contact</Link>
+            <Link href="/communication-and-notifications/Contact_Page">Contact</Link>
           </li>
           {isLoggedIn && localStorage.getItem("userRole") === "admin" && (
             <li>
               <Link
-                href="/lithira/admindashboard"
+                href="/member-system-management/admindashboard"
                 className="text-yellow-400 font-semibold"
                 title="Admin Dashboard"
               >
@@ -197,8 +197,8 @@ const Navbar: React.FC = () => {
           {isLoggedIn && localStorage.getItem("userRole") === "member" && (
             <li>
               <Link
-                href="/lithira/memberdashboard"
-                className="text-blue-400 font-semibold"
+                href="/member-system-management/memberdashboard"
+                className="text-yellow-400 font-semibold"
                 title="Member Dashboard"
               >
                 👤 Member Dashboard
