@@ -1,9 +1,11 @@
+
 /* eslint-disable prefer-const */
 'use client';
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import AnalyticsDashboard from "../../Components/analytics/AnalyticsDashboard";
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import AnalyticsSidebar from "../../Components/analytics/AnalyticsSidebar";
 import Link from 'next/link';
@@ -269,57 +271,126 @@ const AnalyticsPage: React.FC = () => {
       doc.text(`Trainer Filter: ${filters.trainer === "all" ? "All Trainers" : filters.trainer}`, margin, currentY);
       currentY += 20;
 
-      // Summary section
+      // Summary section with autoTable
       doc.setFontSize(14);
       doc.text("Summary", margin, currentY);
-      currentY += 15;
-      
-      doc.setFontSize(12);
-      const summaryData = [
-        `Total Sessions: ${analyticsData.totalSessions ?? 0}`,
-        `Average Sessions Per Day: ${analyticsData.averageSessionsPerDay ? analyticsData.averageSessionsPerDay.toFixed(2) : '0.00'}`
-      ];
-      
-      summaryData.forEach(item => {
-        doc.text(item, margin, currentY);
-        currentY += 10;
-      });
       currentY += 10;
 
-      // Trainer breakdown
+      autoTable(doc, {
+        startY: currentY,
+        margin: { left: margin, right: margin },
+        theme: 'striped',
+        head: [['Metric', 'Value']],
+        body: [
+          ['Total Sessions', analyticsData.totalSessions ?? 0],
+          ['Average Sessions Per Day', analyticsData.averageSessionsPerDay ? analyticsData.averageSessionsPerDay.toFixed(2) : '0.00']
+        ],
+        styles: { fontSize: 12, fillColor: [245, 245, 245] },
+        headStyles: { fillColor: [220, 38, 38], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [255, 235, 238] },
+        didDrawPage: (data: any) => {
+          currentY = data.cursor.y + 10;
+        }
+      });
+
+      // Analytical Results section
+      if (currentY > 200) {
+        doc.addPage();
+        currentY = margin;
+      }
+      doc.setFontSize(14);
+      doc.text("Analytical Results", margin, currentY);
+      currentY += 10;
+
+      const totalPhysicalSessions = (analyticsData.donePhysical?.reduce((a, b) => a + b, 0) ?? 0) + (analyticsData.toBeHeldPhysical?.reduce((a, b) => a + b, 0) ?? 0);
+      const totalVirtualSessions = (analyticsData.doneVirtual?.reduce((a, b) => a + b, 0) ?? 0) + (analyticsData.toBeHeldVirtual?.reduce((a, b) => a + b, 0) ?? 0);
+      const peakMonthSessions = Math.max(...(analyticsData.donePhysical?.map((v, i) => v + (analyticsData.toBeHeldPhysical?.[i] ?? 0)) ?? []), ...(analyticsData.doneVirtual?.map((v, i) => v + (analyticsData.toBeHeldVirtual?.[i] ?? 0)) ?? []), 0);
+      const peakMonthIndex = analyticsData.labels?.findIndex((_, i) => {
+        const total = (analyticsData.donePhysical?.[i] ?? 0) + (analyticsData.toBeHeldPhysical?.[i] ?? 0) + (analyticsData.doneVirtual?.[i] ?? 0) + (analyticsData.toBeHeldVirtual?.[i] ?? 0);
+        return total === peakMonthSessions;
+      });
+      // Remove peakMonth if it is "N/A" to avoid showing it in report
+      const peakMonth = peakMonthIndex !== undefined && peakMonthIndex >= 0 ? analyticsData.labels[peakMonthIndex] : "";
+
+      const analyticalBody = [
+        ['Total Sessions (Physical + Virtual)', analyticsData.totalSessions ?? 0],
+        ['Physical Sessions (Done)', analyticsData.donePhysical?.reduce((a, b) => a + b, 0) ?? 0],
+        ['Physical Sessions (To Be Held)', analyticsData.toBeHeldPhysical?.reduce((a, b) => a + b, 0) ?? 0],
+        ['Virtual Sessions (Done)', analyticsData.doneVirtual?.reduce((a, b) => a + b, 0) ?? 0],
+        ['Virtual Sessions (To Be Held)', analyticsData.toBeHeldVirtual?.reduce((a, b) => a + b, 0) ?? 0],
+        ['Peak Month Sessions', peakMonthSessions],
+        ['Peak Month', peakMonth]
+      ];
+
+      autoTable(doc, {
+        startY: currentY,
+        margin: { left: margin, right: margin },
+        theme: 'striped',
+        head: [['Metric', 'Value']],
+        body: analyticalBody,
+        styles: { fontSize: 12 },
+        headStyles: { fillColor: [200, 200, 200] },
+        didDrawPage: (data: any) => {
+          currentY = data.cursor.y + 10;
+        }
+      });
+
+      // Removed Info cards textual summary as per user request
+
+      // Trainer breakdown with autoTable
       if (analyticsData.trainerBreakdown && Object.keys(analyticsData.trainerBreakdown).length > 0) {
+        if (currentY > 200) { // Check if we need a new page
+          doc.addPage();
+          currentY = margin;
+        }
         doc.setFontSize(14);
         doc.text("Trainer Breakdown", margin, currentY);
-        currentY += 15;
-        
-        doc.setFontSize(12);
-        Object.entries(analyticsData.trainerBreakdown).forEach(([trainer, count]) => {
-          doc.text(`${trainer}: ${count} sessions`, margin, currentY);
-          currentY += 10;
-        });
         currentY += 10;
+
+        const trainerBody = Object.entries(analyticsData.trainerBreakdown).map(([trainer, count]) => [trainer, count.toString()]);
+
+      autoTable(doc, {
+        startY: currentY,
+        margin: { left: margin, right: margin },
+        theme: 'striped',
+        head: [['Trainer', 'Sessions']],
+        body: trainerBody,
+        styles: { fontSize: 12 },
+        headStyles: { fillColor: [220, 220, 220] },
+        didDrawPage: (data: any) => {
+          currentY = data.cursor.y + 10;
+        }
+      });
       }
 
-      // Busiest days
+      // Busiest days with autoTable
       if (analyticsData.busiestDays && analyticsData.busiestDays.length > 0) {
         if (currentY > 200) { // Check if we need a new page
           doc.addPage();
           currentY = margin;
         }
-        
         doc.setFontSize(14);
         doc.text("Busiest Days", margin, currentY);
-        currentY += 15;
-        
-        doc.setFontSize(12);
-        analyticsData.busiestDays.forEach((day, index) => {
-          if (currentY > 270) { // Check if we need a new page
-            doc.addPage();
-            currentY = margin;
-          }
-          doc.text(`${index + 1}. ${day.day}: ${day.count} sessions`, margin, currentY);
-          currentY += 10;
-        });
+        currentY += 10;
+
+        const busiestDaysBody = analyticsData.busiestDays.map((day, index) => [
+          (index + 1).toString(),
+          day.day,
+          day.count.toString()
+        ]);
+
+      autoTable(doc, {
+        startY: currentY,
+        margin: { left: margin, right: margin },
+        theme: 'striped',
+        head: [['#', 'Day', 'Sessions']],
+        body: busiestDaysBody,
+        styles: { fontSize: 12 },
+        headStyles: { fillColor: [220, 220, 220] },
+        didDrawPage: (data: any) => {
+          currentY = data.cursor.y + 10;
+        }
+      });
       }
 
       doc.save(`session_analytics_${filters.startDate}_to_${filters.endDate}.pdf`);

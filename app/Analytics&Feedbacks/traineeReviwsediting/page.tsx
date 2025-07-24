@@ -29,6 +29,7 @@ const ReviewsPage = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'byTrainer'>('all');
   const [trainerGroups, setTrainerGroups] = useState<Record<string, Review[]>>({});
   const [trainerStats, setTrainerStats] = useState<Record<string, TrainerStats>>({});
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchReviews();
@@ -85,6 +86,36 @@ const ReviewsPage = () => {
     setTrainerGroups(groups);
     setTrainerStats(stats);
   };
+
+  // Filter reviews based on search query
+  const filteredReviews = reviews.filter((review) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      review.trainer?.toLowerCase().includes(query) ||
+      review.sessionType?.toLowerCase().includes(query) ||
+      review.comments?.toLowerCase().includes(query) ||
+      review.userName?.toLowerCase().includes(query) ||
+      review.memberEmail?.toLowerCase().includes(query)
+    );
+  });
+
+  // Filter trainer groups based on search query
+  const filteredTrainerGroups: Record<string, Review[]> = {};
+  Object.entries(trainerGroups).forEach(([trainer, groupReviews]) => {
+    const filteredGroup = groupReviews.filter((review) => {
+      const query = searchQuery.toLowerCase();
+      return (
+        review.trainer?.toLowerCase().includes(query) ||
+        review.sessionType?.toLowerCase().includes(query) ||
+        review.comments?.toLowerCase().includes(query) ||
+        review.userName?.toLowerCase().includes(query) ||
+        review.memberEmail?.toLowerCase().includes(query)
+      );
+    });
+    if (filteredGroup.length > 0) {
+      filteredTrainerGroups[trainer] = filteredGroup;
+    }
+  });
 
   const handleDeleteReview = async (reviewId: string) => {
     if (!window.confirm('Are you sure you want to delete this feedback?')) return;
@@ -172,13 +203,24 @@ const ReviewsPage = () => {
     </div>
   );
 
-return (
-  <>
+  return (
+    <>
       <Navbar />
    
 
   <div className="w-full min-h-screen bg-white text-black px-4 sm:px-8 py-8">
     <h2 className="text-4xl font-bold text-center mb-10 text-black">Feedback Management</h2>
+
+    {/* Search input */}
+    <div className="max-w-sm mx-auto mb-6">
+      <input
+        type="text"
+        placeholder="Search reviews..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+      />
+    </div>
   
       <div className="flex mb-10 bg-gray-900 rounded-lg overflow-hidden max-w-sm mx-auto shadow-lg">
         {(['all', 'byTrainer'] as const).map((tab) => (
@@ -204,11 +246,11 @@ return (
         <div className="text-center py-20 text-gray-400 text-lg">No reviews have been submitted yet.</div>
       ) : activeTab === 'all' ? (
         <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-2 sm:px-4 md:px-6">
-          {reviews.map(renderReviewCard)}
+          {filteredReviews.map(renderReviewCard)}
         </div>
       ) : (
         <div className="px-2 sm:px-4 md:px-6 max-w-7xl mx-auto">
-          {Object.entries(trainerGroups).map(([trainer, trainerReviews]) => (
+          {Object.entries(filteredTrainerGroups).map(([trainer, trainerReviews]) => (
             <div key={trainer} className="mb-16">
               <div className="bg-gray-800 text-white py-4 px-6 rounded-t-lg flex items-center shadow-md">
                 <span className="mr-3 text-2xl text-red-500">👤</span>

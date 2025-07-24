@@ -156,7 +156,7 @@ const AdminDashboard: React.FC = () => {
       description: "View orders and revenue session",
       icon: "📋",
       color: "bg-red-600 hover:bg-red-700",
-      link: "",
+      link: "/Analytics&Feedbacks/history",
     },
   ];
 

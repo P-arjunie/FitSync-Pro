@@ -115,8 +115,7 @@ const AnalyticsSidebar = () => {
                         </svg>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-white">Analytics</p>
-                        <p className="text-xs text-gray-600">Dashboard</p>
+                        <p className="text-sm font-medium text-white">Analytics Dashboard</p>
                     </div>
                 </div>
             </div>

@@ -314,7 +314,7 @@ const TrainerDashboard: React.FC = () => {
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
     color?: 'blue' | 'green' | 'red' | 'purple' | 'orange';
-    size?: 'default' | 'large';
+    size?: 'default' | 'large'; 
   }) => {
     const colorClasses = {
       blue: 'bg-blue-50 text-blue-600 border-blue-100',
@@ -591,10 +591,10 @@ const TrainerDashboard: React.FC = () => {
                       color="bg-blue-600"
                     />
                     <QuickActionCard
-                      title="Review Bookings"
+                      title="Trainer Reviews"
                       description="Approve or manage pending session requests"
                       icon={Eye}
-                      onClick={() => router.push('/trainer/sessions')}
+                      onClick={() => router.push('/Analytics&Feedbacks/trainerFeedback')}
                       color="bg-green-600"
                     />
                     <QuickActionCard
@@ -608,7 +608,7 @@ const TrainerDashboard: React.FC = () => {
                       title="Performance Analytics"
                       description="View detailed reports and insights"
                       icon={BarChart3}
-                      onClick={() => router.push('/trainer/analytics')}
+                      onClick={() => router.push('/Analytics&Feedbacks/trainer_analytics')}
                       color="bg-orange-600"
                     />
                   </div>
