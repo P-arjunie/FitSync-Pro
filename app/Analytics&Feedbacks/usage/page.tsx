@@ -5,6 +5,8 @@ import jsPDF from 'jspdf';
 import UsageAnalyticsDashboard from '../../Components/analytics/UsageAnalyticsDashboard';
 import AnalyticsSidebar from '../../Components/analytics/AnalyticsSidebar';
 import Link from 'next/link';
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
 
 // Define a type for the fetched data structure
 interface UsageData {
@@ -198,6 +200,8 @@ const UsageAnalyticsPage = () => {
     }, [reportFormat, generatePDFReport, generateExcelReport, generateCSVReport]);
 
     return (
+<>
+      <Navbar />
         <div className="min-h-screen flex" style={{
             background: 'linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 25%, #c0c0c0 50%, #b0b0b0 75%, #a0a0a0 100%)',
             backgroundImage: `
@@ -407,6 +411,8 @@ const UsageAnalyticsPage = () => {
                 </div>
             </div>
         </div>
+         <Footer />
+    </>
     );
 }
 
