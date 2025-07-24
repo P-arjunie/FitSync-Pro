@@ -52,6 +52,10 @@ const YogaClassPage = () => {
           alert('You are already engaged in 2 classes. Please refund one to continue.');
           return;
         }
+        if (data.error && data.error.includes('already enrolled in this class')) {
+          alert('You are already enrolled in this class. Please refund to enroll again.');
+          return;
+        }
         throw new Error(data.error || "Failed to create enrollment");
       }
 

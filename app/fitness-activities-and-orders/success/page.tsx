@@ -6,6 +6,19 @@ import Link from 'next/link';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer_02';
 
+function SuccessMessage() {
+  return (
+    <>
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">
+        Payment Successful!
+      </h1>
+      <p className="text-gray-600 mb-6">
+        Thank you for your payment. Your transaction was successful.
+      </p>
+    </>
+  );
+}
+
 export default function SuccessPage() {
   const searchParams = useSearchParams();
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -37,21 +50,12 @@ export default function SuccessPage() {
               </svg>
             </div>
           </div>
-          
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Subscription Successful!
-          </h1>
-          
-          <p className="text-gray-600 mb-6">
-            Thank you for subscribing to our fitness classes. Your subscription is now active and you can start attending classes immediately.
-          </p>
-          
+          <SuccessMessage />
           {sessionId && (
             <p className="text-sm text-gray-500 mb-6">
               Session ID: {sessionId}
             </p>
           )}
-          
           <div className="space-y-3">
             <Link
               href="/"
@@ -59,7 +63,6 @@ export default function SuccessPage() {
             >
               Return to Home
             </Link>
-            
             <Link
               href="/fitness-activities-and-orders/pricing_page"
               className="block w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-200"
