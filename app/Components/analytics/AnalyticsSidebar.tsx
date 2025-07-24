@@ -14,7 +14,7 @@ const AnalyticsSidebar = () => {
     const pathname = usePathname();
     const sidebarItems: SidebarItem[] = [
         {
-            href: '/sathya/analytics',
+            href: '/Analytics&Feedbacks/analytics',
             label: 'Session Analytics',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -23,7 +23,7 @@ const AnalyticsSidebar = () => {
             )
         },
         {
-            href: '/sathya/member-analytics',
+            href: '/Analytics&Feedbacks/member-analytics',
             label: 'Member Analytics',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +33,7 @@ const AnalyticsSidebar = () => {
             )
         },
         {
-            href: '/sathya/usage',
+            href: '/Analytics&Feedbacks/usage',
             label: 'Usage Analytics',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,7 +42,7 @@ const AnalyticsSidebar = () => {
             )
         },
         {
-            href: '/sathya/orderanalytics',
+            href: '/Analytics&Feedbacks/orderanalytics',
             label: 'Order Analytics',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@ const AnalyticsSidebar = () => {
             )
         },
         {
-            href: '/sathya/paid-orders-analytics',
+            href: '/Analytics&Feedbacks/paid-orders-analytics',
             label: 'order revenue analytics',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,7 +60,7 @@ const AnalyticsSidebar = () => {
             )
         },
         {
-            href: '/sathya/revenue',
+            href: '/Analytics&Feedbacks/revenue',
             label: 'Service Revenue analytics',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
