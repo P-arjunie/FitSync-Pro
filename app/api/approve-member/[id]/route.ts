@@ -50,7 +50,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       height: pending.height,
       bmi: pending.bmi,
       goalWeight: pending.goalWeight,
-      termsAccepted: pending.termsAccepted !== undefined ? pending.termsAccepted : true,
       role: "member",
       status: "approved"
     };

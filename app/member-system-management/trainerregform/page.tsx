@@ -26,7 +26,6 @@ interface TrainerFormData {
   emergencyName: string;
   emergencyPhone: string;
   relationship: string;
-  termsAccepted: boolean;
   biography: string;
   skills: Skill[];
   password: string;
@@ -54,7 +53,6 @@ export default function TrainerRegistrationForm() {
     emergencyName: "",
     emergencyPhone: "",
     relationship: "",
-    termsAccepted: false,
     biography: "",
     skills: [],
     password: "",
@@ -149,12 +147,6 @@ export default function TrainerRegistrationForm() {
         alert(`Please enter at least one value for "${field}".`);
         return;
       }
-    }
-
-    // Terms check
-    if (!formData.termsAccepted) {
-      alert("Please accept the terms and conditions.");
-      return;
     }
 
     // Email format check
@@ -481,25 +473,6 @@ export default function TrainerRegistrationForm() {
             </div>
           </div>
         </fieldset>
-
-        {/* Terms and Submit */}
-        <div className="flex items-center my-4">
-          <input
-            type="checkbox"
-            id="termsAccepted"
-            name="termsAccepted"
-            checked={formData.termsAccepted}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          <label htmlFor="termsAccepted" className="text-sm">
-            I agree to the{" "}
-            <a href="#" className="text-blue-600 underline">
-              terms and conditions
-            </a>
-            .
-          </label>
-        </div>
 
         <button
           type="submit"
