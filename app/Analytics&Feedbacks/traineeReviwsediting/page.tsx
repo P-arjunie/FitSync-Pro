@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
 
 interface Review {
   _id: string;
@@ -171,6 +173,10 @@ const ReviewsPage = () => {
   );
 
 return (
+  <>
+      <Navbar />
+   
+
   <div className="w-full min-h-screen bg-white text-black px-4 sm:px-8 py-8">
     <h2 className="text-4xl font-bold text-center mb-10 text-black">Feedback Management</h2>
   
@@ -219,6 +225,8 @@ return (
         </div>
       )}
     </div>
+    <Footer />
+    </>
   );
 };
 

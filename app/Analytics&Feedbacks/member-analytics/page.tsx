@@ -2,6 +2,9 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { subMonths } from "date-fns";
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
+
 
 const { jsPDF } = require("jspdf");
 const XLSX = require("xlsx");
@@ -486,6 +489,8 @@ const MemberAnalyticsPage = () => {
   };
 
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen flex bg-gray-100">
       <AnalyticsSidebar />
       <div className="flex-1 p-8">
@@ -835,6 +840,8 @@ const MemberAnalyticsPage = () => {
         </div>
       </div>
     </div>
+      <Footer />
+    </>
   );
 };
 

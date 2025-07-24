@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import MiniCart from "./MiniCart"; // Adjust if needed pasindi
@@ -13,26 +13,9 @@ interface SiteSettings {
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showPurchases, setShowPurchases] = useState(false); // Added for Purchases dropdown
+  const purchasesRef = useRef<HTMLLIElement>(null); // Added for Purchases dropdown
   const router = useRouter();
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
-  const [logoLoading, setLogoLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      setLogoLoading(true);
-      try {
-        const res = await fetch('/api/settings');
-        if (!res.ok) throw new Error('Failed to fetch settings');
-        const data = await res.json();
-        setSettings({ logoUrl: data.logoUrl || "/Logo.png" });
-      } catch (err) {
-        setSettings({ logoUrl: "/Logo.png" });
-      } finally {
-        setLogoLoading(false);
-      }
-    };
-    fetchSettings();
-  }, []);
 
   useEffect(() => {
     const userRole = localStorage.getItem("userRole");
@@ -52,6 +35,23 @@ const Navbar: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    // Collapse Purchases dropdown on outside click
+    function handleClickOutside(event: MouseEvent) {
+      if (purchasesRef.current && !purchasesRef.current.contains(event.target as Node)) {
+        setShowPurchases(false);
+      }
+    }
+    if (showPurchases) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPurchases]);
+
   const handleCartClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isLoggedIn) {
@@ -65,16 +65,12 @@ const Navbar: React.FC = () => {
     <nav className="bg-black text-white py-7 px-2 flex items-center justify-between w-full border-b border-black">
       {/* Logo */}
       <Link href="/" className="flex items-center">
-        {logoLoading ? (
-          <div className="w-[150px] h-[100px] bg-gray-200 animate-pulse rounded" />
-        ) : (
-          <Image
-            src={settings?.logoUrl || "/Logo.png"}
-            alt="FitSync Pro Logo"
-            width={150}
-            height={100}
-          />
-        )}
+        <Image
+          src="/Logo.png"
+          alt="FitSync Pro Logo"
+          width={150}
+          height={100}
+        />
         <div className="ml-2 flex flex-col text-left"></div>
       </Link>
 
@@ -92,19 +88,26 @@ const Navbar: React.FC = () => {
           <Link href="/schedule">Schedule</Link>
         </li>
         {/* Purchases Dropdown */}
-        <li className="relative group px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
-          <span className="cursor-pointer select-none">Purchases ▾</span>
-          <ul className="absolute left-0 top-full mt-2 bg-black text-white rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 min-w-[200px] z-50 text-lg py-2">
-            <li className="px-6 py-3 hover:bg-gray-700 rounded-t-md">
-              <Link href="/#fitness-service">Monthly Plans</Link>
-            </li>
-            <li className="px-6 py-3 hover:bg-gray-700">
-              <Link href="/#featured-classes">Classes</Link>
-            </li>
-            <li className="px-6 py-3 hover:bg-gray-700 rounded-b-md">
-              <Link href="/user-order-management/products">Shop</Link>
-            </li>
-          </ul>
+        <li ref={purchasesRef} className="relative px-3 py-2 rounded-md transition-colors duration-150">
+          <span
+            className="cursor-pointer select-none"
+            onClick={() => setShowPurchases((v) => !v)}
+          >
+            Purchases 
+          </span>
+          {showPurchases && (
+            <ul className="absolute left-0 top-full mt-2 bg-black text-white rounded-md shadow-lg min-w-[200px] z-50 text-lg py-2">
+              <li className="px-6 py-3 hover:bg-gray-700 rounded-t-md">
+                <Link href="/#fitness-service">Monthly Plans</Link>
+              </li>
+              <li className="px-6 py-3 hover:bg-gray-700">
+                <Link href="/#featured-classes">Classes</Link>
+              </li>
+              <li className="px-6 py-3 hover:bg-gray-700 rounded-b-md">
+                <Link href="/user-order-management/products">Shop</Link>
+              </li>
+            </ul>
+          )}
         </li>
         <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
           <Link href="/Analytics&Feedbacks/trainerDetails">Trainers</Link>
