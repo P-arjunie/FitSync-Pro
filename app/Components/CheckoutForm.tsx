@@ -6,6 +6,7 @@ import Navbar from "./Navbar";
 import Footer_02 from "./Footer_02";
 import cartImg from "../../public/cart.png";
 import classImg from "../../public/classesb.png";
+import { useRouter } from 'next/navigation';
 
 interface OrderItem {
   title: string;
@@ -42,6 +43,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   
   const stripe = useStripe();
   const elements = useElements();
+  const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -165,6 +167,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
     if (data.success) {
       setMessage("✅ Payment succeeded!");
       setPaymentSuccess(true);
+      router.push('/fitness-activities-and-orders/success');
       if (!enrollmentData && !pricingPlanData) {
         setShowStoreWarning(true);
       }
@@ -194,6 +197,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       if (res.ok && data.success) {
         setMessage("✅ Payment succeeded using wallet!");
         setPaymentSuccess(true);
+        router.push('/fitness-activities-and-orders/success');
         await fetchWallet(); // Refresh wallet balance after payment
       } else {
         setMessage(`❌ Wallet payment failed: ${data.error || "Unknown error"}`);
