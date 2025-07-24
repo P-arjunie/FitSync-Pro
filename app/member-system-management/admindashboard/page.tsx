@@ -142,14 +142,7 @@ const AdminDashboard: React.FC = () => {
       description: "Manage gallery images and content",
       icon: "🖼️",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/hasini/adminGallery",
-    },
-    {
-      title: "Refund Requests",
-      description: "Manage refund requests and payments",
-      icon: "💰",
-      color: "bg-red-600 hover:bg-red-700",
-      link: "/admin/refund-requests",
+      link: "/communication-and-notifications/adminGallery",
     },
     {
       title: "Settings",
@@ -157,6 +150,13 @@ const AdminDashboard: React.FC = () => {
       icon: "⚙️",
       color: "bg-gray-800 hover:bg-gray-900",
       link: "/member-system-management/settings",
+    },
+    {
+      title: "History",
+      description: "View orders and revenue session",
+      icon: "📋",
+      color: "bg-red-600 hover:bg-red-700",
+      link: "",
     },
   ];
 
