@@ -13,6 +13,8 @@ interface SiteSettings {
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showPurchases, setShowPurchases] = useState(false); // Added for Purchases dropdown
+  const purchasesRef = useRef<HTMLLIElement>(null); // Added for Purchases dropdown
   const router = useRouter();
 
   useEffect(() => {
