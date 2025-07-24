@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import nodemailer from 'nodemailer';
 import { connectToDatabase } from "@/lib/mongodb";
 import Payment from "@/models/Payment";
+import User from "@/models/User";
 
 export async function POST(req: NextRequest) {
   try {
@@ -146,9 +147,13 @@ Note: This is a shop purchase refund request. Please review and process manually
       });
 
       // Send email
+      const user = await User.findOne({ _id: userId });
+      const userEmailDb = user?.email;
+      const recipients = ['fitsyncpro.gym@gmail.com'];
+      if (userEmailDb) recipients.push(userEmailDb);
       await transporter.sendMail({
         from: `"FitSync Pro" <${process.env.EMAIL_USER}>`,
-        to: "fitsync.test@gmail.com",
+        to: recipients.join(','),
         subject: emailSubject,
         text: emailText,
         html: emailHtml,

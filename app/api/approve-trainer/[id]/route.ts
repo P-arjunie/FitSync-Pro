@@ -80,7 +80,6 @@ export async function POST(
       },
       
       // Administrative
-      termsAccepted: trainerData.termsAccepted,
       submittedAt: trainerData.submittedAt,
       role: "trainer",
       status: "approved",

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import nodemailer from 'nodemailer';
 import { connectToDatabase } from "@/lib/mongodb";
 import Payment from "@/models/Payment";
+import User from "@/models/User";
 
 export async function POST(req: NextRequest) {
   try {
@@ -85,6 +86,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Refund already requested or processed" }, { status: 400 });
     }
 
+    // Check if refund is within 7 days of purchase
+    const now = new Date();
+    const purchaseDate = payment.createdAt ? new Date(payment.createdAt) : null;
+    if (purchaseDate && ((now.getTime() - purchaseDate.getTime()) > 7 * 24 * 60 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Refunds can only be claimed within one week of purchase.' }, { status: 403 });
+    }
+
     let refundAmount = 0;
     if (paymentFor === 'enrollment') {
       // Always use Enrollment.totalAmount for refund calculation
@@ -165,9 +173,13 @@ Refund Processed:
 - Reason: ${reason}
 - Processed At: ${new Date().toLocaleString()}
           `;
+          const user = await User.findOne({ _id: userId });
+          const userEmailDb = user?.email;
+          const recipients = ['fitsyncpro.gym@gmail.com'];
+          if (userEmailDb) recipients.push(userEmailDb);
           await transporter.sendMail({
             from: `FitSync Pro <${process.env.EMAIL_USER}>`,
-            to: 'kalanam890@gmail.com',
+            to: recipients.join(','),
             subject: emailSubject,
             text: emailText,
           });
