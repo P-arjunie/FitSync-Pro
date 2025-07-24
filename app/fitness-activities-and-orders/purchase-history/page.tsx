@@ -143,6 +143,17 @@ const PurchaseHistoryPage = () => {
     return matchesSearch && matchesFilter;
   });
 
+  // Helper to calculate remaining/renewal time
+  const getRemainingTime = (endDate: string) => {
+    const now = new Date();
+    const end = new Date(endDate);
+    const diff = end.getTime() - now.getTime();
+    if (diff <= 0) return { days: 0, hours: 0 };
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    return { days, hours };
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'succeeded':
@@ -301,6 +312,17 @@ const PurchaseHistoryPage = () => {
     );
   }
 
+  // Add remaining/renewal time to each purchase
+  const purchasesWithTime = filteredPurchases.map((purchase) => {
+    if (purchase.paymentFor === 'enrollment' && purchase.itemDetails?.endDate) {
+      return { ...purchase, remainingTime: getRemainingTime(purchase.itemDetails.endDate) };
+    }
+    if (purchase.paymentFor === 'pricing-plan' && purchase.itemDetails?.renewalDate) {
+      return { ...purchase, remainingTime: getRemainingTime(purchase.itemDetails.renewalDate) };
+    }
+    return purchase;
+  });
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -377,8 +399,8 @@ const PurchaseHistoryPage = () => {
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Wallet Balance</p>
-                <p className="text-3xl font-bold text-gray-900">${walletData?.balance.toFixed(2) || '0.00'}</p>
+                <p className="text-gray-600 text-sm font-medium">Wallet Balance (DB field)</p>
+                <p className="text-3xl font-bold text-gray-900">${walletData?.balance !== undefined ? walletData.balance.toFixed(2) : '0.00'}</p>
               </div>
               <Wallet className="text-green-500" size={40} />
             </div>
@@ -475,7 +497,7 @@ const PurchaseHistoryPage = () => {
             </div>
           )}
 
-          {filteredPurchases.map((purchase) => (
+          {purchasesWithTime.map((purchase) => (
             <div key={purchase.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* Left side - Purchase details */}
@@ -526,14 +548,13 @@ const PurchaseHistoryPage = () => {
                       </div>
                     </div>
                   )}
-
-                  {/* Remaining time for monthly plans */}
-                  {purchase.paymentFor === 'monthly-plan' && purchase.remainingTime && purchase.isActive && (
-                    <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                      <div className="flex items-center gap-2 text-purple-700">
+                  {/* Remaining time for pricing plan subscriptions */}
+                  {purchase.paymentFor === 'pricing-plan' && purchase.remainingTime && purchase.isActive && (
+                    <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2 text-green-700">
                         <Clock size={16} />
                         <span className="font-medium">
-                          Next Renewal: {purchase.remainingTime.days} days, {purchase.remainingTime.hours} hours
+                          Renewal in: {purchase.remainingTime.days} days, {purchase.remainingTime.hours} hours
                         </span>
                       </div>
                     </div>

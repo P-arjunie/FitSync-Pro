@@ -36,7 +36,12 @@ export async function GET(req: NextRequest) {
     // Only include transactions for payments that still exist in purchase history
     const Payment = (await import('@/models/Payment')).default;
     const validPaymentIds = (await Payment.find({ userId }, { _id: 1 })).map((p: any) => String(p._id));
-    const filteredTransactions = wallet.transactions.filter(t => !t.purchaseId || validPaymentIds.includes(String(t.purchaseId)));
+    // For refunds/credits, always count them. For withdrawals, filter by valid Payment if needed.
+    const filteredTransactions = wallet.transactions.filter(t => {
+      if (t.type === 'refund' || t.type === 'credit') return true;
+      if (t.type === 'withdrawal') return (!t.purchaseId || validPaymentIds.includes(String(t.purchaseId)));
+      return false;
+    });
     // Recalculate balance
     let recalculatedBalance = 0;
     for (const t of filteredTransactions) {
@@ -46,13 +51,14 @@ export async function GET(req: NextRequest) {
         recalculatedBalance -= t.amount;
       }
     }
+    console.log('[WALLET GET] userId:', userId, 'filteredTransactions:', filteredTransactions, 'recalculatedBalance:', recalculatedBalance);
 
     return NextResponse.json({ 
       success: true, 
       wallet: {
-        balance: recalculatedBalance,
+        balance: wallet.balance, // Use the DB field, not recalculated
         currency: wallet.currency,
-        transactions: filteredTransactions
+        transactions: wallet.transactions
       }
     });
 
@@ -110,6 +116,7 @@ export async function POST(req: NextRequest) {
     }
 
     await wallet.save();
+    console.log('[WALLET POST] userId:', userId, 'transaction:', transaction, 'newBalance:', wallet.balance);
 
     return NextResponse.json({ 
       success: true, 

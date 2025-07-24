@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
 import PricingPlanPurchase from '@/models/PricingPlanPurchase';
+import { sendEmail } from "@/lib/sendEmail";
+import User from "@/models/User";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
@@ -70,6 +72,22 @@ export async function POST(req: NextRequest) {
     });
 
     await plan.save();
+
+    // Send confirmation email to admin and user
+    try {
+      const user = await User.findOne({ _id: userId });
+      const userEmail = user?.email;
+      const recipients = ["fitsyncpro.gym@gmail.com"];
+      if (userEmail) recipients.push(userEmail);
+      await sendEmail({
+        to: recipients.join(","),
+        subject: `Subscription Plan Purchase Confirmation: ${planName}`,
+        text: `A new subscription plan has been purchased.\nPlan: ${planName}\nUser ID: ${userId}\nTotal Amount: $${amount}`,
+        html: `<h2>Subscription Plan Purchase Confirmation</h2><p><strong>Plan:</strong> ${planName}</p><p><strong>User ID:</strong> ${userId}</p><p><strong>Total Amount:</strong> $${amount}</p>`
+      });
+    } catch (emailError) {
+      console.error("Failed to send subscription purchase confirmation email:", emailError);
+    }
 
     return NextResponse.json({ success: true, planId: plan._id });
   } catch (err: any) {
