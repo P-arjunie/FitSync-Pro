@@ -5,9 +5,8 @@ import Navbar from "@/Components/Navbar";
 import Footer1 from "@/Components/Footer_01";
 
 const SettingsPage: React.FC = () => {
-  const [logoPreview, setLogoPreview] = useState<string>("/Logo.png");
+  // Removed logoPreview, logoFile, and handleLogoChange
   const [footerText, setFooterText] = useState<string>("© 2024 FitSync Pro. All rights reserved.");
-  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
@@ -40,7 +39,6 @@ const SettingsPage: React.FC = () => {
         const res = await fetch("/api/settings");
         if (!res.ok) throw new Error("Failed to fetch settings");
         const data = await res.json();
-        setLogoPreview(data.logoUrl || "/Logo.png");
         setFooterText(data.footerText || "");
         setClasses(data.classes || []);
         setWorkingHours(data.workingHours || { weekdays: "", saturday: "", sunday: "" });
@@ -55,17 +53,7 @@ const SettingsPage: React.FC = () => {
     fetchSettings();
   }, []);
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // Removed handleLogoChange
 
   const handleFooterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFooterText(e.target.value);
@@ -93,10 +81,8 @@ const SettingsPage: React.FC = () => {
     setSuccess("");
     setError("");
     try {
-      // For logo, if a new file is selected, upload it first (not implemented here)
-      // For now, just use logoPreview as logoUrl
+      // Removed logoUrl from payload
       const payload = {
-        logoUrl: logoPreview,
         footerText,
         classes,
         workingHours,
@@ -127,23 +113,6 @@ const SettingsPage: React.FC = () => {
             <div className="text-center text-gray-500">Loading settings...</div>
           ) : (
             <form onSubmit={handleSave} className="space-y-8">
-              {/* Logo Upload */}
-              <div>
-                <label className="block font-semibold mb-2">Header Logo</label>
-                <div className="flex items-center gap-6">
-                  <img
-                    src={logoPreview}
-                    alt="Logo Preview"
-                    className="w-32 h-20 object-contain border rounded bg-gray-50"
-                  />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoChange}
-                    className="file-input file-input-bordered"
-                  />
-                </div>
-              </div>
               {/* Footer Text */}
               <div>
                 <label className="block font-semibold mb-2">Footer Text</label>

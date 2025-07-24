@@ -29,7 +29,6 @@ export async function POST(req: Request) {
       height,
       bmi,
       goalWeight,
-      termsAccepted,
       password
     } = body;
 
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
       !firstName || !lastName || !dob || !gender || !contactNumber || !email || !address ||
       !emergencyContact?.name || !emergencyContact?.phone || !emergencyContact?.relationship ||
       !membershipInfo?.startDate ||
-      !termsAccepted || !image ||
+      !image ||
       currentWeight === undefined || height === undefined || bmi === undefined || goalWeight === undefined
     ) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
@@ -66,7 +65,6 @@ export async function POST(req: Request) {
       height,
       bmi,
       goalWeight,
-      termsAccepted, // Confirm that the terms checkbox was accepted
       role: "member", // Default role is set to "member"
       status: "pending", // Status indicates admin approval is still required
       password

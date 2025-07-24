@@ -22,7 +22,6 @@ export interface ITrainer extends Document {
     relationship: string;
   };
   startDate?: Date;
-  termsAccepted: boolean;
   profileImage: string;
   status: "pending" | "approved";
   submittedAt: Date;
@@ -56,7 +55,6 @@ const TrainerSchema = new Schema<ITrainer>({
     relationship: { type: String, required: true },
   },
   startDate: { type: Date },
-  termsAccepted: { type: Boolean, required: true },
   profileImage: { type: String, required: true },
   status: { type: String, enum: ["pending", "approved"], default: "pending" },
   submittedAt: { type: Date, default: Date.now },

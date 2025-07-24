@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FaCamera } from "react-icons/fa";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
 
 interface Skill {
   name: string;
@@ -26,7 +27,6 @@ interface TrainerFormData {
   emergencyName: string;
   emergencyPhone: string;
   relationship: string;
-  termsAccepted: boolean;
   biography: string;
   skills: Skill[];
   password: string;
@@ -54,7 +54,6 @@ export default function TrainerRegistrationForm() {
     emergencyName: "",
     emergencyPhone: "",
     relationship: "",
-    termsAccepted: false,
     biography: "",
     skills: [],
     password: "",
@@ -147,37 +146,6 @@ export default function TrainerRegistrationForm() {
       }
       if (Array.isArray(value) && value.length === 0) {
         alert(`Please enter at least one value for "${field}".`);
-        return;
-      }
-    }
-
-    // Terms check
-    if (!formData.termsAccepted) {
-      alert("Please accept the terms and conditions.");
-      return;
-    }
-
-    // Email format check
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      alert("Please enter a valid email address.");
-      return;
-    }
-
-    // Phone number format (simple numeric check)
-    const phoneRegex = /^[0-9]{7,15}$/;
-    if (
-      !phoneRegex.test(formData.phone) ||
-      !phoneRegex.test(formData.emergencyPhone)
-    ) {
-      alert("Please enter valid phone numbers (7–15 digits).");
-      return;
-    }
-
-    // Skill validation
-    for (const skill of formData.skills) {
-      if (!skill.name.trim() || skill.level < 1 || skill.level > 5) {
-        alert("Each skill must have a name and a level between 1 and 5.");
         return;
       }
     }
@@ -482,24 +450,7 @@ export default function TrainerRegistrationForm() {
           </div>
         </fieldset>
 
-        {/* Terms and Submit */}
-        <div className="flex items-center my-4">
-          <input
-            type="checkbox"
-            id="termsAccepted"
-            name="termsAccepted"
-            checked={formData.termsAccepted}
-            onChange={handleChange}
-            className="mr-2"
-          />
-          <label htmlFor="termsAccepted" className="text-sm">
-            I agree to the{" "}
-            <a href="#" className="text-blue-600 underline">
-              terms and conditions
-            </a>
-            .
-          </label>
-        </div>
+        
 
         <button
           type="submit"

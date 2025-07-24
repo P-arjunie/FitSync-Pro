@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { FaCamera } from "react-icons/fa";
 import { useRouter } from "next/navigation";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
 
 const MemberRegistrationForm: React.FC = () => {
   const router = useRouter();
@@ -28,7 +29,6 @@ const MemberRegistrationForm: React.FC = () => {
     membershipInfo: {
       startDate: "",
     },
-    termsAccepted: false,
     password: "",
     confirmPassword: "",
   });
@@ -80,12 +80,6 @@ const MemberRegistrationForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Terms must be accepted
-    if (!formData.termsAccepted) {
-      alert("Please accept the terms and conditions.");
-      return;
-    }
 
     // Image is required
     if (!formData.image) {
@@ -332,16 +326,6 @@ const MemberRegistrationForm: React.FC = () => {
                 onChange={handleChange}
                 required
               />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="termsAccepted"
-                checked={formData.termsAccepted}
-                onChange={handleChange}
-                required
-              />
-              <span className="text-sm">I agree to terms & conditions</span>
             </div>
           </div>
         </fieldset>
