@@ -1,4 +1,4 @@
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, doc, updateDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 // Listen to messages in real-time for a chat room
@@ -32,6 +32,13 @@ export async function deleteMessage(chatId: string, messageId: string) {
 export async function editMessage(chatId: string, messageId: string, newText: string) {
   const ref = doc(db, "chats", chatId, "messages", messageId);
   await updateDoc(ref, { text: newText });
+}
+
+export async function deleteAllMessages(chatId: string) {
+  const messagesRef = collection(db, "chats", chatId, "messages");
+  const snapshot = await getDocs(messagesRef);
+  const batchDeletes = snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref));
+  await Promise.all(batchDeletes);
 }
 
 export async function fetchAllTrainers() {
@@ -75,4 +82,37 @@ export async function fetchUserChatRooms(userId: string) {
 export async function setUserOnlineStatus(userId: string, role: "member" | "trainer", isOnline: boolean) {
   const ref = doc(db, role === "trainer" ? "trainers" : "members", userId);
   await updateDoc(ref, { isOnline });
+}
+
+// Set lastRead timestamp for a user in a chat
+export async function setLastRead(chatId: string, userId: string, timestamp: number) {
+  const ref = doc(db, "chats", chatId, "lastRead", userId);
+  await setDoc(ref, { timestamp });
+}
+
+// Get lastRead timestamp for a user in a chat
+export async function getLastRead(chatId: string, userId: string): Promise<number> {
+  const ref = doc(db, "chats", chatId, "lastRead", userId);
+  const snap = await getDoc(ref);
+  return snap.exists() ? snap.data().timestamp : 0;
+}
+
+// Count unread messages for a user in a chat
+export async function countUnreadMessages(chatId: string, userId: string): Promise<number> {
+  const lastRead = await getLastRead(chatId, userId);
+  const messagesRef = collection(db, "chats", chatId, "messages");
+  const snapshot = await getDocs(messagesRef);
+  return snapshot.docs.filter(docSnap => {
+    const data = docSnap.data();
+    return data.timestamp && data.timestamp.toMillis && data.timestamp.toMillis() > lastRead;
+  }).length;
+}
+
+// Listen to trainers' online status in real time
+export function listenToTrainersOnlineStatus(callback: (trainers: any[]) => void) {
+  const trainersRef = collection(db, "trainers");
+  return onSnapshot(trainersRef, (snapshot) => {
+    const trainers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    callback(trainers);
+  });
 } 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "../../Components/ui/card";
 import { Badge } from "../../Components/ui/badge";
 import { Separator } from "../../Components/ui/separator";
-import { Clock, MapPin, Users } from "lucide-react";
+import { Clock, MapPin, Users, MessageCircle } from "lucide-react";
 import moment from "moment";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "../../Components/ui/dialog";
 import { Button } from "../../Components/ui/button";
@@ -248,6 +248,14 @@ const TrainerSessionsPage: React.FC = () => {
                             {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                           </Badge>
                         )}
+                        <a
+                          href={`/communication-and-notifications/User-chat?trainerName=${encodeURIComponent(session.trainerName)}`}
+                          className="ml-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow p-2 flex items-center justify-center"
+                          title="Message Trainer"
+                          style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+                        >
+                          <MessageCircle className="w-5 h-5" />
+                        </a>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-gray-600">Trainer: {session.trainerName}</span>

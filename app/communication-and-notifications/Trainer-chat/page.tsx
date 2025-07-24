@@ -5,8 +5,8 @@ import { Button } from "@/Components/ui/button"
 import { Input } from "@/Components/ui/input"
 import { Avatar, AvatarFallback } from "@/Components/ui/avatar"
 import { Badge } from "@/Components/ui/badge"
-import { Send, Users } from "lucide-react"
-import { listenToMessages, sendMessage as sendFirestoreMessage, fetchAllMembers, setUserOnlineStatus, deleteMessage, editMessage } from "@/lib/chatService"
+import { Send, Users, Trash2 } from "lucide-react"
+import { listenToMessages, sendMessage as sendFirestoreMessage, fetchAllMembers, setUserOnlineStatus, deleteMessage, editMessage, deleteAllMessages } from "@/lib/chatService"
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -286,7 +286,20 @@ export default function TrainerChatPage() {
                   <p className="text-sm text-gray-500">{selectedMemberInfo.isOnline ? "Online" : "Offline"}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedMember(null)} className="text-red-600 text-xl font-bold px-2 hover:bg-red-100 rounded">×</button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setSelectedMember(null)} className="text-red-600 text-xl font-bold px-2 hover:bg-red-100 rounded">×</button>
+                <button
+                  onClick={async () => {
+                    if (window.confirm('Are you sure you want to delete this conversation? This cannot be undone.')) {
+                      await deleteAllMessages(getChatId(currentTrainer.id, selectedMember!));
+                    }
+                  }}
+                  className="text-red-600 text-xl font-bold px-2 hover:bg-red-100 rounded"
+                  title="Delete Conversation"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
