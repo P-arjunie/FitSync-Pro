@@ -467,24 +467,37 @@ const TrainerReviewsPage = () => {
                 ))}
               </div>
 
-              <button
-                onClick={() => setSelectedTrainer(trainer)}
-                className="mt-4 text-sm text-red-600 hover:underline font-medium"
-              >
-                See more
-              </button>
-              <Link
-                href={`/trainer-sessions/trainer-page/${trainer._id}?name=${encodeURIComponent(trainer.fullName)}`}
-                className="mt-2 inline-block"
-              >
-                <button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 shadow hover:shadow-xl">
-                  Join Session
+              <div className="flex items-center gap-3 mt-4">
+                <button
+                  onClick={() => setSelectedTrainer(trainer)}
+                  className="text-sm text-red-600 hover:underline font-medium bg-transparent border-none p-0 m-0 focus:outline-none"
+                  style={{ minWidth: '70px' }}
+                >
+                  See more
                 </button>
-              </Link>
+                <Link
+                  href={`/trainer-sessions/trainer-page/${trainer._id}?name=${encodeURIComponent(trainer.fullName)}`}
+                  className="inline-block"
+                >
+                  <button className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 shadow hover:shadow-xl">
+                    Join Session
+                  </button>
+                </Link>
+                <Link
+                  href={`/communication-and-notifications/User-chat?trainerId=${trainer._id}&trainerName=${encodeURIComponent(trainer.fullName)}`}
+                  className="inline-block"
+                >
+                  <button
+                    className="w-10 h-10 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-all duration-300 shadow hover:shadow-xl"
+                    title="Message Trainer"
+                  >
+                    <MessageCircle className="w-6 h-6" />
+                  </button>
+                </Link>
+              </div>
             </div>
           ))}
         </div>
-
 
         {/* No Results Message */}
         {filteredTrainers.length === 0 && trainers.length > 0 && (
@@ -501,35 +514,6 @@ const TrainerReviewsPage = () => {
               >
                 Clear all filters
               </button>
-
-            <div className="flex items-center gap-3 mt-4">
-              <button
-                onClick={() => setSelectedTrainer(trainer)}
-                className="text-sm text-red-600 hover:underline font-medium bg-transparent border-none p-0 m-0 focus:outline-none"
-                style={{ minWidth: '70px' }}
-              >
-                See more
-              </button>
-              <Link
-                href={`/pasindi/trainer-page/${trainer._id}?name=${encodeURIComponent(trainer.fullName)}`}
-                className="inline-block"
-              >
-                <button className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 shadow hover:shadow-xl">
-                  Join Session
-                </button>
-              </Link>
-              <Link
-                href={`/communication-and-notifications/User-chat?trainerId=${trainer._id}&trainerName=${encodeURIComponent(trainer.fullName)}`}
-                className="inline-block"
-              >
-                <button
-                  className="w-10 h-10 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-all duration-300 shadow hover:shadow-xl"
-                  title="Message Trainer"
-                >
-                  <MessageCircle className="w-6 h-6" />
-                </button>
-              </Link>
-
             </div>
           </div>
         )}
