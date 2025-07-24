@@ -31,6 +31,16 @@ const TrainerFeedbackPage = () => {
   const [trainerRole, setTrainerRole] = useState<string | null>(null);
   const [trainerFullName, setTrainerFullName] = useState<string | null>(null);
 
+  // Color palette (same as analytics page)
+  const colors = {
+    red: '#dc2626',
+    darkBlue: '#1e293b',
+    white: '#fff',
+    black: '#000',
+    gray: '#6b7280',
+    lightGray: '#f3f4f6',
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setTrainerEmail(localStorage.getItem('userEmail'));
@@ -88,17 +98,17 @@ const TrainerFeedbackPage = () => {
   return (
     <>
       <Navbar />
-      <div className="bg-black min-h-screen px-6 py-10 font-sans text-white">
+      <div className="min-h-screen bg-white px-6 py-10 font-sans">
         {/* Greeting for logged-in approved trainer */}
         {trainerEmail && trainerRole === 'trainer' && (
           <div className="max-w-2xl mx-auto mb-4 flex justify-end">
-            <span className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow">
+            <span className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow">
               Hi{trainerName ? `, ${trainerName}` : `, ${trainerEmail}`}! Welcome back 👋
             </span>
           </div>
         )}
-        <h2 className="text-3xl font-bold text-center mb-8 tracking-wide">
-          <span className="text-white">FitSyncPro</span>{' '}
+        <h2 className="text-3xl font-bold text-center mb-8 tracking-wide text-gray-900">
+          <span className="text-gray-900">FitSyncPro</span>{' '}
           <span className="text-red-600">- My Feedback</span>
         </h2>
         {!trainerEmail || trainerRole !== 'trainer' ? (
@@ -107,38 +117,51 @@ const TrainerFeedbackPage = () => {
           </div>
         ) : (
           <>
-            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+            {error && (
+              <div className="bg-red-900 border-l-4 border-red-500 text-red-100 p-4 mb-6 max-w-2xl mx-auto rounded-r-lg">
+                {error}
+              </div>
+            )}
             {actionMessage && (
-              <div className="mb-4 text-center text-green-400">{actionMessage}</div>
+              <div className="bg-green-900 border-l-4 border-green-500 text-green-100 p-4 mb-6 max-w-2xl mx-auto rounded-r-lg">
+                {actionMessage}
+              </div>
             )}
             {loading ? (
-              <div className="text-center py-12 text-gray-400">Loading feedback...</div>
+              <div className="flex justify-center my-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-red-500"></div>
+              </div>
             ) : (
               <div className="max-w-2xl mx-auto space-y-6">
                 {reviews.length === 0 ? (
-                  <div className="bg-gray-800 rounded-lg p-8 text-center text-gray-400">
+                  <div className="bg-gray-100 rounded-lg p-8 text-center text-gray-500">
                     No feedback found for your trainer profile.
                   </div>
                 ) : (
                   reviews.map((review) => (
-                    <div key={review._id} className="bg-white text-black rounded-lg shadow p-5 relative">
+                    <div 
+                      key={review._id} 
+                      className="bg-gray-900 text-white rounded-lg shadow-lg p-5 relative border-l-4 border-red-600"
+                    >
                       <div className="flex justify-between items-center mb-2">
-                        <div className="text-red-600 text-sm">
+                        <div className="text-red-500 text-sm">
                           {Array.from({ length: 5 }, (_, i) => (
                             <span key={i}>{i < review.rating ? '★' : '☆'}</span>
                           ))}
                         </div>
                         <button
-                          className="text-red-600 hover:underline text-xs px-2 py-1 bg-red-100 rounded"
+                          className="text-white bg-red-600 hover:bg-red-700 text-xs px-3 py-1 rounded transition-colors"
                           onClick={() => handleDelete(review._id)}
                           disabled={deleteLoading === review._id}
-                        >{deleteLoading === review._id ? 'Deleting...' : 'Delete'}</button>
+                        >
+                          {deleteLoading === review._id ? 'Deleting...' : 'Delete'}
+                        </button>
                       </div>
-                      <p className="italic mb-1">"{review.comments}"</p>
-                      <div className="text-xs text-gray-500 mb-1">
+                      <p className="italic mb-2 text-gray-100">"{review.comments}"</p>
+                      <div className="text-xs text-gray-400 mb-1">
                         {new Date(review.date).toLocaleDateString()} • {review.sessionType}
                       </div>
-                      <div className="text-xs text-gray-400">By: {review.memberEmail || 'Unknown'}</div>
+                      <div className="text-xs text-gray-500">By: {review.memberEmail || 'Anonymous'}</div>
                     </div>
                   ))
                 )}

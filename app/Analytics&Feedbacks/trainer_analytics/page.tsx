@@ -5,6 +5,8 @@ import jsPDF from 'jspdf';
 import autotable from 'jspdf-autotable';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 import 'chart.js/auto';
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
 
 interface RevenueAnalytics {
   totalRevenue: number;
@@ -203,6 +205,8 @@ const TrainerAnalyticsPage = () => {
   };
 
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen flex bg-white">
       <div className="flex-1 flex flex-col relative overflow-hidden p-8">
         {trainerEmail && trainerRole === 'trainer' && (
@@ -247,22 +251,14 @@ const TrainerAnalyticsPage = () => {
             {activeTab === 'analytics' && (
               <>
                 {/* Usage Analytics */}
-                <div className="bg-black text-white rounded-lg p-8 shadow-lg flex flex-col md:flex-row justify-between items-center border-l-4 border-gray-600">
-                  <div>
-                    <div className="text-lg text-white font-semibold">Total Logins</div>
-                    <div className="text-3xl font-extrabold text-red-600">{analytics.usage?.loginCount ?? 'N/A'}</div>
-                  </div>
-                  <div>
-                    <div className="text-lg text-white font-semibold">Last Login</div>
-                    <div className="text-xl font-bold text-gray-300">{formatDate(analytics.usage?.lastLogin ?? null)}</div>
-                  </div>
+               
                   <button
                     className="ml-8 bg-red-600 text-white px-4 py-2 rounded-lg font-semibold shadow hover:bg-red-700"
                     onClick={generateAnalyticsReport}
                   >
                     Generate Report
                   </button>
-                </div>
+               
 
                 {/* Advanced Analytics Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
@@ -278,10 +274,7 @@ const TrainerAnalyticsPage = () => {
                     <div className="text-lg font-semibold mb-2 text-gray-200">Total Participants</div>
                     <div className="text-3xl font-extrabold text-gray-100">{totalParticipants}</div>
                   </div>
-                  <div className="bg-gray-900 border-l-2 border-black p-6 shadow-lg text-white rounded-lg">
-                    <div className="text-lg font-semibold mb-2 text-gray-200">Session Participant Count</div>
-                    <div className="text-3xl font-extrabold text-gray-100">{sessionParticipantCount}</div>
-                  </div>
+               
                   <div className="bg-gray-900 border-l-2 border-gray-600 p-6 shadow-lg text-white rounded-lg">
                     <div className="text-lg font-semibold mb-2 text-gray-200">To Be Held Sessions</div>
                     <div className="text-3xl font-extrabold text-gray-100">{toBeHeldSessions}</div>
@@ -486,6 +479,8 @@ const TrainerAnalyticsPage = () => {
         )}
       </div>
     </div>
+      <Footer />
+    </>
   );
 };
 
