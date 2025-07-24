@@ -275,6 +275,18 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <Footer1 />
+
+      {/* Floating Chat Button */}
+      <a
+        href="/communication-and-notifications/User-chat"
+        className="fixed bottom-8 right-8 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg p-4 flex items-center justify-center z-50"
+        title="Chat with Trainer or Member"
+        style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 15.75h6.75m-6.75-3h6.75m-6.75-3h6.75M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 0 1-4.2-.93c-.32-.15-.48-.22-.62-.25a.75.75 0 0 0-.37 0c-.14.03-.3.1-.62.25l-2.7 1.2a.375.375 0 0 1-.51-.46l.6-2.1c.09-.32.13-.48.12-.62a.75.75 0 0 0-.07-.27c-.06-.13-.15-.29-.32-.61A7.72 7.72 0 0 1 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z" />
+        </svg>
+      </a>
     </div>
   );
 };

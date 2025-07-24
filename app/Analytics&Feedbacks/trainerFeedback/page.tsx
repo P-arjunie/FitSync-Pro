@@ -8,6 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../../Components/Navbar';
 import Footer from '../../Components/Footer_01';
+import { MessageCircle, Mail } from 'lucide-react';
 
 interface Review {
   _id: string;
@@ -125,7 +126,7 @@ const TrainerFeedbackPage = () => {
                       <div className="flex justify-between items-center mb-2">
                         <div className="text-red-600 text-sm">
                           {Array.from({ length: 5 }, (_, i) => (
-                            <span key={i}>{i < review.rating ? '★' : '☆'}</span>
+                            <span key={i}>{i < review.rating ? '\u2605' : '\u2606'}</span>
                           ))}
                         </div>
                         <button
@@ -136,9 +137,21 @@ const TrainerFeedbackPage = () => {
                       </div>
                       <p className="italic mb-1">"{review.comments}"</p>
                       <div className="text-xs text-gray-500 mb-1">
-                        {new Date(review.date).toLocaleDateString()} • {review.sessionType}
+                        {new Date(review.date).toLocaleDateString()} \u2022 {review.sessionType}
                       </div>
-                      <div className="text-xs text-gray-400">By: {review.memberEmail || 'Unknown'}</div>
+                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                        By: {review.memberEmail || 'Unknown'}
+                        {review.memberEmail && (
+                          <a
+                            href={`mailto:${review.memberEmail}?subject=Regarding your feedback on FitSyncPro`}
+                            className="ml-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow p-1 flex items-center justify-center"
+                            title="Send Email"
+                            style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+                          >
+                            <Mail className="w-4 h-4" />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}

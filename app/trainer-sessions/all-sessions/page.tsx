@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../Componen
 import { Button } from "../../Components/ui/button"
 import { Badge } from "../../Components/ui/badge"
 import { Separator } from "../../Components/ui/separator"
-import { CalendarIcon, Clock, MapPin, Users, User } from "lucide-react"
+import { CalendarIcon, Clock, MapPin, Users, User, MessageCircle } from "lucide-react"
+import FloatingChatButton from "@/Components/ui/FloatingChatButton";
 
 // Enhanced custom styles with black, gray, red theme
 const customStyles = `
@@ -196,6 +197,7 @@ export default function AllSessionsPage() {
   return (
     <div className="min-h-screen bg-white">
       <style dangerouslySetInnerHTML={{ __html: customStyles }} />
+      <FloatingChatButton />
       <Card className="bg-white border-gray-200 shadow-lg">
         <CardHeader className="bg-gray-900 text-white border-b-2 border-red-500">
           <CardTitle className="text-xl font-bold text-white">All Trainers' Sessions</CardTitle>
@@ -254,6 +256,14 @@ export default function AllSessionsPage() {
                 <div className="flex items-center gap-2 mt-1">
                   <User className="w-4 h-4 text-gray-500" />
                   <span className="text-gray-600">Trainer: {selectedSession.trainerName}</span>
+                  <a
+                    href={`/communication-and-notifications/User-chat?${selectedSession.trainerId ? `trainerId=${selectedSession.trainerId}&` : ''}trainerName=${encodeURIComponent(selectedSession.trainerName)}`}
+                    className="ml-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow p-2 flex items-center justify-center"
+                    title="Message Trainer"
+                    style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </a>
                 </div>
               </div>
               <Separator className="bg-gray-200" />
