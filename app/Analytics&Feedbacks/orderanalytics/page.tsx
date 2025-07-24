@@ -7,6 +7,8 @@ import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import AnalyticsSidebar from "../../Components/analytics/AnalyticsSidebar";
 import autotable from "jspdf-autotable";
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
 
 interface OrderAnalyticsData {
   labels: string[];
@@ -531,6 +533,9 @@ const OrderAnalyticsPage: React.FC = () => {
   }, [reportFormat, generatePDFReport, generateExcelReport, generateCSVReport]);
 
   return (
+    
+<>
+      <Navbar />
     <div className="min-h-screen flex">
       <AnalyticsSidebar />
       <div 
@@ -819,6 +824,8 @@ const OrderAnalyticsPage: React.FC = () => {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 

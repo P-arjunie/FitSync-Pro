@@ -53,8 +53,36 @@ export async function POST(req: NextRequest) {
 
     // Also update Payment records for this subscription (by relatedPlanId)
     const Payment = (await import('@/models/Payment')).default;
-    const payment = await Payment.findOne({ userId, paymentFor: 'pricing-plan', relatedPlanId: plan._id });
-    if (payment) {
+    let payment = await Payment.findOne({ userId, paymentFor: 'pricing-plan', relatedPlanId: plan._id });
+    if (!payment) {
+      // Create a Payment record if missing (to ensure wallet refund is counted)
+      payment = await Payment.create({
+        firstName: plan.planName,
+        lastName: userId.toString(),
+        email: '',
+        company: 'FitSyncPro',
+        amount: plan.amount,
+        currency: 'usd',
+        paymentStatus: 'refunded',
+        paymentMethodId: 'manual-refund',
+        billingAddress: {
+          zip: '',
+          country: '',
+          city: '',
+          street: '',
+        },
+        userId,
+        paymentFor: 'pricing-plan',
+        relatedPlanId: plan._id,
+        refundStatus: 'refunded',
+        refundProcessedAt: new Date(),
+        refundAmount: refundAmount,
+        refundReason: reason,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      console.log('[DEBUG] Created missing Payment for subscription refund:', payment);
+    } else {
       payment.paymentStatus = 'refunded';
       payment.refundStatus = 'refunded';
       payment.refundProcessedAt = new Date();
@@ -62,11 +90,9 @@ export async function POST(req: NextRequest) {
       payment.refundReason = reason;
       await payment.save();
       console.log('[DEBUG] Updated Payment:', payment);
-    } else {
-      console.log('[DEBUG] No Payment found for relatedPlanId', plan._id);
     }
 
-    // Add refund to wallet
+    // Add refund to wallet (EXACTLY like enrollment refund)
     const Wallet = (await import('@/models/Wallet')).default;
     const walletBefore = await Wallet.findOne({ userId });
     console.log('[DEBUG] Wallet before update:', walletBefore);
@@ -78,8 +104,8 @@ export async function POST(req: NextRequest) {
           transactions: {
             type: 'refund',
             amount: refundAmount,
-            description: `Refund for subscription: ${planName}`,
-            purchaseId: plan._id.toString(),
+            description: `Refund for ${plan.planName}`,
+            purchaseId: payment._id.toString(),
             status: 'completed',
             createdAt: new Date(),
           },
@@ -89,40 +115,6 @@ export async function POST(req: NextRequest) {
     );
     const walletAfter = await Wallet.findOne({ userId });
     console.log('[DEBUG] Wallet after update:', walletAfter);
-
-    // Send admin email for subscription refund
-    try {
-      if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        const nodemailer = require('nodemailer');
-        const transporter = nodemailer.createTransport({
-          service: 'gmail',
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
-        const emailSubject = `Refund Processed - Subscription Plan`;
-        const emailText = `
-Refund Processed:
-- User ID: ${userId}
-- Plan Name: ${planName}
-- Purchase ID: ${plan._id}
-- Original Amount: $${plan.amount.toFixed(2)}
-- Refund Amount: $${refundAmount.toFixed(2)}
-- Reason: ${reason || 'N/A'}
-- Processed At: ${new Date().toLocaleString()}
-        `;
-        await transporter.sendMail({
-          from: `FitSync Pro <${process.env.EMAIL_USER}>`,
-          to: 'fitsync.test@gmail.com',
-          subject: emailSubject,
-          text: emailText,
-        });
-        console.log('📧 Subscription refund processed email sent to admin');
-      }
-    } catch (emailErr) {
-      console.error('❌ Failed to send admin subscription refund email:', emailErr);
-    }
 
     return NextResponse.json({ 
       success: true, 

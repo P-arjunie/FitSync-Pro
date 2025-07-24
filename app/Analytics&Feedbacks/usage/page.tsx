@@ -5,6 +5,8 @@ import jsPDF from 'jspdf';
 import UsageAnalyticsDashboard from '../../Components/analytics/UsageAnalyticsDashboard';
 import AnalyticsSidebar from '../../Components/analytics/AnalyticsSidebar';
 import Link from 'next/link';
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
 
 // Define a type for the fetched data structure
 interface UsageData {
@@ -38,26 +40,53 @@ const UsageAnalyticsPage = () => {
     });
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [reportFormat, setReportFormat] = useState<string>("pdf");
+    const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
+    const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
 
-    // Fetch analytics data when logged in or filters change
-    useEffect(() => {
+    // Function to fetch analytics data
+    const fetchAnalyticsData = useCallback(async () => {
         if (!isLoggedIn) return;
         setLoading(true);
         setError(null);
-        let query = [];
-        if (filters.startDate) query.push(`startDate=${encodeURIComponent(filters.startDate.toISOString())}`);
-        if (filters.endDate) query.push(`endDate=${encodeURIComponent(filters.endDate.toISOString())}`);
-        if (filters.role && filters.role !== 'all') query.push(`role=${encodeURIComponent(filters.role)}`);
-        const url = `/api/analytics/platform-usage${query.length ? '?' + query.join('&') : ''}`;
-        fetch(url)
-            .then(res => {
-                if (!res.ok) throw new Error('Failed to fetch data');
-                return res.json();
-            })
-            .then(result => setData(result))
-            .catch(err => setError('Failed to fetch data'))
-            .finally(() => setLoading(false));
+        try {
+            let query = [];
+            if (filters.startDate) query.push(`startDate=${encodeURIComponent(filters.startDate.toISOString())}`);
+            if (filters.endDate) query.push(`endDate=${encodeURIComponent(filters.endDate.toISOString())}`);
+            if (filters.role && filters.role !== 'all') query.push(`role=${encodeURIComponent(filters.role)}`);
+            const url = `/api/analytics/platform-usage${query.length ? '?' + query.join('&') : ''}`;
+            
+            const res = await fetch(url);
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Failed to fetch data: ${errorText}`);
+            }
+            
+            const result = await res.json();
+            setData(result);
+            setLastRefreshed(new Date());
+        } catch (err) {
+            console.error('Error fetching analytics data:', err);
+            setError(err instanceof Error ? err.message : 'Failed to fetch data');
+        } finally {
+            setLoading(false);
+        }
     }, [isLoggedIn, filters]);
+
+    // Fetch analytics data when logged in or filters change
+    useEffect(() => {
+        fetchAnalyticsData();
+    }, [fetchAnalyticsData]);
+
+    // Auto-refresh data every 30 seconds if enabled
+    useEffect(() => {
+        if (!autoRefresh) return;
+        
+        const intervalId = setInterval(() => {
+            fetchAnalyticsData();
+        }, 30000); // 30 seconds
+        
+        return () => clearInterval(intervalId);
+    }, [autoRefresh, fetchAnalyticsData]);
 
     const generatePDFReport = useCallback(() => {
         if (!data) return;
@@ -150,16 +179,7 @@ const UsageAnalyticsPage = () => {
 
 
 
-    useEffect(() => {
-        const userEmail = localStorage.getItem("userEmail");
-        const storedUsername = localStorage.getItem("userName");
-
-        if (userEmail && storedUsername) {
-            setIsLoggedIn(true);
-        }
-        setIsCheckingAuth(false);
-    }, []);
-
+    // Check authentication once on component mount
     useEffect(() => {
         const userEmail = localStorage.getItem("userEmail");
         const storedUsername = localStorage.getItem("userName");
@@ -180,6 +200,8 @@ const UsageAnalyticsPage = () => {
     }, [reportFormat, generatePDFReport, generateExcelReport, generateCSVReport]);
 
     return (
+<>
+      <Navbar />
         <div className="min-h-screen flex" style={{
             background: 'linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 25%, #c0c0c0 50%, #b0b0b0 75%, #a0a0a0 100%)',
             backgroundImage: `
@@ -200,6 +222,18 @@ const UsageAnalyticsPage = () => {
                         <h1 className="text-4xl font-bold mt-4 mb-2 text-gray-800">Usage & Performance</h1>
                         <p className="text-lg text-gray-600">Track platform engagement and user activity</p>
                     </div>
+
+                    {/* Error message display */}
+                    {error && (
+                        <div className="bg-red-600 text-white p-4 mb-8 shadow-lg">
+                            <div className="flex items-center">
+                                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>{error}</span>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Filters & Report Generation */}
                     <div className="bg-black p-6 mb-8 shadow-lg border-l-2 border-red-600 flex flex-col md:flex-row gap-4 items-center">
@@ -240,6 +274,26 @@ const UsageAnalyticsPage = () => {
                         >
                             Reset Filters
                         </button>
+                        <button
+                            className="mt-6 md:mt-0 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-none flex items-center"
+                            onClick={fetchAnalyticsData}
+                            disabled={loading}
+                        >
+                            <svg className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            {loading ? 'Refreshing...' : 'Refresh Data'}
+                        </button>
+                        <div className="flex items-center mt-6 md:mt-0">
+                            <input
+                                type="checkbox"
+                                id="autoRefresh"
+                                checked={autoRefresh}
+                                onChange={(e) => setAutoRefresh(e.target.checked)}
+                                className="mr-2"
+                            />
+                            <label htmlFor="autoRefresh" className="text-white text-sm">Auto-refresh (30s)</label>
+                        </div>
                         {/* Report Format Selector and Generate Button */}
                         <div className="flex flex-col md:flex-row items-center gap-2 mt-6 md:mt-0">
                             <select
@@ -281,6 +335,12 @@ const UsageAnalyticsPage = () => {
 
                     {data ? (
                         <>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold text-gray-800">Analytics Dashboard</h2>
+                                <div className="text-sm text-gray-600">
+                                    Last updated: {lastRefreshed.toLocaleTimeString()}
+                                </div>
+                            </div>
                             <UsageAnalyticsDashboard {...data} />
                             {/* --- Additional Insights Section --- */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
@@ -327,14 +387,32 @@ const UsageAnalyticsPage = () => {
                                 </div>
                             </div>
                         </>
+                    ) : loading ? (
+                        <div className="bg-gray-900 p-8 border-l-2 border-red-600 shadow-lg text-center">
+                            <div className="flex justify-center items-center">
+                                <svg className="animate-spin h-10 w-10 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                            <p className="text-gray-300 mt-4">Loading analytics data...</p>
+                        </div>
                     ) : (
                         <div className="bg-gray-900 p-8 border-l-2 border-red-600 shadow-lg text-center">
                             <p className="text-gray-300">No analytics data available.</p>
+                            <button
+                                className="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-none"
+                                onClick={fetchAnalyticsData}
+                            >
+                                Try Again
+                            </button>
                         </div>
                     )}
                 </div>
             </div>
         </div>
+         <Footer />
+    </>
     );
 }
 
