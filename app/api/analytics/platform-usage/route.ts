@@ -22,36 +22,51 @@ export async function GET(req: NextRequest) {
     if (startDateParam) sixMonthsAgo = new Date(startDateParam);
     if (endDateParam) endOfCurrentMonth = new Date(endDateParam);
 
-    // --- 1. Logins Over Time (filtered) ---
-    const match: any = { timestamp: { $gte: sixMonthsAgo, $lte: endOfCurrentMonth }, status: "success" };
+    // Get user IDs for role filtering if needed
+    let userIds: any[] = [];
     if (roleParam && roleParam !== "all") {
-      // Need to lookup user role
-      // We'll filter after aggregation for performance
+      try {
+        const User = (await import("@/models/User")).default;
+        const users = await User.find({ role: roleParam }, { _id: 1 }).lean();
+        userIds = users.map((u: any) => u._id);
+        
+        // If no users found with this role, return empty data
+        if (userIds.length === 0) {
+          return NextResponse.json({
+            labels: [],
+            loginCounts: [],
+            totalLogins30d: 0,
+            failedLogins30d: 0,
+            dau: 0,
+            mau: 0,
+            roleBreakdown: {},
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching users by role:", error);
+      }
     }
+
+    // --- 1. Logins Over Time (filtered) ---
+    const match: any = {
+      timestamp: { $gte: sixMonthsAgo, $lte: endOfCurrentMonth },
+      status: "success"
+    };
+    
+    // Add user ID filter if role is specified
+    if (userIds.length > 0) {
+      match.userId = { $in: userIds };
+    }
+    
     const loginsOverTime = await LoginHistory.aggregate([
       { $match: match },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m", date: "$timestamp" } },
-          userId: { $first: "$userId" },
           count: { $sum: 1 },
         },
       },
-      { $sort: { _id: 1 } },
-      ...(roleParam && roleParam !== "all"
-        ? [
-            {
-              $lookup: {
-                from: "users",
-                localField: "userId",
-                foreignField: "_id",
-                as: "userDetails"
-              }
-            },
-            { $unwind: "$userDetails" },
-            { $match: { "userDetails.role": roleParam } },
-          ]
-        : []),
+      { $sort: { _id: 1 } }
     ]);
 
     // Format for Chart.js
@@ -75,15 +90,10 @@ export async function GET(req: NextRequest) {
     let keyStart = startDateParam ? new Date(startDateParam) : thirtyDaysAgo;
     let keyEnd = endDateParam ? new Date(endDateParam) : new Date();
     const keyMatch: any = { timestamp: { $gte: keyStart, $lte: keyEnd } };
-    if (roleParam && roleParam !== "all") keyMatch.status = "success";
-
-    let userIds: any[] = [];
-    if (roleParam && roleParam !== "all") {
-      // Find userIds with that role
-      const users = await (await import("@/models/User")).default.find({ role: roleParam }, { _id: 1 });
-      userIds = users.map((u: any) => u._id);
+    
+    // Add user ID filter if role is specified
+    if (userIds.length > 0) {
       keyMatch.userId = { $in: userIds };
-      match.userId = { $in: userIds };
     }
 
     const totalLogins30d = await LoginHistory.countDocuments({ ...keyMatch, status: "success" });
@@ -104,9 +114,16 @@ export async function GET(req: NextRequest) {
     }).then(arr => arr.length);
 
     // --- 4. Role Breakdown (filtered) ---
+    // --- 4. Role Breakdown (filtered) ---
     const roleBreakdownData = await LoginHistory.aggregate([
-      { $match: { status: "success", ...(keyStart ? { timestamp: { $gte: keyStart, $lte: keyEnd } } : {}) } },
-      { $group: { _id: "$userId" } },
+      {
+        $match: {
+          status: "success",
+          timestamp: { $gte: keyStart, $lte: keyEnd },
+          ...(userIds.length > 0 ? { userId: { $in: userIds } } : {})
+        }
+      },
+      { $group: { _id: "$userId", count: { $sum: 1 } } },
       {
         $lookup: {
           from: "users",
@@ -115,11 +132,14 @@ export async function GET(req: NextRequest) {
           as: "userDetails"
         }
       },
-      { $unwind: "$userDetails" },
-      { $group: { _id: "$userDetails.role", count: { $sum: 1 } } }
+      { $unwind: { path: "$userDetails", preserveNullAndEmptyArrays: false } },
+      { $group: { _id: "$userDetails.role", count: { $sum: 1 } } },
+      { $match: { _id: { $ne: null } } }
     ]);
     const roleBreakdown = roleBreakdownData.reduce((acc, item) => {
-      acc[item._id] = item.count;
+      if (item._id) {
+        acc[item._id] = item.count;
+      }
       return acc;
     }, {});
 
@@ -135,7 +155,10 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Platform Usage Analytics Error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch platform usage data." },
+      {
+        error: "Failed to fetch platform usage data.",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }

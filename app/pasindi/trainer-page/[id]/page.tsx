@@ -3,7 +3,7 @@
 "use client"
 
 import { useParams, useSearchParams } from 'next/navigation'
-import { User, Calendar as CalendarIcon, Plus } from "lucide-react"
+import { User, Calendar as CalendarIcon, Plus, MessageCircle } from "lucide-react"
 import SessionCalendar from '../../components/session-calendar'
 import JoinableSessionCalendar from '../../components/JoinableSessionCalendar'
 import { useState } from 'react'
@@ -22,20 +22,25 @@ export default function TrainerDetailsPage() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
       <div className="container mx-auto px-4 py-8">
-        {/* Simple Trainer Header */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
+        {/* Trainer Header Box */}
+        <div className="mb-8 flex flex-col items-center">
+          <div className="flex items-center justify-center gap-3 mb-4 bg-gray-100 rounded-lg px-6 py-4 w-full max-w-xl shadow">
             <User className="h-8 w-8 text-red-600" />
-            <h1 className="text-3xl font-bold text-black">
+            <h1 className="text-3xl font-bold text-black mr-2">
               {trainerName}
             </h1>
+            <a
+              href={`/communication-and-notifications/User-chat?trainerId=${trainerId}&trainerName=${encodeURIComponent(trainerName)}`}
+              className="ml-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow p-2 flex items-center justify-center"
+              title="Message Trainer"
+              style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+            >
+              <MessageCircle className="w-6 h-6" />
+            </a>
           </div>
           <p className="text-gray-600">Professional Gym Trainer</p>
-          
-          {/* Create Sample Session Button */}
-          
         </div>
 
         

@@ -6,6 +6,8 @@ import AnalyticsSidebar from '../../Components/analytics/AnalyticsSidebar';
 import { RevenueAnalyticsData } from '@/types/analytics';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
 
 interface FilterState {
   startDate: string;
@@ -372,6 +374,8 @@ const RevenueAnalyticsPage = () => {
   }, [reportFormat, generatePDFReport, generateExcelReport, generateCSVReport]);
 
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen flex">
       <AnalyticsSidebar />
       <div 
@@ -560,6 +564,8 @@ const RevenueAnalyticsPage = () => {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 

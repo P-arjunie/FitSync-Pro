@@ -7,6 +7,8 @@ import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import AnalyticsSidebar from "../../Components/analytics/AnalyticsSidebar";
 import Link from 'next/link';
+import Navbar from '../../Components/Navbar';
+import Footer from '../../Components/Footer_01';
 
 interface AnalyticsData {
   labels: string[];
@@ -449,6 +451,8 @@ const AnalyticsPage: React.FC = () => {
   }
 
   return (
+    <>
+      <Navbar />
     <div className="min-h-screen flex">
       <AnalyticsSidebar />
       <div 
@@ -608,6 +612,8 @@ const AnalyticsPage: React.FC = () => {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 };
 

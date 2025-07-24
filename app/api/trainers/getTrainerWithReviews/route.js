@@ -21,11 +21,15 @@ export async function GET() {
           averageRating = reviews.reduce((acc, cur) => acc + (cur.rating || 0), 0) / reviews.length;
         }
 
+        // Get the first pricing plan as the main one to display
+        const pricingPlan = trainer.pricingPlans?.[0] || 'N/A';
+
         return {
           ...trainer._doc,
           fullName,
           averageRating: averageRating.toFixed(1),
           reviews: Array.isArray(reviews) ? reviews : [],
+          pricingPlan // Add this field for backward compatibility
         };
       })
     );

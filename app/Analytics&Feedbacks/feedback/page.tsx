@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/Components/Navbar';
 import Footer1 from '@/Components/Footer_01';
 import Link from 'next/link'; // Import Link for navigation to the login page
+import { MessageCircle } from 'lucide-react';
+import FloatingChatButton from "@/Components/ui/FloatingChatButton";
 
 // Define TypeScript types for the data structures
 type Trainer = {
@@ -168,6 +170,7 @@ const ReviewPage = () => {
   return (
     <>
       <Navbar />
+      <FloatingChatButton />
       <div 
         className="min-h-screen flex flex-col relative overflow-hidden"
         style={{

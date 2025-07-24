@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../Components/ui/ta
 import SessionForm from "../components/session-form"
 import SessionCalendar from "../components/session-calendar"
 import VirtualSessionForm from "../components/VirtualSessionForm" // ✅ Import Virtual Session Form
+import FloatingChatButton from "@/Components/ui/FloatingChatButton";
+import { MessageCircle } from "lucide-react";
 
 export default function Home() {
   const router = useRouter()
@@ -42,6 +44,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
+      <FloatingChatButton />
       <div className="container mx-auto py-10 px-4">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-black mb-2">Gym Session Scheduler</h1>

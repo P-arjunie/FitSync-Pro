@@ -69,16 +69,11 @@ const TrainerAnalyticsPage = () => {
   }, [trainerName]);
 
   // Chart data
-  const revenueLabels = analytics?.monthlyRevenue?.map((m) => m.month) || [];
-  const revenueData = analytics?.monthlyRevenue?.map((m) => m.revenue) || [];
   const sessionLabels = analytics?.sessionTypes?.map((s) => s.type) || [];
   const sessionData = analytics?.sessionTypes?.map((s) => s.count) || [];
 
   // Advanced analytics: session status breakdown, top session types, average session revenue
   const totalSessions = analytics?.totalSessions || 0;
-  const totalRevenue = analytics?.totalRevenue || 0;
-  const avgSessionRevenue = totalSessions > 0 ? (totalRevenue / totalSessions) : 0;
-  const topSessionType = sessionLabels.length > 0 && sessionData.length > 0 ? sessionLabels[sessionData.indexOf(Math.max(...sessionData))] : 'N/A';
   const totalParticipants = analytics?.totalParticipants || 0;
   const sessionParticipantCount = analytics?.sessionParticipantCount || 0;
   const toBeHeldSessions = analytics?.toBeHeldSessions || 0;
@@ -127,25 +122,30 @@ const TrainerAnalyticsPage = () => {
     doc.text('Summary', 15, 50);
     doc.setFontSize(12);
     doc.setTextColor('#000');
-    doc.text(`Total Revenue: $${totalRevenue.toFixed(2)}`, 15, 58);
-    doc.text(`Total Sessions: ${totalSessions}`, 15, 66);
-    doc.text(`Total Participants: ${totalParticipants}`, 15, 74);
-    doc.text(`Session Participant Count: ${sessionParticipantCount}`, 15, 82);
-    doc.text(`To Be Held Sessions: ${toBeHeldSessions}`, 15, 90);
-    doc.text(`Done Sessions: ${donePhysicalSessions + doneVirtualSessions} (Physical: ${donePhysicalSessions}, Virtual: ${doneVirtualSessions})`, 15, 98);
-    doc.text(`Top Session Type: ${topSessionType}`, 15, 106);
+    doc.text(`Total Sessions: ${totalSessions}`, 15, 58);
+    doc.text(`Total Participants: ${totalParticipants}`, 15, 66);
+    doc.text(`Session Participant Count: ${sessionParticipantCount}`, 15, 74);
+    doc.text(`To Be Held Sessions: ${toBeHeldSessions}`, 15, 82);
+    doc.text(`Done Sessions: ${donePhysicalSessions + doneVirtualSessions} (Physical: ${donePhysicalSessions}, Virtual: ${doneVirtualSessions})`, 15, 90);
+    doc.text(`Top Session Type: ${sessionLabels.length > 0 && sessionData.length > 0 ? sessionLabels[sessionData.indexOf(Math.max(...sessionData))] : 'N/A'}`, 15, 98);
 
     doc.setFontSize(14);
     doc.setTextColor('#1e293b');
-    doc.text('Monthly Revenue History', 15, 118);
-    const revenueTableY = 122;
+    doc.text('Session History', 15, 118);
+    const sessionTableY = 122;
     autotable(doc, {
-      startY: revenueTableY,
-      head: [['Month', 'Revenue']],
-      body: analytics.monthlyRevenue.map(m => [m.month, `$${m.revenue}`]),
+      startY: sessionTableY,
+      head: [['Type', 'Status', 'Title', 'Date', 'Participants']],
+      body: sessionHistory.map(s => [
+        s.type,
+        s.status,
+        s.title,
+        new Date(s.start ?? s.date ?? '').toLocaleString(),
+        s.currentParticipants || (s.participants?.length ?? 0)
+      ]),
       theme: 'grid',
-      headStyles: { fillColor: [220, 38, 38], textColor: [255,255,255], fontStyle: 'bold' },
-      bodyStyles: { fillColor: [243,244,246], textColor: [30,41,59] },
+      headStyles: { fillColor: [30,41,59], textColor: [255,255,255], fontStyle: 'bold' },
+      bodyStyles: { fillColor: [243,244,246], textColor: [220,38,38] },
       alternateRowStyles: { fillColor: [255,255,255] },
     });
 
@@ -181,21 +181,6 @@ const TrainerAnalyticsPage = () => {
       theme: 'grid',
       headStyles: { fillColor: [30,41,59], textColor: [255,255,255], fontStyle: 'bold' },
       bodyStyles: { fillColor: [243,244,246], textColor: [220,38,38] },
-      alternateRowStyles: { fillColor: [255,255,255] },
-    });
-
-    // Revenue history in history report
-    const revenueY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : 120;
-    doc.setFontSize(14);
-    doc.setTextColor('#dc2626');
-    doc.text('Monthly Revenue History', 15, revenueY);
-    autotable(doc, {
-      startY: revenueY + 4,
-      head: [['Month', 'Revenue']],
-      body: analytics?.monthlyRevenue?.map(m => [m.month, `$${m.revenue}`]) || [],
-      theme: 'grid',
-      headStyles: { fillColor: [220, 38, 38], textColor: [255,255,255], fontStyle: 'bold' },
-      bodyStyles: { fillColor: [243,244,246], textColor: [30,41,59] },
       alternateRowStyles: { fillColor: [255,255,255] },
     });
 
@@ -267,14 +252,10 @@ const TrainerAnalyticsPage = () => {
                 {/* Advanced Analytics Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
                   <div className="bg-gray-900 border-l-2 border-red-600 p-6 shadow-lg text-white rounded-lg">
-                    <div className="text-lg font-semibold mb-2 text-gray-200">Total Revenue</div>
-                    <div className="text-3xl font-extrabold text-red-600">${totalRevenue.toFixed(2)}</div>
+                    <div className="text-lg font-semibold mb-2 text-gray-200">Total Sessions</div>
+                    <div className="text-3xl font-extrabold text-red-600">{totalSessions}</div>
                   </div>
                   <div className="bg-gray-900 border-l-2 border-darkBlue p-6 shadow-lg text-white rounded-lg">
-                    <div className="text-lg font-semibold mb-2 text-gray-200">Total Sessions</div>
-                    <div className="text-3xl font-extrabold text-gray-100">{totalSessions}</div>
-                  </div>
-                  <div className="bg-gray-900 border-l-2 border-gray-600 p-6 shadow-lg text-white rounded-lg">
                     <div className="text-lg font-semibold mb-2 text-gray-200">Total Participants</div>
                     <div className="text-3xl font-extrabold text-gray-100">{totalParticipants}</div>
                   </div>
@@ -310,65 +291,7 @@ const TrainerAnalyticsPage = () => {
                 {/* Top Session Type */}
                 <div className="bg-white rounded-lg p-8 shadow-lg border-l-4 border-red-600">
                   <h3 className="text-xl font-bold mb-4 text-black">Top Session Type</h3>
-                  <div className="text-2xl font-bold text-red-600">{topSessionType}</div>
-                </div>
-
-                {/* Revenue Trend Chart */}
-                <div className="bg-white rounded-lg p-8 shadow-lg border-l-4 border-red-600">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold text-black">Monthly Revenue Trend</h3>
-                    <button
-                      className="bg-darkBlue text-white px-4 py-2 rounded-lg font-semibold shadow hover:bg-gray-900"
-                      onClick={() => {
-                        // Download revenue history as CSV
-                        if (!analytics?.monthlyRevenue) return;
-                        const header = ['Month', 'Revenue'];
-                        const rows = analytics.monthlyRevenue.map(m => [m.month, m.revenue]);
-                        const csvContent = [header, ...rows].map(e => e.join(',')).join('\n');
-                        const dataStr = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
-                        const dlAnchorElem = document.createElement('a');
-                        dlAnchorElem.setAttribute('href', dataStr);
-                        dlAnchorElem.setAttribute('download', 'revenue_history.csv');
-                        dlAnchorElem.click();
-                      }}
-                    >
-                      Download Revenue History
-                    </button>
-                  </div>
-                  {revenueLabels.length > 0 ? (
-                    <div className="h-64">
-                      <Line
-                        data={{
-                          labels: revenueLabels,
-                          datasets: [
-                            {
-                              label: 'Revenue',
-                              data: revenueData,
-                              backgroundColor: 'rgba(220,38,38,0.2)',
-                              borderColor: colors.red,
-                              borderWidth: 3,
-                              pointBackgroundColor: colors.red,
-                              pointBorderColor: colors.darkBlue,
-                              tension: 0.4,
-                            },
-                          ],
-                        }}
-                        options={{
-                          responsive: true,
-                          plugins: {
-                            legend: { display: false },
-                            title: { display: false },
-                          },
-                          scales: {
-                            y: { beginAtZero: true, grid: { color: colors.lightGray } },
-                            x: { grid: { color: colors.lightGray } },
-                          },
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="text-gray-400 text-center">No revenue data for chart.</div>
-                  )}
+                  <div className="text-2xl font-bold text-red-600">{sessionLabels.length > 0 && sessionData.length > 0 ? sessionLabels[sessionData.indexOf(Math.max(...sessionData))] : 'N/A'}</div>
                 </div>
 
                 {/* Session Types Chart */}
