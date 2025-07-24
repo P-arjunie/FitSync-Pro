@@ -106,7 +106,13 @@ export async function GET(req) {
     let loginCount = 0;
     let lastLogin = null;
     try {
-      const logins = await LoginHistory.find({ email: trainer.email, status: 'success' }).sort({ timestamp: -1 });
+      const logins = await LoginHistory.find({
+        $or: [
+          { email: trainer.email },
+          { userId: trainer._id }
+        ],
+        status: 'success'
+      }).sort({ timestamp: -1 });
       loginCount = logins.length;
       lastLogin = logins[0]?.timestamp || null;
     } catch (e) {
