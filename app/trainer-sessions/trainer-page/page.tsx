@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "../../Components/ui/card";
 import { Badge } from "../../Components/ui/badge";
@@ -57,6 +57,8 @@ const TrainerSessionsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'completed' | 'cancelled' | 'requests'>('upcoming');
   const [pendingRequests, setPendingRequests] = useState<Participant[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
+  const [individualSessions, setIndividualSessions] = useState<any[]>([]);
+  const [selectedIndividualSession, setSelectedIndividualSession] = useState<any | null>(null);
 
   useEffect(() => {
     // Get trainer info from localStorage
@@ -133,6 +135,24 @@ const TrainerSessionsPage: React.FC = () => {
     if (sessions.length > 0) fetchAllParticipants();
   }, [sessions]);
 
+  // Fetch individual sessions (approved requests)
+  useEffect(() => {
+    if (!user) return;
+    let isMounted = true;
+    const fetchIndividualSessions = async () => {
+      try {
+        const res = await fetch(`/api/session-request?trainerId=${user.userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const approved = (data.requests || []).filter((r: any) => r.status === 'approved');
+          if (isMounted) setIndividualSessions(approved);
+        }
+      } catch {}
+    };
+    fetchIndividualSessions();
+    return () => { isMounted = false; };
+  }, [user]);
+
   // Filter sessions by status
   const filteredSessions = useMemo(() => {
     const now = new Date();
@@ -149,6 +169,27 @@ const TrainerSessionsPage: React.FC = () => {
       }
     });
   }, [sessions, activeTab]);
+
+  // Merge group and individual sessions for display
+  const allCalendarSessions = useMemo(() => {
+    return [
+      ...sessions.map(s => ({ ...s, type: 'group' })),
+      ...individualSessions.map(r => ({
+        _id: r._id,
+        title: r.sessionName,
+        trainerName: r.trainerName,
+        start: r.preferredDate + 'T' + (r.startTime || '00:00'),
+        end: r.preferredDate + 'T' + (r.endTime || '00:00'),
+        location: r.sessionType === 'Physical' ? r.place : r.meetingLink,
+        description: r.description,
+        memberName: r.memberName,
+        memberEmail: r.memberEmail,
+        sessionType: r.sessionType,
+        pricingPlan: r.pricingPlan,
+        type: 'individual',
+      }))
+    ];
+  }, [sessions, individualSessions]);
 
   // Session statistics
   const sessionStats = useMemo(() => {
@@ -542,20 +583,25 @@ const TrainerSessionsPage: React.FC = () => {
                 <div className="flex items-center justify-center h-64">
                   <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent"></div>
                 </div>
-              ) : filteredSessions.length === 0 ? (
+              ) : allCalendarSessions.length === 0 ? (
                 <div className="text-center py-12">
                   <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                   <p className="text-gray-500 text-lg">No {activeTab} sessions found.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-200">
-                  {filteredSessions.map((session, index) => (
-                    <div key={session._id} className={`p-6 hover:bg-gray-50 transition-colors ${index === 0 ? 'rounded-t-lg' : ''} ${index === filteredSessions.length - 1 ? 'rounded-b-lg' : ''}`}>
+                  {allCalendarSessions.map((session, index) => (
+                    <div key={session._id} className={`p-6 hover:bg-gray-50 transition-colors ${index === 0 ? 'rounded-t-lg' : ''} ${index === allCalendarSessions.length - 1 ? 'rounded-b-lg' : ''}`}>
                       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         {/* Session Info */}
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-3">
                             <h3 className="text-xl font-semibold text-black">{session.title}</h3>
+                            {session.type === 'individual' && (
+                              <Badge className="bg-purple-100 text-purple-800 border-purple-200 font-medium px-3 py-1">
+                                Individual Session
+                              </Badge>
+                            )}
                             {session.status && (
                               <Badge className={`${
                                 session.status === 'cancelled' || session.canceled
@@ -613,47 +659,61 @@ const TrainerSessionsPage: React.FC = () => {
 
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row gap-2 lg:flex-col lg:w-auto">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewParticipants(session)}
-                            className="border-gray-300 hover:bg-gray-50 text-gray-700"
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Participants
-                          </Button>
-                          
-                          {!session.canceled && activeTab === 'upcoming' && (
+                          {session.type === 'individual' ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedIndividualSession(session)}
+                              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Details
+                            </Button>
+                          ) : (
                             <>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleEdit(session)}
-                                className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                                onClick={() => handleViewParticipants(session)}
+                                className="border-gray-300 hover:bg-gray-50 text-gray-700"
                               >
-                                <Edit3 className="w-4 h-4 mr-2" />
-                                Edit Capacity
+                                <Eye className="w-4 h-4 mr-2" />
+                                View Participants
                               </Button>
                               
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleReschedule(session)}
-                                className="border-orange-300 text-orange-700 hover:bg-orange-50"
-                              >
-                                <Calendar className="w-4 h-4 mr-2" />
-                                Reschedule
-                              </Button>
-                              
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleCancel(session)}
-                                className="border-red-300 text-red-700 hover:bg-red-50"
-                              >
-                                <X className="w-4 h-4 mr-2" />
-                                Cancel
-                              </Button>
+                              {!session.canceled && activeTab === 'upcoming' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEdit(session)}
+                                    className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                                  >
+                                    <Edit3 className="w-4 h-4 mr-2" />
+                                    Edit Capacity
+                                  </Button>
+                                  
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleReschedule(session)}
+                                    className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                                  >
+                                    <Calendar className="w-4 h-4 mr-2" />
+                                    Reschedule
+                                  </Button>
+                                  
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleCancel(session)}
+                                    className="border-red-300 text-red-700 hover:bg-red-50"
+                                  >
+                                    <X className="w-4 h-4 mr-2" />
+                                    Cancel
+                                  </Button>
+                                </>
+                              )}
                             </>
                           )}
                         </div>
@@ -849,6 +909,64 @@ const TrainerSessionsPage: React.FC = () => {
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               {actionLoading ? "Cancelling..." : "Cancel Session"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Individual Session Details Modal */}
+      <Dialog open={!!selectedIndividualSession} onOpenChange={open => !open && setSelectedIndividualSession(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              Session Details for "{selectedIndividualSession?.memberName}"
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Session Name</label>
+              <p className="text-lg font-semibold text-black">{selectedIndividualSession?.title}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Trainer</label>
+              <p className="text-lg font-semibold text-black">{selectedIndividualSession?.trainerName}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+              <p className="text-lg font-semibold text-black">{moment(selectedIndividualSession?.start).format("MMM D, YYYY")}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+              <p className="text-lg font-semibold text-black">{moment(selectedIndividualSession?.start).format("h:mm A")} - {moment(selectedIndividualSession?.end).format("h:mm A")}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Location/Meeting Link</label>
+              <p className="text-lg font-semibold text-black">{selectedIndividualSession?.location}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <p className="text-lg font-semibold text-black">{selectedIndividualSession?.description}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Member Name</label>
+              <p className="text-lg font-semibold text-black">{selectedIndividualSession?.memberName}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Member Email</label>
+              <p className="text-lg font-semibold text-black">{selectedIndividualSession?.memberEmail}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Session Type</label>
+              <p className="text-lg font-semibold text-black">{selectedIndividualSession?.sessionType}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Pricing Plan</label>
+              <p className="text-lg font-semibold text-black">{selectedIndividualSession?.pricingPlan}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedIndividualSession(null)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

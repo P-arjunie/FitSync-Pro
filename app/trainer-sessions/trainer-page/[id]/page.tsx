@@ -3,10 +3,13 @@
 "use client"
 
 import { useParams, useSearchParams } from 'next/navigation'
-import { User, CalendarIcon, Plus, DollarSign } from 'lucide-react'
+import { User, CalendarIcon, Plus, DollarSign, MessageCircle } from 'lucide-react'
 import SessionCalendar from '../../components/session-calendar' // Assuming this path is correct
 import JoinableSessionCalendar from '../../components/JoinableSessionCalendar' // Assuming this path is correct
 import { useState, useEffect } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/Components/ui/dialog';
+import { Input } from '@/Components/ui/input';
+import { Button } from '@/Components/ui/button';
 
 export default function TrainerDetailsPage() {
   const params = useParams()
@@ -20,6 +23,183 @@ export default function TrainerDetailsPage() {
   const [planMatch, setPlanMatch] = useState<boolean | null>(null)
   const [virtualSessions, setVirtualSessions] = useState<any[]>([]);
   const [trainerPricingPlans, setTrainerPricingPlans] = useState<string[]>([]);
+
+  // Add session request state and logic
+  const [sessionType, setSessionType] = useState('');
+  const [preferredDate, setPreferredDate] = useState('');
+  const [preferredTime, setPreferredTime] = useState('');
+  const [pricingPlan, setPricingPlan] = useState('');
+  const [memberName, setMemberName] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+  const [sessionName, setSessionName] = useState('');
+  const [canRequestSession, setCanRequestSession] = useState(false);
+  const [restrictionMsg, setRestrictionMsg] = useState('');
+
+  // On mount, get member name
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setMemberName(localStorage.getItem('userName') || '');
+    }
+    setPricingPlan('');
+  }, []);
+
+  // Eligibility logic
+  useEffect(() => {
+    async function checkEligibility() {
+      if (typeof window === 'undefined') return;
+      const memberId = localStorage.getItem('userId');
+      if (!memberId) {
+        setCanRequestSession(false);
+        setRestrictionMsg('You must be logged in as a member to request a session.');
+        return;
+      }
+      // Fetch purchased plans
+      const plansRes = await fetch(`/api/fix-pending-pricing-plans?userId=${memberId}`);
+      if (!plansRes.ok) {
+        setCanRequestSession(false);
+        setRestrictionMsg('Could not verify your plan. Please try again later.');
+        return;
+      }
+      const plansData = await plansRes.json();
+      const paidPlans = Array.isArray(plansData.paidPlans) ? plansData.paidPlans : [];
+      const activePlans = paidPlans.filter((p: any) => ['paid', 'active'].includes(p.status));
+      const planNames = activePlans.map((p: any) => p.planName);
+      if (planNames.includes('Professional')) {
+        setCanRequestSession(true);
+        setRestrictionMsg('');
+        return;
+      }
+      if (planNames.includes('Golden')) {
+        // Fetch session requests for this member
+        const reqRes = await fetch(`/api/session-request?memberId=${memberId}`);
+        const reqData = await reqRes.json();
+        const requests = reqData.requests || [];
+        const physCount = requests.filter((r: any) => r.sessionType === 'Physical' && ['pending','approved'].includes(r.status)).length;
+        const virtCount = requests.filter((r: any) => r.sessionType === 'Virtual' && ['pending','approved'].includes(r.status)).length;
+        if (physCount < 1 || virtCount < 1) {
+          setCanRequestSession(true);
+          setRestrictionMsg('');
+        } else {
+          setCanRequestSession(false);
+          setRestrictionMsg('Golden plan: You have already requested 1 physical and 1 virtual session.');
+        }
+        return;
+      }
+      setCanRequestSession(false);
+      setRestrictionMsg('You must purchase the Professional or Golden plan to request a session.');
+    }
+    checkEligibility();
+  }, []);
+
+  // Handler for request form submit
+  const handleRequestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    const memberEmail = typeof window !== 'undefined' ? localStorage.getItem('userEmail') : null;
+    const memberId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+    if (!memberEmail || !memberId) {
+      setError('You must be logged in as a member to request a session.');
+      setLoading(false);
+      return;
+    }
+    if (!memberName.trim()) {
+      setError('Member name is required.');
+      setLoading(false);
+      return;
+    }
+    if (!sessionName.trim()) {
+      setError('Session name is required.');
+      setLoading(false);
+      return;
+    }
+    if (!sessionType) {
+      setError('Session type is required.');
+      setLoading(false);
+      return;
+    }
+    if (!preferredDate) {
+      setError('Preferred date is required.');
+      setLoading(false);
+      return;
+    }
+    if (!preferredTime) {
+      setError('Preferred time is required.');
+      setLoading(false);
+      return;
+    }
+    if (!pricingPlan) {
+      setError('Pricing plan is required.');
+      setLoading(false);
+      return;
+    }
+    // Prevent past dates
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(preferredDate);
+    if (selectedDate < today) {
+      setError('You cannot request a session for a past date.');
+      setLoading(false);
+      return;
+    }
+    try {
+      // Fetch trainer email
+      const trainerEmail = await fetch(`/api/trainer/getById?id=${trainerId}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => data?.trainer?.email || null);
+      if (!trainerEmail) {
+        setError('Could not find trainer email.');
+        setLoading(false);
+        return;
+      }
+      // Call API to create session request and send emails
+      const res = await fetch('/api/session-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trainerEmail,
+          memberEmail,
+          requestDetails: {
+            memberName,
+            memberEmail,
+            trainerId,
+            trainerName,
+            sessionName,
+            sessionType,
+            preferredDate,
+            preferredTime,
+            pricingPlan,
+            notes,
+          },
+          dashboardLink: '/communication-and-notifications/session-request',
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Failed to submit request.');
+        setLoading(false);
+        return;
+      }
+      setSuccess('Your request has been submitted! The trainer will review it soon.');
+      setSessionType('');
+      setPreferredDate('');
+      setPreferredTime('');
+      setNotes('');
+      setSessionName('');
+      setPricingPlan('');
+    } catch (err) {
+      setError('Failed to submit request. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // For date input min value
+  const todayStr = new Date().toISOString().split('T')[0];
 
   // Log the trainer ID and name for debugging
   console.log("TrainerPage: Trainer ID from URL:", trainerId)
@@ -105,13 +285,21 @@ export default function TrainerDetailsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        {/* Simple Trainer Header */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
+        {/* Trainer Header Box */}
+        <div className="mb-8 flex flex-col items-center">
+          <div className="flex items-center justify-center gap-3 mb-4 bg-gray-100 rounded-lg px-6 py-4 w-full max-w-xl shadow">
             <User className="h-8 w-8 text-red-600" />
-            <h1 className="text-3xl font-bold text-black">
+            <h1 className="text-3xl font-bold text-black mr-2">
               {trainerName}
             </h1>
+            <a
+              href={`/communication-and-notifications/User-chat?trainerId=${trainerId}&trainerName=${encodeURIComponent(trainerName)}`}
+              className="ml-2 bg-red-600 hover:bg-red-700 text-white rounded-full shadow p-2 flex items-center justify-center"
+              title="Message Trainer"
+              style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.15)' }}
+            >
+              <MessageCircle className="w-6 h-6" />
+            </a>
           </div>
           <p className="text-gray-600">Professional Gym Trainer</p>
         </div>
@@ -191,7 +379,6 @@ export default function TrainerDetailsPage() {
         </div>
 
         {/* Joinable Session Calendar */}
-        {console.log("Rendering JoinableSessionCalendar with planMatch:", planMatch)}
         <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
           <div className="flex items-center gap-2 mb-4">
             <CalendarIcon className="h-6 w-6 text-green-600" />
@@ -200,8 +387,72 @@ export default function TrainerDetailsPage() {
           <JoinableSessionCalendar
             trainerId={trainerId}
             height={600}
-            planMatch={!!planMatch}
           />
+        </div>
+        {/* Session Request Section */}
+        <div className="max-w-xl mx-auto">
+          <div className="my-8 border-t border-gray-300"></div>
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 className="text-lg font-bold mb-4 text-black text-center">Request to Join Session</h3>
+            {error && <div className="text-red-600 mb-2">{error}</div>}
+            {success && <div className="text-green-600 mb-2">{success}</div>}
+            {canRequestSession ? (
+              <form onSubmit={handleRequestSubmit} className="space-y-4">
+                <div>
+                  <label className="block font-medium mb-1">Member Name <span className="text-red-600">*</span></label>
+                  <Input type="text" value={memberName} readOnly required className="bg-gray-100" />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Session Name <span className="text-red-600">*</span></label>
+                  <Input type="text" value={sessionName} onChange={e => setSessionName(e.target.value)} required placeholder="Enter session name" />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Session Type <span className="text-red-600">*</span></label>
+                  <select value={sessionType} onChange={e => setSessionType(e.target.value)} required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm bg-white">
+                    <option value="" disabled>Select session type</option>
+                    <option value="Physical">Physical</option>
+                    <option value="Virtual">Virtual</option>
+                  </select>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="block font-medium mb-1">Preferred Date <span className="text-red-600">*</span></label>
+                    <Input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)} required min={todayStr} />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block font-medium mb-1">Preferred Time <span className="text-red-600">*</span></label>
+                    <Input type="time" value={preferredTime} onChange={e => setPreferredTime(e.target.value)} required />
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Pricing Plan <span className="text-red-600">*</span></label>
+                  <Input type="text" value={pricingPlan} onChange={e => setPricingPlan(e.target.value)} required placeholder="Enter pricing plan" />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Notes</label>
+                  <textarea value={notes} onChange={e => setNotes(e.target.value)} className="w-full border rounded p-2" rows={3} />
+                </div>
+                <Button type="submit" disabled={loading} className="w-full bg-red-600 hover:bg-red-700 text-white">
+                  {loading ? 'Submitting...' : 'Submit Request'}
+                </Button>
+              </form>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="bg-red-50 border border-red-200 rounded-lg px-6 py-6 shadow-sm flex flex-col items-center max-w-md">
+                  <svg className="w-10 h-10 text-red-400 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m0-6v2m-6 4V7a2 2 0 012-2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2z" />
+                  </svg>
+                  <div className="text-lg font-semibold text-red-700 text-center mb-1">
+                    To request an individual session, you need to buy the <span className="font-bold">Professional</span> or <span className="font-bold">Golden</span> plan.
+                  </div>
+                  <div className="text-sm text-red-500 text-center">
+                    Upgrade your plan to unlock exclusive 1-on-1 sessions with our trainers!
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

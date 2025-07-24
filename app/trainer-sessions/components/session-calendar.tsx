@@ -9,6 +9,7 @@ import {
   type ReactNode,
   useEffect,
   useState,
+  useMemo,
 } from "react"
 import { useParams } from 'next/navigation'
 import { Calendar, momentLocalizer, Views } from "react-big-calendar"
@@ -75,6 +76,10 @@ export default function SessionCalendar({
   const [approvedTrainerId, setApprovedTrainerId] = useState<string | null>(null)
   const [loadingTrainerId, setLoadingTrainerId] = useState(true)
   const trainerEmail = typeof window !== "undefined" ? localStorage.getItem("userEmail") || "" : ""
+
+  // Add state for individual sessions (approved requests)
+  const [individualSessions, setIndividualSessions] = useState<any[]>([]);
+  const [selectedIndividualSession, setSelectedIndividualSession] = useState<any | null>(null);
 
   // Determine which trainer ID to use based on mode and available sources
   const getTrainerId = () => {
@@ -329,6 +334,46 @@ export default function SessionCalendar({
     }
   }, [trainerEmail, mode])
 
+  // Fetch individual sessions (approved requests)
+  useEffect(() => {
+    const trainerId = getTrainerId();
+    if (!trainerId) return;
+    let isMounted = true;
+    const fetchIndividualSessions = async () => {
+      try {
+        const res = await fetch(`/api/session-request?trainerId=${trainerId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const approved = (data.requests || []).filter((r: any) => r.status === 'approved');
+          if (isMounted) setIndividualSessions(approved);
+        }
+      } catch {}
+    };
+    fetchIndividualSessions();
+    return () => { isMounted = false; };
+  }, [propTrainerId, urlTrainerId, mode, loadingTrainerId, approvedTrainerId]);
+
+  // Merge group and individual sessions for display
+  const allCalendarSessions = useMemo(() => {
+    return [
+      ...sessions.map(s => ({ ...s, type: 'group' })),
+      ...individualSessions.map(r => ({
+        _id: r._id,
+        title: r.sessionName,
+        trainerName: r.trainerName,
+        start: new Date(r.preferredDate + 'T' + (r.startTime || '00:00')),
+        end: new Date(r.preferredDate + 'T' + (r.endTime || '00:00')),
+        location: r.sessionType === 'Physical' ? r.place : r.meetingLink,
+        description: r.description,
+        memberName: r.memberName,
+        memberEmail: r.memberEmail,
+        sessionType: r.sessionType,
+        pricingPlan: r.pricingPlan,
+        type: 'individual',
+      }))
+    ];
+  }, [sessions, individualSessions]);
+
   // Log trainerEmail for debugging
   console.log("Trainer email for ApprovedTrainer fetch:", trainerEmail)
 
@@ -365,7 +410,7 @@ export default function SessionCalendar({
   }
 
   // Custom event styling - different colors for different modes and session types
-  const eventStyleGetter = (event: Session) => {
+  const eventStyleGetter = (event: any) => {
     const baseStyle = {
       borderRadius: "6px",
       color: "white",
@@ -414,6 +459,19 @@ export default function SessionCalendar({
           border: "1px solid #047857", // green-700
         },
       }
+    }
+
+    // Update eventStyleGetter to color individual sessions gold/yellow for high visibility
+    if (event.type === 'individual') {
+      return {
+        style: {
+          ...baseStyle,
+          backgroundColor: "#f59e42", // gold/yellow
+          border: "2px solid #fbbf24", // yellow-400
+          color: "#1a202c", // dark text for contrast
+          boxShadow: "0 0 8px 2px #fbbf24",
+        },
+      };
     }
   }
 
@@ -493,7 +551,7 @@ export default function SessionCalendar({
       ) : (
         <Calendar
           localizer={localizer}
-          events={sessions}
+          events={allCalendarSessions}
           startAccessor="start"
           endAccessor="end"
           style={{ height: "100%" }}
@@ -507,7 +565,11 @@ export default function SessionCalendar({
           selectable={true}
           dayLayoutAlgorithm={"no-overlap"}
           showMultiDayTimes={true}
-          onSelectEvent={handleSelectEvent}
+          onSelectEvent={(event: any) => {
+            if (event.type === 'individual') setSelectedIndividualSession(event);
+            else handleSelectEvent(event);
+          }}
+          eventPropGetter={eventStyleGetter}
           components={{
             event: (props: any) => (
               <div className="text-xs truncate font-medium" title={String(props.title)}>
@@ -715,6 +777,56 @@ export default function SessionCalendar({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Add modal for individual session details */}
+      {selectedIndividualSession && (
+        <Dialog open={!!selectedIndividualSession} onOpenChange={open => !open && setSelectedIndividualSession(null)}>
+          <DialogContent className="sm:max-w-md bg-white border-gray-200">
+            <DialogHeader>
+              <DialogTitle className="text-black text-xl">{selectedIndividualSession.title}</DialogTitle>
+              <DialogDescription>Individual Session</DialogDescription>
+              <div className="flex gap-2 mt-2">
+                <Badge variant="outline" className="border-purple-200 text-purple-700 bg-purple-50">
+                  {selectedIndividualSession.memberName}
+                </Badge>
+                <Badge variant="outline" className="border-purple-200 text-purple-700 bg-purple-50">
+                  {selectedIndividualSession.sessionType}
+                </Badge>
+              </div>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3">
+                <Clock className="h-5 w-5 text-gray-500" />
+                <span className="text-gray-700">
+                  {moment(selectedIndividualSession.start).format("MMM D, YYYY • h:mm A")} - {moment(selectedIndividualSession.end).format("h:mm A")}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-gray-500" />
+                <span className="text-gray-700">{selectedIndividualSession.location}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-gray-500" />
+                <span className="text-gray-700">{selectedIndividualSession.memberEmail}</span>
+              </div>
+              {selectedIndividualSession.description && (
+                <div className="pt-2">
+                  <h4 className="text-sm font-semibold mb-2 text-black">Description</h4>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md border border-gray-200">
+                    {selectedIndividualSession.description}
+                  </p>
+                </div>
+              )}
+              <div className="pt-2">
+                <Badge className="bg-purple-100 text-purple-800 border-purple-200 font-medium px-3 py-1">
+                  Individual Session
+                </Badge>
+              </div>
+            </div>
+            {/* No join button for individual sessions */}
+          </DialogContent>
+        </Dialog>
+      )}
 
       <style jsx global>{`
         .rbc-calendar {

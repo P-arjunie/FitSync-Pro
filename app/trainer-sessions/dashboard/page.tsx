@@ -37,6 +37,8 @@ import {
   TrendingDown
 } from "lucide-react";
 import moment from "moment";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../Components/ui/dialog';
+import { Input } from '../../Components/ui/input';
 
 interface Session {
   _id: string;
@@ -74,6 +76,13 @@ const TrainerDashboard: React.FC = () => {
   const [virtualSessions, setVirtualSessions] = useState<any[]>([]);
   const [trainerPricingPlans, setTrainerPricingPlans] = useState<string[]>([]);
   const [trainerEmail, setTrainerEmail] = useState<string>("");
+  const [sessionRequests, setSessionRequests] = useState<any[]>([]);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [approveFields, setApproveFields] = useState({ place: '', meetingLink: '', startTime: '', endTime: '', description: '' });
+  const [rejectReason, setRejectReason] = useState('');
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     // Get trainer info from localStorage
@@ -153,6 +162,93 @@ const TrainerDashboard: React.FC = () => {
         setVirtualSessions(Array.isArray(data) ? data : data.sessions || []);
       });
   }, [trainerEmail]);
+
+  // Fetch session requests for this trainer
+  useEffect(() => {
+    if (!user || !user.userId) return;
+    fetch(`/api/session-request?trainerId=${user.userId}`)
+      .then(res => res.json())
+      .then(data => setSessionRequests(data.requests || []));
+  }, [user]);
+
+  const openApproveModal = (req: any) => {
+    setSelectedRequest(req);
+    setApproveFields({ place: '', meetingLink: '', startTime: '', endTime: '', description: '' });
+    setShowApproveModal(true);
+  };
+  const openRejectModal = (req: any) => {
+    setSelectedRequest(req);
+    setRejectReason('');
+    setShowRejectModal(true);
+  };
+  // Update handleApproveSubmit to require both start and end time, and send both to the backend
+  const handleApproveSubmit = async () => {
+    if (!selectedRequest) return;
+    const isPhysical = selectedRequest.sessionType === 'Physical';
+    if (!approveFields.startTime.trim()) return alert('Start time is required');
+    if (!approveFields.endTime.trim()) return alert('End time is required');
+    if (isPhysical && !approveFields.place.trim()) return alert('Place is required');
+    if (!isPhysical && !approveFields.meetingLink.trim()) return alert('Meeting link is required');
+    setActionLoading(selectedRequest.id);
+    try {
+      await fetch('/api/session-request', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedRequest.id,
+          action: 'approved',
+          memberEmail: selectedRequest.memberEmail,
+          trainerEmail: selectedRequest.trainerEmail,
+          trainerName: selectedRequest.trainerName,
+          sessionName: selectedRequest.sessionName,
+          sessionType: selectedRequest.sessionType,
+          preferredDate: selectedRequest.preferredDate,
+          startTime: approveFields.startTime,
+          endTime: approveFields.endTime,
+          pricingPlan: selectedRequest.pricingPlan,
+          place: isPhysical ? approveFields.place : undefined,
+          meetingLink: !isPhysical ? approveFields.meetingLink : undefined,
+          description: approveFields.description,
+        }),
+      });
+      setSessionRequests(reqs => reqs.map(r => r.id === selectedRequest.id ? { ...r, status: 'approved', place: approveFields.place, meetingLink: approveFields.meetingLink, startTime: approveFields.startTime, endTime: approveFields.endTime, description: approveFields.description } : r));
+      setShowApproveModal(false);
+    } catch (err) {
+      alert('Failed to approve request.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+  const handleRejectSubmit = async () => {
+    if (!selectedRequest) return;
+    if (!rejectReason.trim()) return alert('Reason is required');
+    setActionLoading(selectedRequest.id);
+    try {
+      await fetch('/api/session-request', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: selectedRequest.id,
+          action: 'rejected',
+          memberEmail: selectedRequest.memberEmail,
+          trainerEmail: selectedRequest.trainerEmail,
+          trainerName: selectedRequest.trainerName,
+          sessionName: selectedRequest.sessionName,
+          sessionType: selectedRequest.sessionType,
+          preferredDate: selectedRequest.preferredDate,
+          preferredTime: selectedRequest.preferredTime,
+          pricingPlan: selectedRequest.pricingPlan,
+          rejectionReason: rejectReason,
+        }),
+      });
+      setSessionRequests(reqs => reqs.map(r => r.id === selectedRequest.id ? { ...r, status: 'rejected', rejectionReason: rejectReason } : r));
+      setShowRejectModal(false);
+    } catch (err) {
+      alert('Failed to reject request.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   // Enhanced dashboard metrics with more meaningful calculations
   const dashboardMetrics = useMemo(() => {
@@ -591,17 +687,17 @@ const TrainerDashboard: React.FC = () => {
                       color="bg-blue-600"
                     />
                     <QuickActionCard
-                      title="Review Bookings"
+                      title="Individual Sessions"
                       description="Approve or manage pending session requests"
                       icon={Eye}
-                      onClick={() => router.push('/trainer/sessions')}
+                      onClick={() => router.push('/communication-and-notifications/session-request')}
                       color="bg-green-600"
                     />
                     <QuickActionCard
                       title="Client Communications"
                       description="Message your clients and send updates"
                       icon={MessageSquare}
-                      onClick={() => router.push('/trainer/messages')}
+                      onClick={() => router.push('/communication-and-notifications/Trainer-chat')}
                       color="bg-purple-600"
                     />
                     <QuickActionCard
@@ -1069,6 +1165,120 @@ const TrainerDashboard: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
+            {/* Session Requests Card */}
+            <Card className="border-0 shadow-lg mt-8">
+              <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50 border-b">
+                <CardTitle className="flex items-center text-gray-900">
+                  <AlertCircle className="w-5 h-5 mr-2 text-red-600" />
+                  Individual Session Requests
+                </CardTitle>
+                <p className="text-sm text-gray-600 mt-1">Manage all individual session requests from your clients</p>
+              </CardHeader>
+              <CardContent className="p-6">
+                {sessionRequests.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">No session requests found.</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="px-4 py-2 text-left">Member</th>
+                          <th className="px-4 py-2 text-left">Session</th>
+                          <th className="px-4 py-2 text-left">Type</th>
+                          <th className="px-4 py-2 text-left">Date</th>
+                          <th className="px-4 py-2 text-left">Status</th>
+                          <th className="px-4 py-2 text-left">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sessionRequests.map(req => (
+                          <tr key={req.id} className="border-b">
+                            <td className="px-4 py-2">{req.memberName} <br /><span className="text-xs text-gray-400">{req.memberEmail}</span></td>
+                            <td className="px-4 py-2">{req.sessionName}</td>
+                            <td className="px-4 py-2">{req.sessionType}</td>
+                            <td className="px-4 py-2">{req.preferredDate} {req.preferredTime}</td>
+                            <td className="px-4 py-2">
+                              <span className={`px-2 py-1 rounded-full text-xs font-bold ${req.status === 'pending' ? 'bg-yellow-200 text-yellow-800' : req.status === 'approved' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>{req.status}</span>
+                            </td>
+                            <td className="px-4 py-2">
+                              {req.status === 'pending' ? (
+                                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white mr-2" onClick={() => openApproveModal(req)} disabled={actionLoading === req.id}>Approve</Button>
+                              ) : null}
+                              {req.status === 'pending' ? (
+                                <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => openRejectModal(req)} disabled={actionLoading === req.id}>Reject</Button>
+                              ) : null}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            {/* Approve Modal */}
+            <Dialog open={showApproveModal} onOpenChange={setShowApproveModal}>
+              <DialogContent className="bg-white">
+                <DialogHeader>
+                  <DialogTitle>Schedule Session</DialogTitle>
+                </DialogHeader>
+                {selectedRequest && (
+                  <>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="block font-medium mb-1">Start Time <span className="text-red-600">*</span></label>
+                        <Input
+                          type="time"
+                          value={approveFields.startTime}
+                          onChange={e => setApproveFields(f => ({ ...f, startTime: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block font-medium mb-1">End Time <span className="text-red-600">*</span></label>
+                        <Input
+                          type="time"
+                          value={approveFields.endTime}
+                          onChange={e => setApproveFields(f => ({ ...f, endTime: e.target.value }))}
+                          required
+                        />
+                      </div>
+                    </div>
+                    {selectedRequest.sessionType === 'Physical' ? (
+                      <div>
+                        <label className="block font-medium mb-1">Place <span className="text-red-600">*</span></label>
+                        <Input value={approveFields.place} onChange={e => setApproveFields(f => ({ ...f, place: e.target.value }))} required />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block font-medium mb-1">Meeting Link <span className="text-red-600">*</span></label>
+                        <Input value={approveFields.meetingLink} onChange={e => setApproveFields(f => ({ ...f, meetingLink: e.target.value }))} required />
+                      </div>
+                    )}
+                  </>
+                )}
+                <div className="flex gap-2 mt-4">
+                  <Button onClick={handleApproveSubmit} disabled={actionLoading === selectedRequest?.id} className="bg-green-600 hover:bg-green-700 text-white">Confirm</Button>
+                  <Button variant="outline" onClick={() => setShowApproveModal(false)}>Cancel</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            {/* Reject Modal */}
+            <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Reject Request</DialogTitle>
+                </DialogHeader>
+                <div>
+                  <label className="block font-medium mb-1">Reason <span className="text-red-600">*</span></label>
+                  <Input value={rejectReason} onChange={e => setRejectReason(e.target.value)} required />
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <Button onClick={handleRejectSubmit} disabled={actionLoading === selectedRequest?.id} className="bg-red-600 hover:bg-red-700 text-white">Reject</Button>
+                  <Button variant="outline" onClick={() => setShowRejectModal(false)}>Cancel</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
         </Tabs>
       </div>

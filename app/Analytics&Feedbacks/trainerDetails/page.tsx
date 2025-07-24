@@ -467,23 +467,26 @@ const TrainerReviewsPage = () => {
                 ))}
               </div>
 
-              <button
-                onClick={() => setSelectedTrainer(trainer)}
-                className="mt-4 text-sm text-red-600 hover:underline font-medium"
-              >
-                See more
+            <div className="flex items-center gap-3 mt-4">
+            <button
+              onClick={() => setSelectedTrainer(trainer)}
+                className="text-sm text-red-600 hover:underline font-medium bg-transparent border-none p-0 m-0 focus:outline-none"
+                style={{ minWidth: '70px' }}
+            >
+              See more
+            </button>
+            <Link
+              href={`/trainer-sessions/trainer-page/${trainer._id}?name=${encodeURIComponent(trainer.fullName)}`}
+              className="inline-block"
+            >
+                <button className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 shadow hover:shadow-xl">
+                Join Session
               </button>
-              <Link
-                href={`/trainer-sessions/trainer-page/${trainer._id}?name=${encodeURIComponent(trainer.fullName)}`}
-                className="mt-2 inline-block"
-              >
-                <button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 shadow hover:shadow-xl">
-                  Join Session
-                </button>
-              </Link>
+            </Link>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+      </div>
 
         {/* No Results Message */}
         {filteredTrainers.length === 0 && trainers.length > 0 && (

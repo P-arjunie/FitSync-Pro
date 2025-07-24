@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import VirtualSession from '@/models/VirtualSession';
+import { sendEmail } from '@/lib/sendEmail';
+import dedent from 'dedent';
+import Member from '@/models/member';
 
 // GET: Fetch a single virtual session by its ID
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
@@ -60,6 +63,36 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
+    // Send reschedule email to all participants and trainer
+    const allParticipants = updated.participants || [];
+    const emails = [body.trainer.email, ...allParticipants.map((p: any) => p.email)].filter(Boolean);
+    for (const email of emails) {
+      try {
+        await sendEmail({
+          to: email,
+          subject: `🔄 Session Rescheduled: ${updated.title}`,
+          html: dedent`
+            <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
+              <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
+            </div>
+            <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
+              <h2 style="color:#e53935;margin-top:0;">Virtual Session Rescheduled</h2>
+              <p>The session <b>${updated.title}</b> has been rescheduled.</p>
+              <ul style="padding-left:20px;text-align:left;">
+                <li><b>Date:</b> ${new Date(updated.date).toLocaleDateString()}</li>
+                <li><b>Start Time:</b> ${updated.startTime}</li>
+                <li><b>End Time:</b> ${updated.endTime}</li>
+                <li><b>Meeting Link:</b> <a href="${updated.onlineLink}">${updated.onlineLink}</a></li>
+                <li><b>Description:</b> ${updated.description || ''}</li>
+              </ul>
+            </div>
+          `
+        });
+      } catch (err) {
+        console.error('Failed to send reschedule email to', email, err);
+      }
+    }
+
     return NextResponse.json(updated, { status: 200 });
   } catch (error) {
     console.error('Error updating session:', error);
@@ -75,6 +108,29 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     if (!deleted) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    // Send cancellation email to all participants and trainer
+    const allParticipants = deleted.participants || [];
+    const emails = [deleted.trainer.email, ...allParticipants.map((p: any) => p.email)].filter(Boolean);
+    for (const email of emails) {
+      try {
+        await sendEmail({
+          to: email,
+          subject: `❌ Session Cancelled: ${deleted.title}`,
+          html: dedent`
+            <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
+              <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
+            </div>
+            <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
+              <h2 style="color:#e53935;margin-top:0;">Virtual Session Cancelled</h2>
+              <p>The session <b>${deleted.title}</b> has been cancelled.</p>
+            </div>
+          `
+        });
+      } catch (err) {
+        console.error('Failed to send cancellation email to', email, err);
+      }
     }
 
     return NextResponse.json({ message: 'Session deleted successfully' }, { status: 200 });

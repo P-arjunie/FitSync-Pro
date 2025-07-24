@@ -4,6 +4,8 @@ import { NextRequest } from "next/server"; // Import Next.js request utility
 
 import Trainer from "@/models/Trainer"; // Import the model for pending trainers
 import ApprovedTrainer from "@/models/ApprovedTrainer"; // Import the model for approved trainers
+import { sendEmail } from '@/lib/sendEmail';
+import dedent from 'dedent';
 
 // POST handler to approve a trainer using their ID from the URL parameters
 export async function POST(
@@ -109,6 +111,30 @@ export async function POST(
     console.log(`🗑️ Deleted pending trainer: ${trainer.email}`);
 
     console.log(`✅ Trainer approved: ${trainer.email}`);
+    try {
+      await sendEmail({
+        to: trainerData.email,
+        subject: '✅ Your FitSync Pro Trainer Account Approved',
+        html: dedent`
+          <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
+            <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
+          </div>
+          <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
+            <h2 style="color:#e53935;margin-top:0;">Welcome to FitSync Pro!</h2>
+            <p>Dear ${trainerData.firstName},</p>
+            <p>Your trainer account has been <b>approved</b> by our admin team. You can now log in and start training members!</p>
+            <ul style="padding-left:20px;text-align:left;">
+              <li><b>Email:</b> ${trainerData.email}</li>
+            </ul>
+            <p>If you have any questions, reply to this email or contact our support team.</p>
+            <br/>
+            <p>Thank you,<br/>FitSync Pro Team</p>
+          </div>
+        `
+      });
+    } catch (err) {
+      console.error('Failed to send approval email to trainer:', err);
+    }
     return NextResponse.json({ 
       message: "Trainer approved",
       trainerId: approvedTrainer.insertedId

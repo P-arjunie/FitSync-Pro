@@ -1,9 +1,10 @@
+"use client";
 // pages/_app.tsx
 import { useEffect, useState } from 'react';
 import io, { Socket } from 'socket.io-client';
 import type { AppProps } from 'next/app';
 import { Toaster, toast } from 'react-hot-toast';
-import '../styles/globals.css';
+import '../globals.css';
 
 interface Notification {
   _id: string;

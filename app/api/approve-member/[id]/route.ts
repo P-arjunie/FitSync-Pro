@@ -3,6 +3,8 @@ import { connectToDatabase } from "@/lib/mongodb"; // Import function to connect
 
 import PendingMember from "@/models/pendingMember"; // Import the PendingMember model
 import Member from "@/models/member"; // Import the Member model
+import { sendEmail } from '@/lib/sendEmail';
+import dedent from 'dedent';
 
 // POST handler to approve a pending member using their ID
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -77,6 +79,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // Delete the pending member
     await PendingMember.findByIdAndDelete(id);
     console.log("🗑️ Deleted pending member:", pending.email);
+
+    try {
+      await sendEmail({
+        to: approvedMemberData.email,
+        subject: '✅ Your FitSync Pro Membership Approved',
+        html: dedent`
+          <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
+            <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
+          </div>
+          <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
+            <h2 style="color:#e53935;margin-top:0;">Welcome to FitSync Pro!</h2>
+            <p>Dear ${approvedMemberData.firstName},</p>
+            <p>Your membership has been <b>approved</b> by our admin team. You can now log in and start your fitness journey with us!</p>
+            <ul style="padding-left:20px;text-align:left;">
+              <li><b>Email:</b> ${approvedMemberData.email}</li>
+            </ul>
+            <p>If you have any questions, reply to this email or contact our support team.</p>
+            <br/>
+            <p>Thank you,<br/>FitSync Pro Team</p>
+          </div>
+        `
+      });
+    } catch (err) {
+      console.error('Failed to send approval email to member:', err);
+    }
 
     return NextResponse.json({ message: "Member approved", memberId: approvedMember._id });
   } catch (error) {
