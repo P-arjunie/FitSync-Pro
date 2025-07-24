@@ -3,6 +3,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import Enrollment from "@/models/enrollment";
+import { sendEmail } from "@/lib/sendEmail";
+import User from "@/models/User";
 
 const connectToDB = async () => {
   if (mongoose.connection.readyState === 0) {
@@ -72,6 +74,22 @@ export async function POST(req: NextRequest) {
 
     const savedEnrollment = await newEnrollment.save();
     console.log("✅ Enrollment saved:", savedEnrollment);
+
+    // Send confirmation email to admin and user
+    try {
+      const user = await User.findOne({ _id: userId });
+      const userEmail = user?.email;
+      const recipients = ["fitsyncpro.gym@gmail.com"];
+      if (userEmail) recipients.push(userEmail);
+      await sendEmail({
+        to: recipients.join(","),
+        subject: `Class Enrollment Confirmation: ${className}`,
+        text: `A new class enrollment has been made.\nClass: ${className}\nUser ID: ${userId}\nTotal Amount: $${totalAmount}`,
+        html: `<h2>Class Enrollment Confirmation</h2><p><strong>Class:</strong> ${className}</p><p><strong>User ID:</strong> ${userId}</p><p><strong>Total Amount:</strong> $${totalAmount}</p>`
+      });
+    } catch (emailError) {
+      console.error("Failed to send enrollment confirmation email:", emailError);
+    }
 
     return NextResponse.json(savedEnrollment, { status: 201 });
   } catch (error: any) {
