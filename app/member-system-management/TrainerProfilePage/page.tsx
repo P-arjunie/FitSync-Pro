@@ -76,30 +76,27 @@ const TrainerProfilePage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onloadend = async () => {
-      const base64Image = reader.result;
+    // Create a FormData object and append the file
+    const formDataToSend = new FormData();
+    formDataToSend.append('file', file);
 
-      try {
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: base64Image }), // <--- CORRECT field
-        });
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataToSend, // This will be sent as multipart/form-data
+      });
 
-        const data = await res.json();
+      const data = await res.json();
 
-        if (res.ok) {
-          setFormData((prev: any) => ({ ...prev, profileImage: data.url }));
-        } else {
-          alert(data.error || "Image upload failed");
-        }
-      } catch (err) {
-        console.error("Upload error:", err);
-        alert("Image upload error");
+      if (res.ok) {
+        setFormData((prev: any) => ({ ...prev, profileImage: data.url }));
+      } else {
+        alert(data.error || "Image upload failed");
       }
-    };
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Image upload error");
+    }
   };
 
   const handleAddCertification = () => {
