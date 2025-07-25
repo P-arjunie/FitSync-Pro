@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Edit, Trash2, Plus, Search, RotateCcw } from "lucide-react"
+import Toast from "@/utils/Toast";
+import { ToastContainer } from "@/utils/Toast";
 
 // Define TypeScript interfaces
 interface Product {
@@ -94,6 +96,7 @@ const AdminProductsDashboard = () => {
         setShowDeleteModal(false)
         setDeleteId(null)
         setDeleteProductName("")
+        Toast({ type: "success", message: "Product deleted successfully!" });
       } else {
         const errorData = await response.json()
         console.error("Failed to delete product:", errorData)
@@ -141,6 +144,7 @@ const AdminProductsDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <ToastContainer />
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6">
           {/* Header */}
