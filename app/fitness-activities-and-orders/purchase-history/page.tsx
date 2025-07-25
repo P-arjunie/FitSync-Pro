@@ -399,7 +399,7 @@ const PurchaseHistoryPage = () => {
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Wallet Balance (DB field)</p>
+                <p className="text-gray-600 text-sm font-medium">Wallet Balance</p>
                 <p className="text-3xl font-bold text-gray-900">${walletData?.balance !== undefined ? walletData.balance.toFixed(2) : '0.00'}</p>
               </div>
               <Wallet className="text-green-500" size={40} />

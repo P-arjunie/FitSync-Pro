@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Enrollment not found" }, { status: 404 });
       }
       amount = Math.round(enrollment.totalAmount * 100);
-      itemTitle = enrollment.className;
+      itemTitle = enrollment.className; // <-- This is the className
       relatedEnrollmentId = enrollment._id;
     } else if (paymentFor === "pricing-plan") {
       if (!pricingPlanId) {
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
         let currentPaymentId = null;
         if (!existingPayment) {
           const paymentDoc: any = {
-            firstName: itemTitle,
+            firstName: itemTitle, // <-- This is set to className for enrollments
             lastName: userId.toString(),
             email: email,
             company: "FitSyncPro",
