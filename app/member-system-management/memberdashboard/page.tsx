@@ -73,7 +73,7 @@ const MemberDashboard: React.FC = () => {
       description: "View your training sessions",
       icon: "🏋️",
       color: "bg-gray-800 hover:bg-gray-900",
-      link: "/trainer-sessions/all-sessions",
+      link: "/trainer-sessions/my-joined-sessions",
     },
     {
       title: "My Profile",
@@ -87,7 +87,7 @@ const MemberDashboard: React.FC = () => {
       description: "View and manage your orders",
       icon: "📦",
       color: "bg-red-600 hover:bg-red-700",
-      link: ".", // Updated link
+      link: "/user-order-management/my-orders", // Updated link
     },
   ];
 

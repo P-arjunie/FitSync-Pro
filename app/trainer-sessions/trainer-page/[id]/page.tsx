@@ -3,7 +3,7 @@
 "use client"
 
 import { useParams, useSearchParams } from 'next/navigation'
-import { User, CalendarIcon, Plus, DollarSign } from 'lucide-react'
+import { User, CalendarIcon, Plus, DollarSign, Shield, AlertCircle, CheckCircle } from 'lucide-react'
 import SessionCalendar from '../../components/session-calendar' // Assuming this path is correct
 import JoinableSessionCalendar from '../../components/JoinableSessionCalendar' // Assuming this path is correct
 import { useState, useEffect } from 'react'
@@ -34,7 +34,7 @@ export default function TrainerDetailsPage() {
       const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
       console.log("useEffect: userId from localStorage:", userId)
 
-      if (!userId) {
+      if (!userId) {  
         console.log("No userId found in localStorage. Cannot fetch user plan.")
         setUserPlan(null)
       }
@@ -104,104 +104,126 @@ export default function TrainerDetailsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Simple Trainer Header */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <User className="h-8 w-8 text-red-600" />
-            <h1 className="text-3xl font-bold text-black">
-              {trainerName}
-            </h1>
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Enhanced Trainer Header */}
+        <div className="mb-8 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-red-600 to-black p-8 text-white">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="bg-white/20 p-3 rounded-full">
+                <User className="h-10 w-10 text-white" />
+              </div>
+              <div className="text-center">
+                <h1 className="text-4xl font-bold mb-2">
+                  {trainerName}
+                </h1>
+                <p className="text-red-100 text-lg font-medium">Professional Gym Trainer</p>
+              </div>
+            </div>
           </div>
-          <p className="text-gray-600">Professional Gym Trainer</p>
         </div>
 
-        {/* Trainer's Pricing Plans Section */}
-        <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center gap-2 mb-4">
-            <DollarSign className="h-6 w-6 text-purple-600" />
-            <h2 className="text-xl font-semibold text-black">Trainer's Pricing Plans</h2>
-          </div>
-          {trainerPricingPlans.length > 0 ? (
-            <div>
-              <p className="text-lg font-medium text-gray-800">Plans: <span className="font-bold text-purple-700">{trainerPricingPlans.join(", ")}</span></p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Trainer's Pricing Plans Section */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+              <div className="bg-black text-white p-4">
+                <div className="flex items-center gap-3">
+                  <DollarSign className="h-6 w-6 text-red-500" />
+                  <h2 className="text-xl font-bold">Available Plans</h2>
+                </div>
+              </div>
+              <div className="p-6">
+                {trainerPricingPlans.length > 0 ? (
+                  <div className="space-y-3">
+                    {trainerPricingPlans.map((plan, index) => (
+                      <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border-l-4 border-red-500">
+                        <Shield className="h-5 w-5 text-red-600" />
+                        <span className="font-semibold text-gray-800">{plan}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">No pricing plans available</p>
+                  </div>
+                )}
+              </div>
             </div>
-          ) : (
-            <p className="text-gray-500">No pricing plans found for this trainer.</p>
-          )}
-        </div>
 
-        {/* Trainer's Pricing Plan Section
-        <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center gap-2 mb-4">
-            <DollarSign className="h-6 w-6 text-purple-600" />
-            <h2 className="text-xl font-semibold text-black">Trainer's Pricing Plan</h2>
-          </div>
-          {isLoadingPlans ? (
-            <p className="text-gray-500">Loading pricing plan...</p>
-          ) : trainerPlan ? (
-            <div>
-              <p className="text-lg font-medium text-gray-800">Plan: <span className="font-bold text-purple-700">{trainerPlan}</span></p>
-            </div>
-          ) : (
-            <p className="text-gray-500">No pricing plan found for this trainer.</p>
-          )}
-        </div> */}
+            {/* Plan Comparison Section */}
+            {userPlan && trainerPlan && !isLoadingPlans && (
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                <div className={`${planMatch ? 'bg-green-600' : 'bg-red-600'} text-white p-4`}>
+                  <div className="flex items-center gap-3">
+                    {planMatch ? (
+                      <CheckCircle className="h-6 w-6" />
+                    ) : (
+                      <AlertCircle className="h-6 w-6" />
+                    )}
+                    <h2 className="text-xl font-bold">Plan Compatibility</h2>
+                  </div>
+                </div>
+                <div className="p-6">
+                  {planMatch ? (
+                    <div className="text-center py-4">
+                      <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+                      <p className="text-lg font-semibold text-gray-800 mb-2">Perfect Match!</p>
+                      <p className="text-gray-600">
+                        Your <span className="font-bold text-black">{userPlan.planName}</span> plan is compatible with {trainerName}'s training sessions.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+                      <p className="text-lg font-semibold text-gray-800 mb-2">Plan Mismatch</p>
+                      <p className="text-gray-600 mb-4">
+                        Your <span className="font-bold text-black">{userPlan?.planName || 'N/A'}</span> plan doesn't match this trainer's available plans.
+                      </p>
+                      <p className="text-sm text-gray-500">Consider upgrading your plan to access this trainer's sessions.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
-        {/* Plan Comparison Section */}
-        {userPlan && trainerPlan && !isLoadingPlans && (
-          <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-xl font-semibold text-black">Your Plan vs. Trainer's Plan</h2>
-            </div>
-            {planMatch ? (
-              <p className="text-green-600 font-semibold">
-                Your plan (<span className="font-bold">{userPlan.planName}</span>) matches {trainerName}'s plan (<span className="font-bold">{trainerPlan}</span>).
-              </p>
-            ) : (
-              <p className="text-red-600 font-semibold">
-                Your plan (<span className="font-bold">{userPlan?.planName || 'N/A'}</span>) does <span className="font-bold">not</span> match {trainerName}'s plan (<span className="font-bold">{trainerPlan || 'N/A'}</span>).
-              </p>
+            {!userPlan && !isLoadingPlans && (
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <div className="text-center py-8">
+                  <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Sign In Required</h3>
+                  <p className="text-gray-600">Log in to compare your pricing plan with the trainer's available plans.</p>
+                </div>
+              </div>
+            )}
+
+            {isLoadingPlans && (
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <div className="text-center py-8">
+                  <div className="animate-spin h-12 w-12 border-4 border-red-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <p className="text-gray-600 font-medium">Loading plan information...</p>
+                </div>
+              </div>
             )}
           </div>
-        )}
-        {!userPlan && !isLoadingPlans && (
-          <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
-            <p className="text-gray-500">Log in to compare your pricing plan with the trainer's.</p>
-          </div>
-        )}
 
-        {/* Virtual Sessions Section */}
-        <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center gap-2 mb-4">
-            <CalendarIcon className="h-6 w-6 text-blue-600" />
-            <h2 className="text-xl font-semibold text-black">Virtual Sessions</h2>
+          {/* Right Column - Calendar */}
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="bg-black text-white p-4">
+              <div className="flex items-center gap-3">
+                <CalendarIcon className="h-6 w-6 text-red-500" />
+                <h2 className="text-xl font-bold">Available Sessions</h2>
+              </div>
+            </div>
+            <div className="p-8">
+              <JoinableSessionCalendar
+                trainerId={trainerId}
+                height={700}
+                planMatch={!!planMatch}
+              />
+            </div>
           </div>
-          {virtualSessions.length > 0 ? (
-            <ul>
-              {virtualSessions.map((session) => (
-                <li key={session._id} className="mb-2">
-                  <span className="font-bold">{session.title}</span> — {session.start} to {session.end} at {session.location}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500">No virtual sessions found for this trainer.</p>
-          )}
-        </div>
-
-        {/* Joinable Session Calendar */}
-        {console.log("Rendering JoinableSessionCalendar with planMatch:", planMatch)}
-        <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
-          <div className="flex items-center gap-2 mb-4">
-            <CalendarIcon className="h-6 w-6 text-green-600" />
-            <h2 className="text-xl font-semibold text-black">Join a Session</h2>
-          </div>
-          <JoinableSessionCalendar
-            trainerId={trainerId}
-            height={600}
-            planMatch={!!planMatch}
-          />
         </div>
       </div>
     </div>

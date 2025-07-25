@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import ItemDetails from "../components/ProductDetails";
 
 import { Search, Filter, Dumbbell, Zap, Heart } from 'lucide-react';
+import Toast from "@/utils/Toast";
+import { ToastContainer } from "@/utils/Toast";
 
 // Define TypeScript interfaces
 interface Product {
@@ -28,6 +30,7 @@ const Products = () => {
   const [sortBy, setSortBy] = useState<string>("name");
   const itemsPerPage = 20;
   const router = useRouter();
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -43,6 +46,16 @@ const Products = () => {
     };
     fetchItems();
   }, []); //stores in items state
+
+  useEffect(() => {
+    setUserId(localStorage.getItem("userId"));
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      console.log("User ID:", userId);
+    }
+  }, [userId]);
 
   // Filter items
   const filteredItems = items.filter(
@@ -83,11 +96,19 @@ const Products = () => {
     setCurrentPage(1);
   };
 
-  const userId = localStorage.getItem("userId");
-  console.log("User ID:", userId);
-  
+  const handleAddToCart = (item: Product) => {
+    if (!userId) {
+      Toast({ type: "error", message: "Please log in to add items to cart." });
+      return;
+    }
+    // In a real application, you would send an API request to add the item to the cart
+    // For now, we'll just show a toast message
+    Toast({ type: "success", message: "Item added to cart!" });
+  };
+
   return (
     <div className="min-h-screen bg-white">
+      <ToastContainer />
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Hero Header */}
         {/* Hero Header with Background Image */}
