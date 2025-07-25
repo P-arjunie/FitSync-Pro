@@ -122,7 +122,7 @@ export default function CheckoutPage() {
                   View All Orders
                 </button>
               </Link>
-              <Link href="/user-/order-management/products">
+              <Link href="/user-order-management/products">
                 <button className="px-8 py-4 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                   Continue Shopping
                 </button>
