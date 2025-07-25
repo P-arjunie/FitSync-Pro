@@ -21,6 +21,12 @@ export const config = {
 // ✅ POST handler for image upload
 export async function POST(req: Request) {
   try {
+    // Debug: Log request headers and content-type
+    console.log('UPLOAD DEBUG: Request headers:');
+    req.headers.forEach((value, key) => {
+      console.log(`  ${key}: ${value}`);
+    });
+    console.log('UPLOAD DEBUG: Content-Type:', req.headers.get('content-type'));
     // Parse the form data and get file
     const formData = await req.formData();
     const file = formData.get('file') as File;
