@@ -31,6 +31,7 @@ const customStyles = `
 const localizer = momentLocalizer(moment)
 
 type Session = {
+  trainerId: any
   _id: string
   title: string
   trainerName: string
@@ -51,6 +52,10 @@ export default function AllSessionsPage() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isJoining, setIsJoining] = useState(false)
+  const [activeTab, setActiveTab] = useState("sessions")
+  const [userPlan, setUserPlan] = useState<any>(null)
+  const [trainerPlans, setTrainerPlans] = useState<{[key: string]: string[]}>({})
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true)
 
   // New states for day-specific events dialog
   const [selectedDayEvents, setSelectedDayEvents] = useState<Session[]>([])
@@ -109,6 +114,63 @@ export default function AllSessionsPage() {
     setCurrentDate(new Date());
   }, []);
 
+  // Fetch user plan and trainer plans
+  useEffect(() => {
+    const fetchPlans = async () => {
+      setIsLoadingPlans(true)
+      const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+      
+      if (!userId) {
+        setUserPlan(null)
+        setIsLoadingPlans(false)
+        return
+      }
+
+      try {
+        // Fetch user's plan
+        const userRes = await fetch(`/api/fix-pending-pricing-plans?userId=${userId}`)
+        const userData = await userRes.json()
+        const fetchedUserPlan = (userData.paidPlans && userData.paidPlans[0]) || null
+        setUserPlan(fetchedUserPlan)
+
+        // Fetch trainer plans for each session
+        const trainerIds = [...new Set(sessions.map(session => session.trainerId).filter(Boolean))]
+        const trainerPlansData: {[key: string]: string[]} = {}
+        
+        for (const trainerId of trainerIds) {
+          try {
+            const trainerRes = await fetch(`/api/approved-trainer/${trainerId}`)
+            const trainerData = await trainerRes.json()
+            trainerPlansData[trainerId] = trainerData.pricingPlans || []
+          } catch (error) {
+            console.error(`Failed to fetch trainer ${trainerId} plans:`, error)
+            trainerPlansData[trainerId] = []
+          }
+        }
+        
+        setTrainerPlans(trainerPlansData)
+      } catch (error) {
+        console.error("Failed to fetch plans:", error)
+        setUserPlan(null)
+        setTrainerPlans({})
+      } finally {
+        setIsLoadingPlans(false)
+      }
+    }
+
+    if (sessions.length > 0) {
+      fetchPlans()
+    }
+  }, [sessions])
+
+  // Check if user can join a specific session
+  const canJoinSession = (session: Session) => {
+    if (!userPlan || !session.trainerId) return false
+    
+    const trainerPlanList = trainerPlans[session.trainerId] || []
+    return trainerPlanList.includes(userPlan.planName)
+  }
+
   const handleSelectEvent = (event: Session) => {
     setSelectedSession(event)
     setIsDialogOpen(true)
@@ -116,6 +178,13 @@ export default function AllSessionsPage() {
 
   const handleJoinSession = async () => {
     if (!selectedSession) return
+    
+    // Check plan compatibility before joining
+    if (!canJoinSession(selectedSession)) {
+      alert("Your current plan doesn't match this trainer's requirements. Please upgrade your plan to join this session.")
+      return
+    }
+    
     setIsJoining(true)
     try {
       const userId = localStorage.getItem("userId")
@@ -313,10 +382,11 @@ export default function AllSessionsPage() {
                     isJoining ||
                     isSessionFull(selectedSession) ||
                     isSessionPast(selectedSession) ||
-                    selectedSession.hasJoined
+                    selectedSession.hasJoined ||
+                    !canJoinSession(selectedSession)
                   }
                   className={`flex-1 ${
-                    isJoining || isSessionFull(selectedSession) || isSessionPast(selectedSession)
+                    isJoining || isSessionFull(selectedSession) || isSessionPast(selectedSession) || !canJoinSession(selectedSession)
                       ? "bg-gray-400 hover:bg-gray-400"
                       : "bg-red-500 hover:bg-red-600"
                   } text-white`}
@@ -330,6 +400,8 @@ export default function AllSessionsPage() {
                     "Session Full"
                   ) : isSessionPast(selectedSession) ? (
                     "Session Ended"
+                  ) : !canJoinSession(selectedSession) ? (
+                    "Plan Required"
                   ) : (
                     "Join Session"
                   )}
@@ -342,6 +414,25 @@ export default function AllSessionsPage() {
                   Close
                 </Button>
               </div>
+              {/* Plan Compatibility Info */}
+              {userPlan && selectedSession.trainerId && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium text-gray-700">Plan Compatibility:</span>
+                    {canJoinSession(selectedSession) ? (
+                      <span className="text-green-600 text-sm font-medium">✓ Compatible</span>
+                    ) : (
+                      <span className="text-red-600 text-sm font-medium">✗ Incompatible</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Your plan: <span className="font-medium">{userPlan.planName}</span>
+                    {trainerPlans[selectedSession.trainerId] && (
+                      <> • Trainer accepts: {trainerPlans[selectedSession.trainerId].join(", ")}</>
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

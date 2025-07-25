@@ -44,10 +44,9 @@ type Session = {
 interface JoinableSessionCalendarProps {
   trainerId: string
   height?: string | number
-  planMatch?: boolean
 }
 
-export default function JoinableSessionCalendar({ trainerId, height = 600, planMatch = true }: JoinableSessionCalendarProps) {
+export default function JoinableSessionCalendar({ trainerId, height = 600 }: JoinableSessionCalendarProps) {
   const [sessions, setSessions] = useState<Session[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [currentView, setCurrentView] = useState<View>(Views.WEEK)
@@ -59,8 +58,6 @@ export default function JoinableSessionCalendar({ trainerId, height = 600, planM
   const [selectedDayEvents, setSelectedDayEvents] = useState<Session[]>([])
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
   const [isDayDialogOpen, setIsDayDialogOpen] = useState(false)
-  const [userPlan, setUserPlan] = useState<any>(null);
-  const [trainerPlans, setTrainerPlans] = useState<string[]>([]);
 
   // Set the actual current date only on the client after hydration [^1]
   useEffect(() => {
@@ -116,30 +113,6 @@ export default function JoinableSessionCalendar({ trainerId, height = 600, planM
     }
   }, [trainerId])
 
-  useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    if (!userId) return;
-
-    // Fetch logged-in user's plan
-    fetch(`/api/fix-pending-pricing-plans?userId=${userId}`)
-      .then(res => res.json())
-      .then(data => {
-        // Find the active/paid plan
-        const plan = (data.paidPlans && data.paidPlans[0]) || null;
-        setUserPlan(plan);
-      });
-
-    // Fetch trainer's pricingPlans array
-    if (trainerId) {
-      fetch(`/api/approved-trainer/${trainerId}`)
-        .then(res => res.json())
-        .then(data => {
-          const plans = Array.isArray(data.pricingPlans) ? data.pricingPlans : [];
-          setTrainerPlans(plans);
-        });
-    }
-  }, [trainerId]);
-
   // Debug current view and date
   useEffect(() => {
     if (currentView === Views.MONTH && sessions.length > 0) {
@@ -180,19 +153,10 @@ export default function JoinableSessionCalendar({ trainerId, height = 600, planM
   }
 
   const handleJoinSession = async () => {
-    if (!planMatch) {
-      alert("You cannot join this trainer's sessions because your plan is not accepted by the trainer.");
-      return;
-    }
     if (!selectedSession) return
     if (selectedSession.hasJoined) {
       alert("You have already joined this session.")
       return
-    }
-    // Check pricing plan match
-    if (!userPlan || !trainerPlans.length || !trainerPlans.includes(userPlan.planName)) {
-      alert("You can only join sessions if your pricing plan is accepted by the trainer.");
-      return;
     }
 
     setIsJoining(true)
@@ -381,14 +345,12 @@ export default function JoinableSessionCalendar({ trainerId, height = 600, planM
                 <Button
                   onClick={handleJoinSession}
                   disabled={
-                    !planMatch ||
                     isJoining ||
                     isSessionFull(selectedSession) ||
                     isSessionPast(selectedSession) ||
                     selectedSession.hasJoined
                   }
                   className={`flex-1 ${
-                    !planMatch ||
                     isJoining ||
                     isSessionFull(selectedSession) ||
                     isSessionPast(selectedSession) ||
@@ -397,9 +359,7 @@ export default function JoinableSessionCalendar({ trainerId, height = 600, planM
                       : "bg-green-600 hover:bg-green-700"
                   } text-white`}
                 >
-                  {!planMatch ? (
-                    "Your plan is not accepted"
-                  ) : isJoining ? (
+                  {isJoining ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
                       Joining...

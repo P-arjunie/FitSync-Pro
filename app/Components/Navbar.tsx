@@ -85,7 +85,7 @@ const Navbar: React.FC = () => {
           <Link href="/communication-and-notifications/Gallery_page">Gallery</Link>
         </li>
         <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
-          <Link href="/schedule">Schedule</Link>
+          <Link href="/trainer-sessions/all-sessions">Schedule</Link>
         </li>
         {/* Purchases Dropdown */}
         <li ref={purchasesRef} className="relative px-3 py-2 rounded-md transition-colors duration-150">
@@ -122,6 +122,13 @@ const Navbar: React.FC = () => {
           <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
             <Link href="/member-system-management/admindashboard" title="Admin Dashboard">
               🛡️
+            </Link>
+          </li>
+        )}
+        {isLoggedIn && localStorage.getItem("userRole") === "trainer" && (
+          <li className="px-3 py-2 hover:bg-gray-800 rounded-md transition-colors duration-150">
+            <Link href="/trainer-sessions/dashboard" title="Trainer Dashboard">
+              🏋️
             </Link>
           </li>
         )}
@@ -178,7 +185,7 @@ const Navbar: React.FC = () => {
             <Link href="/class">Class</Link>
           </li>
           <li>
-            <Link href="/schedule">Schedule</Link>
+            <Link href="/trainer-sessions/all-sessions">Schedule</Link>
           </li>
           <li>
             <Link href="/user-order-management/products">Shop</Link>

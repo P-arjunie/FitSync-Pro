@@ -5,6 +5,7 @@ import { useState, useEffect, type ChangeEvent, type FormEvent } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Upload, ArrowLeft } from "lucide-react"
 import Image from "next/image"
+import Toast from "@/utils/Toast";
 
 interface ProductData { //product obj
   _id: string
@@ -127,8 +128,11 @@ const EditProduct = () => {
         throw new Error(errorData.error || "Failed to update product")
       }
 
-      // navigate back to admin dashboard
-      router.push("/admin-order-management/admin-products-dashboard")
+      // Show toast before navigating away
+      Toast({ type: "success", message: "Product updated successfully!" });
+      setTimeout(() => {
+        router.push("/admin-order-management/admin-products-dashboard");
+      }, 500);
     } catch (error) {
       console.error("Error updating product:", error)
       setError(error instanceof Error ? error.message : "An unknown error occurred")

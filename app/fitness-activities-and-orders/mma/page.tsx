@@ -44,15 +44,25 @@ const MMAClassPage = () => {
         }),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        data = {};
+      }
 
       if (!res.ok) {
-        console.error("🔴 Server responded with error:", data);
         if (data.error && data.error.includes('engaged in 2 classes')) {
           alert('You are already engaged in 2 classes. Please refund one to continue.');
           return;
         }
-        throw new Error(data.error || "Failed to create enrollment");
+        if (data.error && data.error.includes('already enrolled in this class')) {
+          alert('You are already enrolled in this class. Please refund to enroll again.');
+          return;
+        }
+        console.error("🔴 Server responded with error:", data);
+        alert(data && data.error ? data.error : "Could not create enrollment, please try again.");
+        return;
       }
 
       router.push(`/fitness-activities-and-orders/checkout?enrollmentId=${data._id}`);
