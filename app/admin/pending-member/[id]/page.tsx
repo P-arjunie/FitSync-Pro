@@ -17,6 +17,31 @@ export default async function PendingMemberDetail({ params }: PageProps) {
     return <div className="text-white p-6">Member not found</div>;
   }
 
+  const formatValue = (key: string, value: any) => {
+    // Special handling for emergencyContact object
+    if (key === 'emergencyContact' && typeof value === 'object' && value !== null) {
+      return `${value.name} (${value.relationship}) - ${value.phone}`;
+    }
+    
+    // Special handling for membershipInfo object
+    if (key === 'membershipInfo' && typeof value === 'object' && value !== null) {
+      return `Start Date: ${value.startDate}`;
+    }
+    
+    // Handle arrays
+    if (Array.isArray(value)) {
+      return value.join(", ");
+    }
+    
+    // Handle other objects
+    if (typeof value === "object" && value !== null) {
+      return JSON.stringify(value);
+    }
+    
+    // Handle other types
+    return value?.toString() || '';
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-8">
       <h1 className="text-4xl font-bold mb-6">Member Request Details</h1>
@@ -30,11 +55,8 @@ export default async function PendingMemberDetail({ params }: PageProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           {Object.entries(member.toObject()).map(([key, value]) => {
             if (key === "_id" || key === "__v" || key === "image") return null;
-            const displayValue = Array.isArray(value)
-              ? value.join(", ")
-              : typeof value === "object"
-              ? JSON.stringify(value)
-              : value?.toString();
+            
+            const displayValue = formatValue(key, value);
 
             return (
               <div key={key}>
