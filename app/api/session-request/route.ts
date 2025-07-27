@@ -49,13 +49,13 @@ export async function POST(req: NextRequest) {
 
     // Email templates (FitSync Pro branded)
     const trainerHtml = `
-      <div style=\"background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;\">
-        <h1 style=\"color:#fff;margin:0;font-size:2rem;font-family:sans-serif;\">FitSync Pro</h1>
+      <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
+        <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
       </div>
-      <div style=\"background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;\">
-        <h2 style=\"color:#e53935;margin-top:0;\">New Session Request</h2>
-        <p>You have a new session request from <b>${requestDetails.memberName}</b> (<a href=\"mailto:${requestDetails.memberEmail}\">${requestDetails.memberEmail}</a>).</p>
-        <ul style=\"padding-left:20px;text-align:left;\">
+      <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
+        <h2 style="color:#e53935;margin-top:0;">New Session Request</h2>
+        <p>You have a new session request from <b>${requestDetails.memberName}</b> (<a href="mailto:${requestDetails.memberEmail}">${requestDetails.memberEmail}</a>).</p>
+        <ul style="padding-left:20px;text-align:left;">
           <li><b>Session Name:</b> ${requestDetails.sessionName}</li>
           <li><b>Session Type:</b> ${requestDetails.sessionType}</li>
           <li><b>Date:</b> ${requestDetails.preferredDate}</li>
@@ -63,22 +63,27 @@ export async function POST(req: NextRequest) {
           <li><b>Pricing Plan:</b> ${requestDetails.pricingPlan}</li>
           ${requestDetails.notes ? `<li><b>Notes:</b> ${requestDetails.notes}</li>` : ''}
         </ul>
-        <a href=\"${dashboardLink}\" style=\"color:#e53935;text-decoration:none;display:inline-block;margin-top:16px;\">
-          <button style=\"background:#e53935;color:#fff;padding:10px 28px;border-radius:5px;border:none;font-weight:bold;font-size:1rem;\">Review Request</button>
+        <a href="${dashboardLink}" style="color:#e53935;text-decoration:none;display:inline-block;margin-top:16px;">
+          <button style="background:#e53935;color:#fff;padding:10px 28px;border-radius:5px;border:none;font-weight:bold;font-size:1rem;">Review Request</button>
         </a>
       </div>
     `;
 
     const memberHtml = `
-      <h2>Session Request Submitted</h2>
-      <p>Your request for <b>${requestDetails.sessionName}</b> with ${requestDetails.trainerName} has been submitted and is pending approval.</p>
-      <ul>
-        <li><b>Date:</b> ${requestDetails.preferredDate}</li>
-        <li><b>Time:</b> ${requestDetails.preferredTime}</li>
-        <li><b>Session Type:</b> ${requestDetails.sessionType}</li>
-        <li><b>Pricing Plan:</b> ${requestDetails.pricingPlan}</li>
-      </ul>
-      <p>You will receive an email when your request is approved or rejected.</p>
+      <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
+        <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
+      </div>
+      <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
+        <h2 style="color:#e53935;margin-top:0;">Session Request Submitted</h2>
+        <p>Your request for <b>${requestDetails.sessionName}</b> with ${requestDetails.trainerName} has been submitted and is pending approval.</p>
+        <ul style="padding-left:20px;text-align:left;">
+          <li><b>Date:</b> ${requestDetails.preferredDate}</li>
+          <li><b>Time:</b> ${requestDetails.preferredTime}</li>
+          <li><b>Session Type:</b> ${requestDetails.sessionType}</li>
+          <li><b>Pricing Plan:</b> ${requestDetails.pricingPlan}</li>
+        </ul>
+        <p>You will receive an email when your request is approved or rejected.</p>
+      </div>
     `;
 
     const transporter = nodemailer.createTransport({
@@ -149,69 +154,6 @@ export async function PUT(req: NextRequest) {
   let trainerHtml = '';
 
   if (action === 'approved') {
-    memberSubject = '🔄 Session Rescheduled';
-    memberHtml = `
-      <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
-        <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
-      </div>
-      <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
-        <h2 style="color:#e53935;margin-top:0;">Your Session Was Rescheduled!</h2>
-        <p>Your session <b>${sessionName}</b> with ${trainerName} has been rescheduled.</p>
-        <ul style="padding-left:20px;text-align:left;">
-          <li><b>Date:</b> ${preferredDate}</li>
-          <li><b>Start Time:</b> ${startTime || ''}</li>
-          <li><b>End Time:</b> ${endTime || ''}</li>
-          <li><b>Session Type:</b> ${sessionType}</li>
-          <li><b>Pricing Plan:</b> ${pricingPlan}</li>
-          ${sessionType === 'Physical' ? `<li><b>Place:</b> ${place}</li>` : `<li><b>Meeting Link:</b><br><a href=\"${meetingLink}\" style=\"color:#e53935;text-decoration:none;display:inline-block;margin-top:8px;\"><button style='background:#e53935;color:#fff;padding:10px 28px;border-radius:5px;border:none;font-weight:bold;font-size:1rem;'>Join Meeting</button></a></li>`}
-          ${description ? `<li><b>Description:</b> ${description}</li>` : ''}
-        </ul>
-      </div>
-    `;
-    trainerSubject = '🔄 Session Rescheduled (Confirmation)';
-    trainerHtml = `
-      <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
-        <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
-      </div>
-      <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
-        <h2 style="color:#e53935;margin-top:0;">You Rescheduled a Session</h2>
-        <p>You have rescheduled the session <b>${sessionName}</b> with your member.</p>
-        <ul style="padding-left:20px;text-align:left;">
-          <li><b>Date:</b> ${preferredDate}</li>
-          <li><b>Start Time:</b> ${startTime || ''}</li>
-          <li><b>End Time:</b> ${endTime || ''}</li>
-          <li><b>Session Type:</b> ${sessionType}</li>
-          <li><b>Pricing Plan:</b> ${pricingPlan}</li>
-          ${sessionType === 'Physical' ? `<li><b>Place:</b> ${place}</li>` : `<li><b>Meeting Link:</b><br><a href=\"${meetingLink}\" style=\"color:#e53935;text-decoration:none;display:inline-block;margin-top:8px;\"><button style='background:#e53935;color:#fff;padding:10px 28px;border-radius:5px;border:none;font-weight:bold;font-size:1rem;'>Join Meeting</button></a></li>`}
-          ${description ? `<li><b>Description:</b> ${description}</li>` : ''}
-        </ul>
-      </div>
-    `;
-  } else if (action === 'rejected' || action === 'cancelled') {
-    memberSubject = '❌ Session Cancelled';
-    memberHtml = `
-      <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
-        <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
-      </div>
-      <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
-        <h2 style="color:#e53935;margin-top:0;">Your Session Was Cancelled</h2>
-        <p>Your session <b>${sessionName}</b> with ${trainerName} has been cancelled.</p>
-        <p><b>Reason:</b> ${rejectionReason || 'No reason provided.'}</p>
-      </div>
-    `;
-    trainerSubject = '❌ Session Cancelled (Confirmation)';
-    trainerHtml = `
-      <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
-        <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
-      </div>
-      <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
-        <h2 style="color:#e53935;margin-top:0;">You Cancelled a Session</h2>
-        <p>You have cancelled the session <b>${sessionName}</b> with your member.</p>
-        <p><b>Reason:</b> ${rejectionReason || 'No reason provided.'}</p>
-      </div>
-    `;
-  } else {
-    // fallback to previous approve/reject logic
     memberSubject = '✅ Session Request Approved';
     memberHtml = `
       <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
@@ -226,7 +168,7 @@ export async function PUT(req: NextRequest) {
           <li><b>End Time:</b> ${endTime || ''}</li>
           <li><b>Session Type:</b> ${sessionType}</li>
           <li><b>Pricing Plan:</b> ${pricingPlan}</li>
-          ${sessionType === 'Physical' ? `<li><b>Place:</b> ${place}</li>` : `<li><b>Meeting Link:</b><br><a href=\"${meetingLink}\" style=\"color:#e53935;text-decoration:none;display:inline-block;margin-top:8px;\"><button style='background:#e53935;color:#fff;padding:10px 28px;border-radius:5px;border:none;font-weight:bold;font-size:1rem;'>Join Meeting</button></a></li>`}
+          ${sessionType === 'Physical' ? `<li><b>Place:</b> ${place}</li>` : `<li><b>Meeting Link:</b><br><a href="${meetingLink}" style="color:#e53935;text-decoration:none;display:inline-block;margin-top:8px;"><button style='background:#e53935;color:#fff;padding:10px 28px;border-radius:5px;border:none;font-weight:bold;font-size:1rem;'>Join Meeting</button></a></li>`}
           ${description ? `<li><b>Description:</b> ${description}</li>` : ''}
         </ul>
       </div>
@@ -245,9 +187,33 @@ export async function PUT(req: NextRequest) {
           <li><b>End Time:</b> ${endTime || ''}</li>
           <li><b>Session Type:</b> ${sessionType}</li>
           <li><b>Pricing Plan:</b> ${pricingPlan}</li>
-          ${sessionType === 'Physical' ? `<li><b>Place:</b> ${place}</li>` : `<li><b>Meeting Link:</b><br><a href=\"${meetingLink}\" style=\"color:#e53935;text-decoration:none;display:inline-block;margin-top:8px;\"><button style='background:#e53935;color:#fff;padding:10px 28px;border-radius:5px;border:none;font-weight:bold;font-size:1rem;'>Join Meeting</button></a></li>`}
+          ${sessionType === 'Physical' ? `<li><b>Place:</b> ${place}</li>` : `<li><b>Meeting Link:</b><br><a href="${meetingLink}" style="color:#e53935;text-decoration:none;display:inline-block;margin-top:8px;"><button style='background:#e53935;color:#fff;padding:10px 28px;border-radius:5px;border:none;font-weight:bold;font-size:1rem;'>Join Meeting</button></a></li>`}
           ${description ? `<li><b>Description:</b> ${description}</li>` : ''}
         </ul>
+      </div>
+    `;
+  } else {
+    memberSubject = '❌ Session Request Rejected';
+    memberHtml = `
+      <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
+        <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
+      </div>
+      <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
+        <h2 style="color:#e53935;margin-top:0;">Your Session Request Was Rejected</h2>
+        <p>Unfortunately, your request for <b>${sessionName}</b> with ${trainerName} was rejected.</p>
+        <p><b>Reason:</b> ${rejectionReason || 'No reason provided.'}</p>
+        <p>You may contact the trainer for more information or submit a new request.</p>
+      </div>
+    `;
+    trainerSubject = '❌ Session Request Rejected (Confirmation)';
+    trainerHtml = `
+      <div style="background:#e53935;padding:24px 0 0 0;text-align:center;border-radius:8px 8px 0 0;">
+        <h1 style="color:#fff;margin:0;font-size:2rem;font-family:sans-serif;">FitSync Pro</h1>
+      </div>
+      <div style="background:#fff;padding:32px 32px 24px 32px;border-radius:0 0 8px 8px;font-family:sans-serif;max-width:600px;margin:auto;">
+        <h2 style="color:#e53935;margin-top:0;">You Rejected a Session Request</h2>
+        <p>You have rejected the request for <b>${sessionName}</b> with your member.</p>
+        <p><b>Reason:</b> ${rejectionReason || 'No reason provided.'}</p>
       </div>
     `;
   }
