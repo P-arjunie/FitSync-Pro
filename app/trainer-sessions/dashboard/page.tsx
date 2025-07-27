@@ -189,6 +189,15 @@ const TrainerDashboard: React.FC = () => {
     if (!approveFields.endTime.trim()) return alert('End time is required');
     if (isPhysical && !approveFields.place.trim()) return alert('Place is required');
     if (!isPhysical && !approveFields.meetingLink.trim()) return alert('Meeting link is required');
+    
+    // Validate that end time is after start time
+    const startTime = new Date(`2000-01-01T${approveFields.startTime}`);
+    const endTime = new Date(`2000-01-01T${approveFields.endTime}`);
+    if (endTime <= startTime) {
+      alert('End time must be after start time');
+      return;
+    }
+    
     setActionLoading(selectedRequest.id);
     try {
       await fetch('/api/session-request', {

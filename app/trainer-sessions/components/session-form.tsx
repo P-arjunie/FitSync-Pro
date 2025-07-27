@@ -43,7 +43,18 @@ const formSchema = z.object({
   }),
   description: z.string().optional(),
 
-})
+}).refine((data) => {
+  // Custom validation to ensure end time is after start time
+  if (data.startTime && data.endTime) {
+    const startTime = new Date(`2000-01-01T${data.startTime}`);
+    const endTime = new Date(`2000-01-01T${data.endTime}`);
+    return endTime > startTime;
+  }
+  return true;
+}, {
+  message: "End time must be after start time.",
+  path: ["endTime"], // This will show the error on the endTime field
+});
 
 export default function SessionForm() {
   const router = useRouter()

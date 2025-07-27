@@ -103,6 +103,28 @@ export default function TrainerRegistrationForm() {
     });
   };
 
+  // Validation functions
+  const isValidAge = (dob: string) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      return age - 1 >= 18; // Trainers must be at least 18
+    }
+    return age >= 18;
+  };
+
+  const isValidExperience = (experience: string) => {
+    const num = parseInt(experience);
+    return !isNaN(num) && num >= 0 && num <= 50; // Reasonable experience range
+  };
+
+  const isValidSkillLevel = (level: number) => {
+    return level >= 1 && level <= 100; // Skill level should be between 1-100
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -166,10 +188,22 @@ export default function TrainerRegistrationForm() {
       return;
     }
 
+    // Age validation (must be 18 or older for trainers)
+    if (!isValidAge(formData.dob)) {
+      alert("You must be at least 18 years old to register as a trainer.");
+      return;
+    }
+
+    // Experience validation
+    if (!isValidExperience(formData.yearsOfExperience)) {
+      alert("Please enter a valid number of years of experience (0-50 years).");
+      return;
+    }
+
     // Skill validation
     for (const skill of formData.skills) {
-      if (!skill.name.trim() || skill.level < 1 || skill.level > 5) {
-        alert("Each skill must have a name and a level between 1 and 5.");
+      if (!skill.name.trim() || !isValidSkillLevel(skill.level)) {
+        alert("Each skill must have a name and a level between 1 and 100.");
         return;
       }
     }

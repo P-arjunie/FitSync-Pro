@@ -77,6 +77,30 @@ const MemberRegistrationForm: React.FC = () => {
   const isValidPhone = (phone: string) =>
     /^\d{7,15}$/.test(phone.replace(/\D/g, ""));
 
+  // Age validation (must be 16 or older)
+  const isValidAge = (dob: string) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      return age - 1 >= 16;
+    }
+    return age >= 16;
+  };
+
+  // Weight and height validation
+  const isValidWeight = (weight: string) => {
+    const num = parseFloat(weight);
+    return !isNaN(num) && num > 0 && num <= 500; // Reasonable weight range
+  };
+
+  const isValidHeight = (height: string) => {
+    const num = parseFloat(height);
+    return !isNaN(num) && num > 0 && num <= 300; // Reasonable height range in cm
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -113,6 +137,23 @@ const MemberRegistrationForm: React.FC = () => {
       alert(
         "Please enter a valid emergency contact phone number (digits only)."
       );
+      return;
+    }
+
+    // Validate age (must be 16 or older)
+    if (!isValidAge(formData.dob)) {
+      alert("You must be at least 16 years old to register.");
+      return;
+    }
+
+    // Validate weight and height
+    if (formData.currentWeight && !isValidWeight(formData.currentWeight)) {
+      alert("Please enter a valid weight (between 1 and 500 kg).");
+      return;
+    }
+
+    if (formData.height && !isValidHeight(formData.height)) {
+      alert("Please enter a valid height (between 1 and 300 cm).");
       return;
     }
 

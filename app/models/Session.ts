@@ -52,15 +52,15 @@ const sessionSchema = new Schema({
     type: Boolean,
     default: false
   },
+  cancellationReason: {
+    type: String,
+    default: ""
+  },
   cancelledAt: {
     type: Date,
     default: null
   },
   cancelledBy: {
-    type: String,
-    default: null
-  },
-  cancellationReason: {
     type: String,
     default: null
   },
@@ -77,7 +77,30 @@ const sessionSchema = new Schema({
     default: null
   }
 }, {
-  timestamps: true,
+  timestamps: true
+});
+
+// Add custom validator to ensure end time is after start time
+sessionSchema.pre('save', function(next) {
+  if (this.start && this.end) {
+    if (this.end <= this.start) {
+      const error = new Error('End time must be after start time');
+      return next(error);
+    }
+  }
+  next();
+});
+
+// Add custom validator to ensure end time is after start time for updates
+sessionSchema.pre('findOneAndUpdate', function(next) {
+  const update = this.getUpdate();
+  if (update.start && update.end) {
+    if (update.end <= update.start) {
+      const error = new Error('End time must be after start time');
+      return next(error);
+    }
+  }
+  next();
 });
 
 // Check if model already exists to prevent overwriting during hot reloads

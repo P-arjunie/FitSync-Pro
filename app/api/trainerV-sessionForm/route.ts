@@ -35,6 +35,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Validate that end time is after start time
+    if (body.startTime && body.endTime) {
+      const startTime = new Date(`2000-01-01T${body.startTime}`);
+      const endTime = new Date(`2000-01-01T${body.endTime}`);
+      
+      if (endTime <= startTime) {
+        console.log(`❌ Invalid time range: ${body.startTime} - ${body.endTime}`);
+        return NextResponse.json({ error: 'End time must be after start time' }, { status: 400 });
+      }
+    }
+
+    // Check for duplicate zoom links on the same date
+    const existingSession = await VirtualSession.findOne({
+      date: new Date(body.date),
+      onlineLink: body.onlineLink,
+      _id: { $ne: body._id } // Exclude current session if updating
+    });
+
+    if (existingSession) {
+      console.log(`❌ Duplicate zoom link found for date: ${body.date}`);
+      return NextResponse.json({ 
+        error: 'This zoom link is already being used for another session on the same date. Please use a different link.' 
+      }, { status: 409 });
+    }
+
     // Create session document
     const newSession = new VirtualSession({
       title: body.title,

@@ -285,8 +285,7 @@ export default function Contact() {
                       <div className="pl-2">{workingHours.weekdays || "7:00 a.m. - 9:00 p.m."}</div>
                       <div className="mt-2">Saturday</div>
                       <div className="pl-2">{workingHours.saturday || "7:00 a.m. - 4:00 p.m."}</div>
-                      <div className="mt-2">Sunday</div>
-                      <div className="pl-2">{workingHours.sunday || "Closed"}</div>
+                      
                     </div>
                   </div>
                   {/* Location */}

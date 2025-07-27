@@ -68,6 +68,20 @@ const virtualSessionSchema = new Schema({
   timestamps: true,
 });
 
+// Add custom validator to ensure end time is after start time
+virtualSessionSchema.pre('save', function(next) {
+  if (this.startTime && this.endTime) {
+    const startTime = new Date(`2000-01-01T${this.startTime}`);
+    const endTime = new Date(`2000-01-01T${this.endTime}`);
+    
+    if (endTime <= startTime) {
+      const error = new Error('End time must be after start time');
+      return next(error);
+    }
+  }
+  next();
+});
+
 const VirtualSession = mongoose.models.VirtualSession || mongoose.model('VirtualSession', virtualSessionSchema);
 
 export default VirtualSession;
