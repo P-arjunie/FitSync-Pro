@@ -5,6 +5,7 @@ import { useShoppingCartStore } from '../ShoppingCart/page';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 
 export default function CartPage() {
@@ -12,8 +13,15 @@ export default function CartPage() {
   const cartTotal = getCartTotal();
   const itemCount = getItemCount();
 
-  const userId = localStorage.getItem("userId");
-  console.log("User ID:", userId);
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    setUserId(typeof window !== 'undefined' ? localStorage.getItem('userId') : null);
+  }, []);
+  useEffect(() => {
+    if (userId) {
+      console.log("User ID:", userId);
+    }
+  }, [userId]);
 
   return (
     <div className="min-h-screen bg-gray-50">

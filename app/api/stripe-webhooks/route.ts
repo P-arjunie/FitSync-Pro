@@ -169,4 +169,17 @@ export async function POST(req: NextRequest) {
           });
           console.log(`✅ Created payment record in fitsync_paymentsses`);
         } else {
-          console.log(`
+                    console.log(`ℹ️ Payment record already exists for invoice.payment_succeeded`);
+                  }
+                }
+                break;
+              }
+              // Add more event types as needed
+              default: {
+                console.log(`Unhandled event type: ${event.type}`);
+                break;
+              }
+            }
+          
+            return NextResponse.json({ received: true });
+          }
