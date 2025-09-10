@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Navbar from "../../Components/Navbar";
 import Footer from "@/Components/Footer_02";
-import styles from "@/Components/pricingpage.module.css";
+import styles from "@/Components/PricingPage.module.css";
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getAuthUser } from '@/lib/auth';

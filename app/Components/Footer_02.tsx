@@ -1,6 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import styles from './footer2.module.css';
+import styles from './Footer2.module.css';
 
 const footer_02: React.FC = () => {
   return (

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { StripeCardElement } from "@stripe/stripe-js";
-import styles from "./checkoutform.module.css";
+import styles from "./CheckoutForm.module.css";
 import Navbar from "./Navbar";
 import Footer_02 from "./Footer_02";
 import cartImg from "../../public/cart.png";
