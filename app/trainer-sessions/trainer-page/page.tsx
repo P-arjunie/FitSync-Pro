@@ -258,20 +258,10 @@ const TrainerSessionsPage: React.FC = () => {
   };
 
   // View Participants
-  const handleViewParticipants = async (session: Session) => {
+  const handleViewParticipants = (session: Session) => {
     setParticipantsSession(session);
-    setParticipantsLoading(true);
-    try {
-      const res = await fetch(`/api/sessions/${session._id}/participants`);
-      if (res.ok) {
-        const data = await res.json();
-        setParticipants(Array.isArray(data) ? data : data.all || []);
-      } else {
-        setParticipants([]);
-      }
-    } finally {
-      setParticipantsLoading(false);
-    }
+    setParticipantsLoading(false);
+    setParticipants(allParticipants.filter(p => p.sessionId === session._id));
   };
 
   // Approve/Reject from main requests tab
@@ -588,7 +578,9 @@ const TrainerSessionsPage: React.FC = () => {
                             <div className="flex items-center gap-2 text-gray-700">
                               <Users className="w-4 h-4 text-red-500" />
                               <span>
-                                <span className="font-medium">{session.currentParticipants || 0}</span>
+                                <span className="font-medium">
+                                  {allParticipants.filter(p => p.sessionId === session._id && p.status === "approved").length}
+                                </span>
                                 <span className="text-gray-500">/{session.maxParticipants} participants</span>
                               </span>
                             </div>
