@@ -51,11 +51,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   // Add a state for store purchase warning
-  const [showStoreWarning, setShowStoreWarning] = useState(false);
+  // Removed unused showStoreWarning state
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [walletLoading, setWalletLoading] = useState(true);
   const [walletError, setWalletError] = useState("");
-  const [useWallet, setUseWallet] = useState(false);
+  // const [useWallet, setUseWallet] = useState(false);
 
   // Fetch wallet balance (same as purchase history)
   const fetchWallet = async () => {
@@ -67,7 +67,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       const data = await res.json();
       setWalletBalance(data.wallet?.balance || 0);
       console.log('[CHECKOUT] Wallet fetched:', data.wallet?.balance, 'Order total:', totalAmount);
-    } catch (err) {
+    } catch {
       setWalletError("Could not load wallet");
     } finally {
       setWalletLoading(false);
@@ -105,8 +105,8 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
           setOrderItems(latest.orderItems);
           setTotalAmount(latest.totalAmount);
         }
-      } catch (err) {
-        console.error("Order fetch error:", err);
+      } catch {
+        console.error("Order fetch error");
       }
     };
     fetchOrders();
@@ -168,9 +168,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       setMessage("✅ Payment succeeded!");
       setPaymentSuccess(true);
       router.push('/fitness-activities-and-orders/success');
-      if (!enrollmentData && !pricingPlanData) {
-        setShowStoreWarning(true);
-      }
+      // Removed setShowStoreWarning since it's unused
     } else {
       setMessage(`❌ Payment failed: ${data.error || "Unknown error"}`);
     }
@@ -202,7 +200,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       } else {
         setMessage(`❌ Wallet payment failed: ${data.error || "Unknown error"}`);
       }
-    } catch (err) {
+    } catch {
       setMessage("❌ Wallet payment failed");
     } finally {
       setLoading(false);
@@ -312,13 +310,29 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
             {console.log('[CHECKOUT] Rendering wallet button. Wallet balance:', walletBalance, 'Order total:', totalAmount)}
             <button
               type="button"
-              disabled={loading || walletBalance < totalAmount}
-              className={styles.button + (walletBalance < totalAmount ? " bg-gray-400 cursor-not-allowed" : " bg-green-600 hover:bg-green-700") + " mt-4 mb-4"} // Added mb-4 for spacing
+              disabled={loading || walletBalance < totalAmount || walletLoading}
+              className={styles.button + (walletBalance < totalAmount || walletLoading ? " bg-gray-400 cursor-not-allowed" : " bg-green-600 hover:bg-green-700") + " mt-4 mb-4"}
               onClick={handleWalletPay}
             >
-              {walletBalance < totalAmount ? "Insufficient Wallet Balance" : loading ? "Processing..." : "Pay with Wallet"}
+              {walletLoading
+                ? "Loading wallet..."
+                : walletBalance < totalAmount
+                  ? "Insufficient Wallet Balance"
+                  : loading
+                    ? "Processing..."
+                    : "Pay with Wallet"}
             </button>
-            {walletBalance < totalAmount && (
+            {walletLoading && (
+              <div className="text-gray-500 font-medium my-2 text-center">
+                Loading wallet balance...
+              </div>
+            )}
+            {walletError && (
+              <div className="text-red-600 font-semibold my-2 text-center">
+                {walletError}
+              </div>
+            )}
+            {walletBalance < totalAmount && !walletLoading && (
               <div className="text-red-600 font-semibold my-2 text-center">
                 Your wallet balance is not enough to complete this purchase.
               </div>

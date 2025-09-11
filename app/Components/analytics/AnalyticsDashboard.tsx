@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Components/analytics/AnalyticsDashboard.tsx
 import React, { useMemo } from "react";
 import { Bar } from "react-chartjs-2";
@@ -57,10 +58,10 @@ const AnalyticsDashboard: React.FC<DashboardProps> = ({
     totalPhysicalSessions + totalVirtualSessions,
     [totalPhysicalSessions, totalVirtualSessions]);
 
-  const totalMonths = bookingLabels.length;
-  const averageSessionsPerMonth = useMemo(() => {
-    return totalMonths > 0 ? Math.round(totalSessions / totalMonths) : 0;
-  }, [totalSessions, totalMonths]);
+  // const totalMonths = bookingLabels.length;
+  // const averageSessionsPerMonth = useMemo(() => {
+  //   return totalMonths > 0 ? Math.round(totalSessions / totalMonths) : 0;
+  // }, [totalSessions, totalMonths]);
 
   // For chart: sum all categories for each month
   const combinedData = bookingLabels.map((_, idx) =>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -12,7 +13,7 @@ interface DashboardProps {
   groupBy?: "day" | "week" | "month";
 }
 
-const RevenueAnalyticsDashboard: React.FC<DashboardProps> = ({ data, groupBy = "day" }) => {
+const RevenueAnalyticsDashboard: React.FC<DashboardProps> = ({ data }) => {
   // Prepare chart data - handle both old and new formats
   const timeSeriesData = data.labels 
     ? data.labels.map((label, i) => ({

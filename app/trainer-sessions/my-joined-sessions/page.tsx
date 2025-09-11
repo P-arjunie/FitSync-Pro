@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "../../Components/ui/card";
-import { Separator } from "../../Components/ui/separator";
 import { Clock, MapPin, Users, User, Calendar, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import moment from "moment";
 
@@ -267,7 +268,7 @@ const MyJoinedSessionsPage: React.FC = () => {
                 <Calendar className="w-12 h-12 text-gray-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No Sessions Yet</h3>
-              <p className="text-gray-600 mb-6">You haven't joined any training sessions yet.</p>
+              <p className="text-gray-600 mb-6">You haven&#39;t joined any training sessions yet.</p>
               <button 
                 onClick={() => router.push("/sessions")}
                 className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
@@ -373,10 +374,10 @@ const MyJoinedSessionsPage: React.FC = () => {
                     <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-5 h-5 text-green-600" />
-                        <p className="text-green-800 font-medium">You're All Set!</p>
+                        <p className="text-green-800 font-medium">You&#39;re All Set!</p>
                       </div>
                       <p className="text-green-700 text-sm mt-1">
-                        Your participation has been confirmed. Don't forget to attend!
+                        Your participation has been confirmed. Don&#39;t forget to attend!
                       </p>
                     </div>
                   )}

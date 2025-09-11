@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 // pages/_app.tsx
 import { useEffect, useState } from 'react';

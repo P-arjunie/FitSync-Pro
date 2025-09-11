@@ -17,15 +17,17 @@ export default async function PendingMemberDetail({ params }: PageProps) {
     return <div className="text-white p-6">Member not found</div>;
   }
 
-  const formatValue = (key: string, value: any) => {
+  const formatValue = (key: string, value: unknown) => {
     // Special handling for emergencyContact object
     if (key === 'emergencyContact' && typeof value === 'object' && value !== null) {
-      return `${value.name} (${value.relationship}) - ${value.phone}`;
+      const contact = value as { name?: string; relationship?: string; phone?: string };
+      return `${contact.name ?? ''} (${contact.relationship ?? ''}) - ${contact.phone ?? ''}`;
     }
     
     // Special handling for membershipInfo object
     if (key === 'membershipInfo' && typeof value === 'object' && value !== null) {
-      return `Start Date: ${value.startDate}`;
+      const membership = value as { startDate?: string };
+      return `Start Date: ${membership.startDate ?? ''}`;
     }
     
     // Handle arrays

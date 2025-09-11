@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -26,8 +27,6 @@ import {
   Target,
   Award,
   MessageSquare,
-  Phone,
-  Mail,
   Timer,
   Zap,
   Eye,
@@ -553,7 +552,7 @@ const TrainerDashboard: React.FC = () => {
 
                 {/* Today's Focus */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Focus</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Today&#39;s Focus</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <MetricCard
                       title="Today's Sessions"

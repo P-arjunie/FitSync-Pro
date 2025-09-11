@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/Components/Navbar';
 import Footer1 from '@/Components/Footer_01';
 import { getAuthUser } from '@/lib/auth';
-import { createSubscription, redirectToSubscriptionCheckout } from '@/lib/subscription';
+// import { createSubscription, redirectToSubscriptionCheckout } from '@/lib/subscription';
 
 const YogaClassPage = () => {
   const router = useRouter();
@@ -152,7 +152,7 @@ const YogaClassPage = () => {
             {isLoading ? "Loading..." : authUser ? "Enroll Now" : "Login to Enroll"}
           </button>
                       <div className="enrollment-benefits">
-              <h4>What's Included:</h4>
+              <h4>What&apos;s Included:</h4>
               <ul>
                 <li>Unlimited monthly yoga classes</li>
                 <li>Certified yoga instructors</li>

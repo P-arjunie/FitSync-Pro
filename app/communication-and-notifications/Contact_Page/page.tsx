@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -230,9 +231,9 @@ export default function Contact() {
             </h1>
             <hr className="my-4 border-t border-gray-200 w-full" />
             <p className="text-gray-700 mb-8 leading-relaxed text-justify">
-              At FitSync Pro, we're committed to helping you achieve your fitness goals. 
+              At FitSync Pro, we&apos;re committed to helping you achieve your fitness goals. 
               Whether you have questions about our programs, need guidance, or want to get started, 
-              we're here to support your fitness journey every step of the way.
+              we&apos;re here to support your fitness journey every step of the way.
             </p>
             <div style={{ height: '0.1rem' }} />
 

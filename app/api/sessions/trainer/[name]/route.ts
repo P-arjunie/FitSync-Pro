@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // app/api/sessions/trainer/[name]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import connectMongoDB from '@/lib/mongodb';
+import { connectToDatabase } from '@/lib/mongodb';
 import Session from '@/models/Session';
 
 export async function GET(
@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: { name: string } }
 ) {
   try {
-    await connectMongoDB();
+    await connectToDatabase();
     const decodedName = decodeURIComponent(params.name);
     
     // Get query parameters for date filtering

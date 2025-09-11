@@ -1,12 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useEffect, useState, useRef, useMemo } from "react"
 import { Button } from "@/Components/ui/button"
 import { Input } from "@/Components/ui/input"
 import { Avatar, AvatarFallback } from "@/Components/ui/avatar"
-import { Badge } from "@/Components/ui/badge"
 import { Send, UserCheck, Trash2 } from "lucide-react"
-import { listenToMessages, sendMessage as sendFirestoreMessage, fetchAllTrainers, setUserOnlineStatus, deleteMessage, editMessage, deleteAllMessages, listenToTrainersOnlineStatus } from "@/lib/chatService"
+import { listenToMessages, sendMessage as sendFirestoreMessage, setUserOnlineStatus, deleteMessage, editMessage, deleteAllMessages, listenToTrainersOnlineStatus } from "@/lib/chatService"
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useSearchParams } from 'next/navigation';

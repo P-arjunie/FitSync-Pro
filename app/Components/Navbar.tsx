@@ -4,18 +4,18 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import MiniCart from "./MiniCart"; // Adjust if needed pasindi
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 // For dynamic logo
-interface SiteSettings {
-  logoUrl: string;
-}
+// interface SiteSettings {
+//   logoUrl: string;
+// }
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showPurchases, setShowPurchases] = useState(false); // Added for Purchases dropdown
   const purchasesRef = useRef<HTMLLIElement>(null); // Added for Purchases dropdown
-  const router = useRouter();
+  // const router = useRouter();
 
   useEffect(() => {
     const userRole = localStorage.getItem("userRole");
@@ -52,14 +52,14 @@ const Navbar: React.FC = () => {
     };
   }, [showPurchases]);
 
-  const handleCartClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (isLoggedIn) {
-      router.push("/fitness-activities-and-orders/cart");
-    } else {
-      router.push("/login");
-    }
-  };
+  // const handleCartClick = (e: React.MouseEvent) => {
+  //   e.preventDefault();
+  //   if (isLoggedIn) {
+  //     router.push("/fitness-activities-and-orders/cart");
+  //   } else {
+  //     router.push("/login");
+  //   }
+  // };
 
   return (
     <nav className="bg-black text-white py-7 px-2 flex items-center justify-between w-full border-b border-black">

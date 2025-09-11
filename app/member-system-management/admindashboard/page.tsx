@@ -1,10 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/Components/Navbar";
 import Footer1 from "@/Components/Footer_01";
-import Image from "next/image";
 
 const AdminDashboard: React.FC = () => {
   const router = useRouter();

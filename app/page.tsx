@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -105,13 +106,7 @@ const HomePage: React.FC = () => {
     router.push("/member-system-management/Authform");
   };
 
-  const handleAdminUserManagement = () => {
-    router.push("/member-system-management/adminUserManagement");
-  };
 
-  const handleUserInfo = () => {
-    router.push("/member-system-management/userinfo");
-  };
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
@@ -356,7 +351,7 @@ const HomePage: React.FC = () => {
             <p className="card-title">Progression</p>
             <p className="card-text">
               Tracking your progress is key to reaching your fitness goals.
-              Whether you're building strength, losing weight, or improving
+              Whether you&apos;re building strength, losing weight, or improving
               endurance, seeing measurable progress keeps you motivated and
               focused on your journey. Celebrate each milestone along the way!
             </p>

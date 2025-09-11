@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState } from 'react';
@@ -136,21 +138,21 @@ export default function TestEmailPage() {
                 <p><strong>1. Enable 2-Factor Authentication:</strong></p>
                 <ul className="list-disc list-inside ml-4 space-y-1">
                   <li>Go to <a href="https://myaccount.google.com/" target="_blank" rel="noopener noreferrer" className="underline">Google Account Settings</a></li>
-                  <li>Click on "Security"</li>
-                  <li>Enable "2-Step Verification"</li>
+                  <li>Click on &quot;Security&quot;</li>
+                  <li>Enable &quot;2-Step Verification&quot;</li>
                 </ul>
                 
                 <p><strong>2. Generate App Password:</strong></p>
                 <ul className="list-disc list-inside ml-4 space-y-1">
                   <li>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="underline">App Passwords</a></li>
-                  <li>Select "Mail" and "Other (Custom name)"</li>
-                  <li>Name it "FitSync Pro"</li>
+                  <li>Select &quot;Mail&quot; and &quot;Other (Custom name)&quot;</li>
+                  <li>Name it &quot;FitSync Pro&quot;</li>
                   <li>Copy the 16-character password</li>
                 </ul>
                 
                 <p><strong>3. Update .env file:</strong></p>
                 <ul className="list-disc list-inside ml-4 space-y-1">
-                  <li>Replace "your_app_password_here" with the generated app password</li>
+                  <li>Replace &quot;your_app_password_here&quot; with the generated app password</li>
                   <li>Restart your development server</li>
                 </ul>
               </div>

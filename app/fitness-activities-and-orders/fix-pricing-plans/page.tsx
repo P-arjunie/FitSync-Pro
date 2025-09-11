@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, CheckCircle, XCircle, RefreshCw, Wrench } from 'lucide-react';
+import { AlertCircle, CheckCircle, XCircle, Wrench } from 'lucide-react';
 
 export default function FixPricingPlansPage() {
   const [userId, setUserId] = useState<string | null>(null);
@@ -220,9 +221,9 @@ export default function FixPricingPlansPage() {
               </div>
               <div className="text-sm text-gray-700 space-y-2">
                 <p><strong>1. Check Status:</strong> See how many pricing plans are pending vs paid</p>
-                <p><strong>2. Fix Plans:</strong> Updates pending plans to "paid" and creates missing payment records</p>
+                <p><strong>2. Fix Plans:</strong> Updates pending plans to &quot;paid&quot; and creates missing payment records</p>
                 <p><strong>3. Result:</strong> Pricing plans will appear in purchase history after fixing</p>
-                <p><strong>Note:</strong> This only fixes plans that are already paid in Stripe but stuck in "pending" status</p>
+                <p><strong>Note:</strong> This only fixes plans that are already paid in Stripe but stuck in &quot;pending&quot; status</p>
               </div>
             </div>
           </div>

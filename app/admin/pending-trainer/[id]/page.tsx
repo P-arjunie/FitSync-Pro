@@ -17,10 +17,16 @@ export default async function PendingTrainerDetail({ params }: PageProps) {
     return <div className="text-white p-6">Trainer not found</div>;
   }
 
-  const formatValue = (key: string, value: any) => {
+  const formatValue = (key: string, value: unknown) => {
     // Special handling for skills array
     if (key === 'skills' && Array.isArray(value)) {
-      return value.map((skill: any) => `${skill.name} (Level ${skill.level})`).join(', ');
+      return value.map((skill: unknown) => {
+        if (typeof skill === 'object' && skill !== null && 'name' in skill && 'level' in skill) {
+          const s = skill as { name: string; level: number };
+          return `${s.name} (Level ${s.level})`;
+        }
+        return '';
+      }).join(', ');
     }
     
     // Handle arrays

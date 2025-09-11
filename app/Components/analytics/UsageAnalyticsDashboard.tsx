@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // components/analytics/UsageAnalyticsDashboard.tsx
 import React from "react";
 import { Line } from "react-chartjs-2";

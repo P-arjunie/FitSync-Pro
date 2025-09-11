@@ -178,7 +178,6 @@ export default function TrainerRegistrationForm() {
       emergencyName,
       emergencyPhone,
       relationship,
-      confirmPassword,
       ...rest
     } = formData;
     const payload = {

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -13,8 +15,6 @@ import {
   ShoppingCart,
   BookOpen,
   DollarSign,
-  Activity,
-  Clock,
   FileText,
   TrendingUp,
   Eye,
@@ -46,7 +46,7 @@ interface ReportData {
   totalEnrollments?: number;
   totalPlans?: number;
   totalRevenue?: number;
-  data?: any[];
+  data?: HistoryItem[];
   [key: string]: any;
 }
 
@@ -100,7 +100,7 @@ const AdminHistoryDashboard = () => {
         setHistoryData([]);
         setFilteredData([]);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching history data:', error);
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
       setHistoryData([]);
@@ -135,7 +135,7 @@ const AdminHistoryDashboard = () => {
       } else {
         setError(result.error || 'Failed to generate report');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating report:', error);
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
@@ -651,7 +651,7 @@ const AdminHistoryDashboard = () => {
                     
                     // Clean up
                     URL.revokeObjectURL(url);
-                  } catch (error) {
+                  } catch (error: unknown) {
                     console.error('Error downloading PDF:', error);
                     setError(error instanceof Error ? error.message : 'Failed to download PDF');
                   } finally {

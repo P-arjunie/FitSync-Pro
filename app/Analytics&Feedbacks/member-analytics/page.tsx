@@ -6,11 +6,11 @@ import Navbar from '../../Components/Navbar';
 import Footer from '../../Components/Footer_01';
 
 
-const { jsPDF } = require("jspdf");
-const XLSX = require("xlsx");
+import { jsPDF } from "jspdf";
+import XLSX from "xlsx";
 
 const AnalyticsSidebar = dynamic(() => import("../../Components/analytics/AnalyticsSidebar"), { ssr: false });
-const Bar = dynamic(() => import("react-chartjs-2").then((mod) => mod.Bar), { ssr: false });
+// const Bar = dynamic(() => import("react-chartjs-2").then((mod) => mod.Bar), { ssr: false });
 const Line = dynamic(() => import("react-chartjs-2").then((mod) => mod.Line), { ssr: false });
 const Pie = dynamic(() => import("react-chartjs-2").then((mod) => mod.Pie), { ssr: false });
 
@@ -147,7 +147,7 @@ const MemberAnalyticsPage = () => {
       }
 
       doc.save(`member_analytics_${filters.startDate.toISOString().split('T')[0]}_to_${filters.endDate.toISOString().split('T')[0]}.pdf`);
-    } catch (error) {
+    } catch {
       setError("Failed to generate PDF report");
     } finally {
       setIsGeneratingReport(false);
@@ -177,7 +177,7 @@ const MemberAnalyticsPage = () => {
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(genderData), "Gender Breakdown");
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(ageData), "Age Breakdown");
       XLSX.writeFile(workbook, `member_analytics_${filters.startDate.toISOString().split('T')[0]}_to_${filters.endDate.toISOString().split('T')[0]}.xlsx`);
-    } catch (error) {
+    } catch {
       setError("Failed to generate Excel report");
     } finally {
       setIsGeneratingReport(false);
@@ -218,7 +218,7 @@ const MemberAnalyticsPage = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    } catch (error) {
+    } catch {
       setError("Failed to generate CSV report");
     } finally {
       setIsGeneratingReport(false);
@@ -226,7 +226,7 @@ const MemberAnalyticsPage = () => {
   }, [data, filters]);
 
   const generateReport = useCallback(() => {
-    const reportGenerators = {
+    const reportGenerators: Record<string, () => void> = {
       pdf: generatePDFReport,
       excel: generateExcelReport,
       csv: generateCSVReport,
@@ -367,35 +367,35 @@ const MemberAnalyticsPage = () => {
 
   // Chart data
   const signupsLabels = useMemo(
-    () => (data?.signupsByMonth ?? []).map((d) => d._id),
+  () => (data?.signupsByMonth ?? []).map((d) => (d as { _id: string; count: number })._id),
     [data]
   );
   const signupsCounts = useMemo(
-    () => (data?.signupsByMonth ?? []).map((d) => d.count),
+  () => (data?.signupsByMonth ?? []).map((d) => (d as { _id: string; count: number }).count),
     [data]
   );
   const churnLabels = useMemo(
-    () => (data?.churnByMonth ?? []).map((d) => d._id),
+  () => (data?.churnByMonth ?? []).map((d) => (d as { _id: string; count: number })._id),
     [data]
   );
   const churnCounts = useMemo(
-    () => (data?.churnByMonth ?? []).map((d) => d.count),
+  () => (data?.churnByMonth ?? []).map((d) => (d as { _id: string; count: number }).count),
     [data]
   );
   const genderLabels = useMemo(
-    () => (data?.genderBreakdown ?? []).map((g) => g._id),
+  () => (data?.genderBreakdown ?? []).map((g) => (g as { _id: string; count: number })._id),
     [data]
   );
   const genderCounts = useMemo(
-    () => (data?.genderBreakdown ?? []).map((g) => g.count),
+  () => (data?.genderBreakdown ?? []).map((g) => (g as { _id: string; count: number }).count),
     [data]
   );
   const ageLabels = useMemo(
-    () => Object.keys(data?.ageBreakdown ?? {}),
+  () => Object.keys(data?.ageBreakdown ?? {}),
     [data]
   );
   const ageCounts = useMemo(
-    () => Object.values(data?.ageBreakdown ?? {}),
+  () => Object.values(data?.ageBreakdown ?? {}),
     [data]
   );
 
@@ -505,7 +505,7 @@ const MemberAnalyticsPage = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
-              <label className="block text-gray-300 font-semibold mb-2 flex items-center">
+              <label className="text-gray-300 font-semibold mb-2 flex items-center">
                 <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                   <circle cx="10" cy="10" r="8" />
                 </svg>
@@ -523,7 +523,7 @@ const MemberAnalyticsPage = () => {
               </select>
             </div>
             <div>
-              <label className="block text-gray-300 font-semibold mb-2 flex items-center">
+              <label className="text-gray-300 font-semibold mb-2 flex items-center">
                 <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                   <rect x="4" y="4" width="12" height="12" />
                 </svg>
@@ -541,7 +541,7 @@ const MemberAnalyticsPage = () => {
               </select>
             </div>
             <div>
-              <label className="block text-gray-300 font-semibold mb-2 flex items-center">
+              <label className="text-gray-300 font-semibold mb-2 flex items-center">
                 <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                 </svg>
@@ -555,7 +555,7 @@ const MemberAnalyticsPage = () => {
               />
             </div>
             <div>
-              <label className="block text-gray-300 font-semibold mb-2 flex items-center">
+              <label className="text-gray-300 font-semibold mb-2 flex items-center">
                 <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                 </svg>

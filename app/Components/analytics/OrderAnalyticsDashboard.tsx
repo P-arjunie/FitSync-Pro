@@ -57,7 +57,7 @@ const OrderAnalyticsDashboard: React.FC<OrderAnalyticsProps> = ({
   statusBreakdown,
   categoryBreakdown,
   topProducts,
-  selectedStatus,
+
 }) => {
   // Calculate peak month for orders
   const peakOrderMonthIndex = useMemo(() => {

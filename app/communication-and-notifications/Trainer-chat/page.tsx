@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useEffect, useState, useRef, useMemo } from "react"
 import { Button } from "@/Components/ui/button"
 import { Input } from "@/Components/ui/input"
 import { Avatar, AvatarFallback } from "@/Components/ui/avatar"
-import { Badge } from "@/Components/ui/badge"
+// import { Badge } from "@/Components/ui/badge"
 import { Send, Users, Trash2 } from "lucide-react"
 import { listenToMessages, sendMessage as sendFirestoreMessage, fetchAllMembers, setUserOnlineStatus, deleteMessage, editMessage, deleteAllMessages } from "@/lib/chatService"
 import { doc, getDoc } from "firebase/firestore";

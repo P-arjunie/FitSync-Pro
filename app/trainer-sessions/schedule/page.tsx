@@ -7,7 +7,6 @@ import SessionForm from "../components/session-form"
 import SessionCalendar from "../components/session-calendar"
 import VirtualSessionForm from "../components/VirtualSessionForm" // ✅ Import Virtual Session Form
 import FloatingChatButton from "@/Components/ui/FloatingChatButton";
-import { MessageCircle } from "lucide-react";
 
 export default function Home() {
   const router = useRouter()

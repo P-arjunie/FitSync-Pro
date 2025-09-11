@@ -144,10 +144,10 @@ const AnalyticsPage: React.FC = () => {
       // Enhanced data validation with better error handling
       const data: AnalyticsData = {
         labels: Array.isArray(result.data?.labels) ? result.data.labels : [],
-        donePhysical: Array.isArray(result.data?.donePhysical) ? result.data.donePhysical.map((count: any) => Number(count) || 0) : [],
-        toBeHeldPhysical: Array.isArray(result.data?.toBeHeldPhysical) ? result.data.toBeHeldPhysical.map((count: any) => Number(count) || 0) : [],
-        doneVirtual: Array.isArray(result.data?.doneVirtual) ? result.data.doneVirtual.map((count: any) => Number(count) || 0) : [],
-        toBeHeldVirtual: Array.isArray(result.data?.toBeHeldVirtual) ? result.data.toBeHeldVirtual.map((count: any) => Number(count) || 0) : [],
+        donePhysical: Array.isArray(result.data?.donePhysical) ? result.data.donePhysical.map((count: string | number) => Number(count) || 0) : [],
+        toBeHeldPhysical: Array.isArray(result.data?.toBeHeldPhysical) ? result.data.toBeHeldPhysical.map((count: string | number) => Number(count) || 0) : [],
+        doneVirtual: Array.isArray(result.data?.doneVirtual) ? result.data.doneVirtual.map((count: string | number) => Number(count) || 0) : [],
+        toBeHeldVirtual: Array.isArray(result.data?.toBeHeldVirtual) ? result.data.toBeHeldVirtual.map((count: string | number) => Number(count) || 0) : [],
         trainers: Array.isArray(result.data?.trainers) ? result.data.trainers : [],
         bookings: Array.isArray(result.data?.bookings) ? result.data.bookings : [],
         virtualBookings: Array.isArray(result.data?.virtualBookings) ? result.data.virtualBookings : [],

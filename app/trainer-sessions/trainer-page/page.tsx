@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "../../Components/ui/card";
 import { Badge } from "../../Components/ui/badge";
-import { Separator } from "../../Components/ui/separator";
 import { Clock, MapPin, Users, Edit3, Calendar, X, Eye, CheckCircle, XCircle, AlertCircle, UserCheck } from "lucide-react";
 import moment from "moment";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "../../Components/ui/dialog";
@@ -39,7 +40,6 @@ const TrainerSessionsPage: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<{ userId: string; role: string; name: string } | null>(null);
-  const router = useRouter();
   const [editSession, setEditSession] = useState<Session | null>(null);
   const [editMaxParticipants, setEditMaxParticipants] = useState<number>(0);
   const [rescheduleSession, setRescheduleSession] = useState<Session | null>(null);
@@ -664,7 +664,7 @@ const TrainerSessionsPage: React.FC = () => {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
-              Participants for "{participantsSession?.title}"
+              Participants for &quot;{participantsSession?.title}&quot;
             </DialogTitle>
           </DialogHeader>
           {participantsLoading ? (

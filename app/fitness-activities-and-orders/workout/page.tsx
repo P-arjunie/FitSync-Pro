@@ -150,7 +150,7 @@ const WorkoutClassPage = () => {
             {isLoading ? "Loading..." : authUser ? "Enroll Now" : "Login to Enroll"}
           </button>
                       <div className="enrollment-benefits">
-              <h4>What's Included:</h4>
+              <h4>What&apos;s Included:</h4>
               <ul>
                 <li>Unlimited monthly classes</li>
                 <li>Professional instruction</li>

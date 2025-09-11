@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -20,7 +22,6 @@ import {
   X,
   AlertCircle,
   RefreshCw,
-  Mail,
   XCircle
 } from 'lucide-react';
 
@@ -191,13 +192,7 @@ const PurchaseHistoryPage = () => {
     });
   };
 
-  const getTotalSpent = () => {
-    return purchaseHistory.reduce((total, purchase) => total + purchase.amount, 0);
-  };
 
-  const getPurchaseCount = () => {
-    return purchaseHistory.length;
-  };
 
   const handleRefundRequest = async () => {
     if (!selectedPurchase || !refundReason.trim()) return;
@@ -775,7 +770,7 @@ const PurchaseHistoryPage = () => {
 
             <div className="mb-6">
               <p className="text-gray-600 mb-4">
-                You're requesting a refund for: <strong>{selectedPurchase.itemDetails?.title}</strong>
+                You&apos;re requesting a refund for: <strong>{selectedPurchase.itemDetails?.title}</strong>
               </p>
 
               {selectedPurchase.paymentFor === 'order' ? (

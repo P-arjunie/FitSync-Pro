@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -6,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/Components/Navbar';
 import Footer1 from '@/Components/Footer_01';
 import { getAuthUser } from '@/lib/auth';
-import { createSubscription, redirectToSubscriptionCheckout } from '@/lib/subscription';
+// import { createSubscription, redirectToSubscriptionCheckout } from '@/lib/subscription';
 
 const MMAClassPage = () => {
   const router = useRouter();
@@ -44,7 +45,7 @@ const MMAClassPage = () => {
         }),
       });
 
-      let data = {};
+      let data: { error?: string; _id?: string } = {};
       try {
         data = await res.json();
       } catch (jsonErr) {
@@ -158,7 +159,7 @@ const MMAClassPage = () => {
             {isLoading ? "Loading..." : authUser ? "Enroll Now" : "Login to Enroll"}
           </button>
                       <div className="enrollment-benefits">
-              <h4>What's Included:</h4>
+              <h4>What&apos;s Included:</h4>
               <ul>
                 <li>Unlimited MMA training sessions</li>
                 <li>Pro coaching staff</li>

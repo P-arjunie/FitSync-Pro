@@ -51,8 +51,12 @@ const ReviewsPage = () => {
       const fetchedReviews = data.reviews;
       updateStateWithReviews(fetchedReviews);
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch reviews');
+    } catch (err: unknown) {
+      setError(
+        typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch reviews'
+      );
     } finally {
       setLoading(false);
     }
@@ -102,8 +106,12 @@ const ReviewsPage = () => {
       const updatedReviews = reviews.filter((r) => r._id !== reviewId);
       updateStateWithReviews(updatedReviews);
 
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(
+        typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to delete review'
+      );
     }
   };
 
@@ -129,7 +137,7 @@ const ReviewsPage = () => {
         </div>
       </div>
   
-      <p className="text-gray-300 mb-4 italic">"{review.comments}"</p>
+      <p className="text-gray-300 mb-4 italic">&quot;{review.comments}&quot;</p>
   
       <div className="text-gray-400 text-sm flex justify-between pt-2 border-t border-gray-700">
         <span>For: <span className="font-medium text-gray-200">{review.trainer}</span></span>

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { loadStripe } from '@stripe/stripe-js';
 import Navbar from '@/Components/Navbar';
 import Footer from '@/Components/Footer_02';
@@ -9,7 +9,6 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 
 export default function SubscriptionCheckoutPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const email = searchParams.get('email');
   const priceId = searchParams.get('priceId');

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 // ...existing code...
 import React, { useEffect, useState } from 'react';
@@ -79,7 +80,7 @@ const TrainerAnalyticsPage = () => {
   // Advanced analytics: session status breakdown, top session types, average session revenue
   const totalSessions = analytics?.totalSessions || 0;
   const totalRevenue = analytics?.totalRevenue || 0;
-  const avgSessionRevenue = totalSessions > 0 ? (totalRevenue / totalSessions) : 0;
+  // const avgSessionRevenue = totalSessions > 0 ? (totalRevenue / totalSessions) : 0;
   const topSessionType = sessionLabels.length > 0 && sessionData.length > 0 ? sessionLabels[sessionData.indexOf(Math.max(...sessionData))] : 'N/A';
   const totalParticipants = analytics?.totalParticipants || 0;
   const sessionParticipantCount = analytics?.sessionParticipantCount || 0;
@@ -100,11 +101,11 @@ const TrainerAnalyticsPage = () => {
     lightGray: '#f3f4f6',
   };
 
-  function formatDate(date: string | null) {
-    if (!date) return 'N/A';
-    const d = new Date(date);
-    return d.toLocaleString();
-  }
+  // function formatDate(date: string | null) {
+  //   if (!date) return 'N/A';
+  //   const d = new Date(date);
+  //   return d.toLocaleString();
+  // }
 
 
   // Navigation state

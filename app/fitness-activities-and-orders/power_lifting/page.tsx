@@ -151,7 +151,7 @@ const PowerLiftingClassPage = () => {
             {isLoading ? "Loading..." : authUser ? "Enroll Now" : "Login to Enroll"}
           </button>
                       <div className="enrollment-benefits">
-              <h4>What's Included:</h4>
+              <h4>What&apos;s Included:</h4>
               <ul>
                 <li>Unlimited monthly powerlifting classes</li>
                 <li>Expert powerlifting coaching</li>

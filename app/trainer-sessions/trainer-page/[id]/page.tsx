@@ -171,7 +171,7 @@ export default function TrainerDetailsPage() {
                       <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
                       <p className="text-lg font-semibold text-gray-800 mb-2">Perfect Match!</p>
                       <p className="text-gray-600">
-                        Your <span className="font-bold text-black">{userPlan.planName}</span> plan is compatible with {trainerName}'s training sessions.
+                        Your <span className="font-bold text-black">{userPlan.planName}</span> plan is compatible with {trainerName}&#39;s training sessions.
                       </p>
                     </div>
                   ) : (
@@ -179,9 +179,9 @@ export default function TrainerDetailsPage() {
                       <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
                       <p className="text-lg font-semibold text-gray-800 mb-2">Plan Mismatch</p>
                       <p className="text-gray-600 mb-4">
-                        Your <span className="font-bold text-black">{userPlan?.planName || 'N/A'}</span> plan doesn't match this trainer's available plans.
+                        Your <span className="font-bold text-black">{userPlan?.planName || 'N/A'}</span> plan doesn&#39;t match this trainer&#39;s available plans.
                       </p>
-                      <p className="text-sm text-gray-500">Consider upgrading your plan to access this trainer's sessions.</p>
+                      <p className="text-sm text-gray-500">Consider upgrading your plan to access this trainer&#39;s sessions.</p>
                     </div>
                   )}
                 </div>
@@ -193,7 +193,7 @@ export default function TrainerDetailsPage() {
                 <div className="text-center py-8">
                   <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">Sign In Required</h3>
-                  <p className="text-gray-600">Log in to compare your pricing plan with the trainer's available plans.</p>
+                  <p className="text-gray-600">Log in to compare your pricing plan with the trainer&#39;s available plans.</p>
                 </div>
               </div>
             )}

@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import Link from "next/link";
 import Navbar from "../../Components/Navbar";
 import Footer from "@/Components/Footer_02";
-import styles from "@/Components/PricingPage.module.css";
+import styles from "../../Components/PricingPage.module.css";
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getAuthUser } from '@/lib/auth';
@@ -29,12 +30,12 @@ export default function PricingPage() {
     checkAuth();
   }, []);
 
-  const priceMap: Record<string, string> = {
-    Standard: "price_1Rl5CZ06dhrOhRKFNIRfbdY5",
-    Popular: "price_1Rl5Er06dhrOhRKFnptOwuQR",
-    Golden: "price_1Rl5GI06dhrOhRKFCjHsJuXQ",
-    Professional: "price_1Rl40106dhrOhRKFEAb72IQ0",
-  };
+  // const priceMap: Record<string, string> = {
+  //   Standard: "price_1Rl5CZ06dhrOhRKFNIRfbdY5",
+  //   Popular: "price_1Rl5Er06dhrOhRKFnptOwuQR",
+  //   Golden: "price_1Rl5GI06dhrOhRKFCjHsJuXQ",
+  //   Professional: "price_1Rl40106dhrOhRKFEAb72IQ0",
+  // };
 
   const priceIdMap: Record<string, string> = {
     Standard: "price_1Rl5CZ06dhrOhRKFNIRfbdY5",

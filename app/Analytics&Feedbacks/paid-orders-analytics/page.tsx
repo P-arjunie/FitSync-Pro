@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import OrderAnalyticsDashboard from '@/Components/analytics/OrderAnalyticsDashboard';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { format, subMonths } from 'date-fns';
+import { subMonths } from 'date-fns';
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
 import AnalyticsSidebar from '@/Components/analytics/AnalyticsSidebar';
@@ -106,9 +106,14 @@ const PaidOrdersAnalyticsPage = () => {
       } else {
         throw new Error(result.error || 'Failed to fetch data');
       }
-    } catch (err: any) {
-      setError(err.message);
-      console.error('Error fetching analytics data:', err);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+        console.error('Error fetching analytics data:', err);
+      } else {
+        setError('Error fetching analytics data');
+        console.error('Error fetching analytics data:', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -437,7 +442,7 @@ const PaidOrdersAnalyticsPage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
-                <label className="block text-gray-300 font-semibold mb-2 flex items-center">
+                <label className="text-gray-300 font-semibold mb-2 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                   </svg>
@@ -465,7 +470,7 @@ const PaidOrdersAnalyticsPage = () => {
               </div>
               
               <div>
-                <label className="block text-gray-300 font-semibold mb-2 flex items-center">
+                <label className="text-gray-300 font-semibold mb-2 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                   </svg>
@@ -483,7 +488,7 @@ const PaidOrdersAnalyticsPage = () => {
               </div>
               
               <div>
-                <label className="block text-gray-300 font-semibold mb-2 flex items-center">
+                <label className="text-gray-300 font-semibold mb-2 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                   </svg>

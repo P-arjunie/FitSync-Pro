@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import UsageAnalyticsDashboard from '../../Components/analytics/UsageAnalyticsDashboard';
 import AnalyticsSidebar from '../../Components/analytics/AnalyticsSidebar';
-import Link from 'next/link';
 import Navbar from '../../Components/Navbar';
 import Footer from '../../Components/Footer_01';
 
@@ -32,7 +31,7 @@ const UsageAnalyticsPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+    // Removed unused isCheckingAuth state
     const [filters, setFilters] = useState<FilterState>({
         startDate: null,
         endDate: null,
@@ -49,7 +48,7 @@ const UsageAnalyticsPage = () => {
         setLoading(true);
         setError(null);
         try {
-            let query = [];
+            const query = [];
             if (filters.startDate) query.push(`startDate=${encodeURIComponent(filters.startDate.toISOString())}`);
             if (filters.endDate) query.push(`endDate=${encodeURIComponent(filters.endDate.toISOString())}`);
             if (filters.role && filters.role !== 'all') query.push(`role=${encodeURIComponent(filters.role)}`);
@@ -152,7 +151,7 @@ const UsageAnalyticsPage = () => {
             }
 
             doc.save(`usage_analytics_${filters.startDate ? filters.startDate.toISOString().split('T')[0] : 'all'}_to_${filters.endDate ? filters.endDate.toISOString().split('T')[0] : 'all'}.pdf`);
-        } catch (error) {
+        } catch {
             setError("Failed to generate PDF report");
         } finally {
             setIsGeneratingReport(false);
@@ -187,7 +186,7 @@ const UsageAnalyticsPage = () => {
         if (userEmail && storedUsername) {
             setIsLoggedIn(true);
         }
-        setIsCheckingAuth(false);
+        // Removed setIsCheckingAuth(false);
     }, []);
     const generateReport = useCallback(() => {
         if (reportFormat === "pdf") {

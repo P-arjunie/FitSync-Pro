@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*
   Trainer Feedback Management Page
   - Shows all feedback for the logged-in trainer (by email)
@@ -8,7 +9,7 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '../../Components/Navbar';
 import Footer from '../../Components/Footer_01';
-import { MessageCircle, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
 interface Review {
   _id: string;
@@ -33,14 +34,14 @@ const TrainerFeedbackPage = () => {
   const [trainerFullName, setTrainerFullName] = useState<string | null>(null);
 
   // Color palette (same as analytics page)
-  const colors = {
-    red: '#dc2626',
-    darkBlue: '#1e293b',
-    white: '#fff',
-    black: '#000',
-    gray: '#6b7280',
-    lightGray: '#f3f4f6',
-  };
+  // const colors = {
+  //   red: '#dc2626',
+  //   darkBlue: '#1e293b',
+  //   white: '#fff',
+  //   black: '#000',
+  //   gray: '#6b7280',
+  //   lightGray: '#f3f4f6',
+  // };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -159,13 +160,13 @@ const TrainerFeedbackPage = () => {
                         </button>
                       </div>
 
-                      <p className="italic mb-2 text-gray-100">"{review.comments}"</p>
+                      <p className="italic mb-2 text-gray-100">&quot;{review.comments}&quot;</p>
                       <div className="text-xs text-gray-400 mb-1">
                         {new Date(review.date).toLocaleDateString()} • {review.sessionType}
                       </div>
                       <div className="text-xs text-gray-500">By: {review.memberEmail || 'Anonymous'}</div>
 
-                      <p className="italic mb-1">"{review.comments}"</p>
+                      <p className="italic mb-1">&quot;{review.comments}&quot;</p>
                       <div className="text-xs text-gray-500 mb-1">
                         {new Date(review.date).toLocaleDateString()} \u2022 {review.sessionType}
                       </div>
